@@ -1,0 +1,32 @@
+# Compiled output
+target/
+
+# IntelliJ IDEA
+**/.idea/dictionaries/
+**/.idea/libraries/
+**/.idea/misc.xml
+**/.idea/tasks.xml
+**/.idea/workspace.xml
+
+# Package Files
+*.jar
+*.war
+*.ear
+
+# Windows
+*.db
+*.exe
+
+# C/GCC
+*.c
+*.h
+*.i
+*.o
+*.s
+
+# BPL
+*.bplbc
+
+# JVM
+hs_err_pid*
+hotspot*
