@@ -49,18 +49,20 @@ public final class Bytecode {
 		}
 	}
 
-	static final Map<Byte, Op> opcodes;
+	static final Map<Byte, Op> opCodes;
 
 	static {
-		opcodes = new HashMap<>();
-		opcodes.put(NOP, new Op("nop", 0));
-		opcodes.put(IPUSH, new Op("ipush", 8));
-		opcodes.put(IADD, new Op("iadd", 0));
-		opcodes.put(ISUB, new Op("isub", 0));
-		opcodes.put(IMUL, new Op("imul", 0));
-		opcodes.put(IDIV, new Op("idiv", 0));
-		opcodes.put(PRINT, new Op("print", 0));
-		opcodes.put(HALT, new Op("halt", 0));
+		//fmt:off
+		opCodes = new HashMap<>();
+		opCodes.put(NOP,   new Op("nop",   0));
+		opCodes.put(IPUSH, new Op("ipush", 8));
+		opCodes.put(IADD,  new Op("iadd",  0));
+		opCodes.put(ISUB,  new Op("isub",  0));
+		opCodes.put(IMUL,  new Op("imul",  0));
+		opCodes.put(IDIV,  new Op("idiv",  0));
+		opCodes.put(PRINT, new Op("print", 0));
+		opCodes.put(HALT,  new Op("halt",  0));
+		//fmt:on
 	}
 
 	private Bytecode() { /**/ }

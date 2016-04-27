@@ -149,7 +149,7 @@ class CPU {
 	//region trace
 
 	private void disassemble() {
-		Op inst = Bytecode.opcodes.get(op);
+		Op inst = Bytecode.opCodes.get(op);
 		if (inst == null)
 			throw new IllegalStateException(String.format("Illegal op code 0x%02x", op));
 
