@@ -67,9 +67,10 @@ public final class Exec {
 		fName = fName.substring(0, idx);
 		String[] cmd = {
 			"gcc",
-			"-std=c89",
+			"-std=c99",
 			"-Wall",
 			"-Wextra",
+			"-Wpedantic",
 			"-save-temps",
 			"-o" + fName + "." + OS.exeEXT(),
 			fName + ".c"

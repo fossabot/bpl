@@ -42,13 +42,13 @@ public class C89Visitor extends BPLBaseVisitor<String> {
 		int size = i.bitLength();
 		String res;
 		if (size <= 8) {
-			res = "uint8_t a = " + val + ";";
+			res = "uint8_t a = " + val + "U;";
 		} else if (size <= 16) {
-			res = "uint16_t a = " + val + ";";
+			res = "uint16_t a = " + val + "U;";
 		} else if (size <= 32) {
-			res = "uint32_t a = " + val + ";";
+			res = "uint32_t a = " + val + "UL;";
 		} else if (size <= 64) {
-			res = "uint64_t a = " + val + ";";
+			res = "uint64_t a = " + val + "ULL;";
 		} else {
 			throw new IllegalStateException(); // TODO
 		}

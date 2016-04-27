@@ -37,22 +37,30 @@ import java.nio.file.*;
 public final class Main {
 
 	public static void main(String[] args) throws IOException {
-		String bpl = "1234567890";
+		String bpl = "255";
+		bpl = "65535";
+		bpl = "4294967295";
+		bpl = "18446744073709551615";
 
 		byte[] bplbc = compileBC(bpl);
-		VM vm = new VM(bplbc, 0, false);
+		VM vm = new VM(bplbc, 0, true);
 		vm.run();
 		System.out.println();
 
-		String c89 = compileC89(bpl);
 		Path tmpDir = IO.makeTmpDir("_bplc_");
-		Path c89out = tmpDir.resolve("out.c");
-		IO.writeAll(c89out, c89);
-		ExecRes gcc = Exec.gcc(c89out);
-		if (!gcc.isEmpty())
-			throw new Error(gcc.toString());
-		ExecRes run = Exec.exec(tmpDir.resolve("out." + OS.exeEXT()));
-		System.out.println(run.out);
+		try {
+			String c89 = compileC89(bpl);
+			Path c89out = tmpDir.resolve("out.c");
+			IO.writeAll(c89out, c89);
+			ExecRes gcc = Exec.gcc(c89out);
+			if (!gcc.isEmpty())
+				throw new Error(gcc.toString());
+			ExecRes run = Exec.exec(tmpDir.resolve("out." + OS.exeEXT()));
+			System.out.println(c89);
+			System.out.println(run);
+		} finally {
+			IO.delRec(tmpDir);
+		}
 	}
 
 	public static byte[] compileBC(String bpl) {

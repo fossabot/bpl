@@ -44,7 +44,7 @@ public class CompilerTest {
 
 	@AfterTest
 	public void teardown() throws IOException {
-//		IO.delRec(tmpDir);
+		IO.delRec(tmpDir);
 	}
 
 	@DataProvider
