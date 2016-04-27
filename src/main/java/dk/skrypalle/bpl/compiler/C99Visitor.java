@@ -55,8 +55,8 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 	}
 
 	@Override
-	public String visitAddExpr(AddExprContext ctx) {
-		return visit(ctx.lhs) + "+" + visit(ctx.rhs);
+	public String visitBinOpExpr(BinOpExprContext ctx) {
+		return visit(ctx.lhs) + ttos(ctx.op) + visit(ctx.rhs);
 	}
 
 	@Override

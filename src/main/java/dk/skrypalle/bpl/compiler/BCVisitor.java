@@ -30,6 +30,7 @@ import dk.skrypalle.bpl.antlr.BPLParser.*;
 import dk.skrypalle.bpl.util.*;
 import org.antlr.v4.runtime.tree.*;
 
+import static dk.skrypalle.bpl.util.Array.*;
 import static dk.skrypalle.bpl.util.Parse.*;
 import static dk.skrypalle.bpl.vm.Bytecode.*;
 
@@ -42,27 +43,38 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 	@Override
 	public byte[] visitCompilationUnit(CompilationUnitContext ctx) {
 		byte[] cld = visitChildren(ctx);
-		return append(cld, HALT);
+		return concat(cld, HALT);
 	}
 
 	@Override
-	public byte[] visitAddExpr(AddExprContext ctx) {
+	public byte[] visitBinOpExpr(BinOpExprContext ctx) {
 		byte[] lhs = visit(ctx.lhs);
 		byte[] rhs = visit(ctx.rhs);
-		return append(concat(lhs, rhs), IADD);
+		String op_str = ttos(ctx.op);
+		byte op;
+		//fmt:off
+		switch (op_str) {
+		case "+": op = IADD; break;
+		case "-": op = ISUB; break;
+		case "*": op = IMUL; break;
+		case "/": op = IDIV; break;
+		default : throw new IllegalStateException("unreachable");
+		}
+		//fmt:on
+		return concat(lhs, rhs, op);
 	}
 
 	@Override
 	public byte[] visitIntExpr(IntExprContext ctx) {
 		String val = Parse.ttos(ctx.val);
 		byte[] res = Marshal.bytesS64BE(Long.parseUnsignedLong(val, 10));
-		return prepend(IPUSH, res);
+		return concat(IPUSH, res);
 	}
 
 	@Override
 	public byte[] visitPrint(PrintContext ctx) {
 		byte[] cld = visitChildren(ctx);
-		return append(cld, PRINT);
+		return concat(cld, PRINT);
 	}
 
 	//region aggregate, default, visit

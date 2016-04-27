@@ -70,6 +70,24 @@ class CPU {
 			res = lhs + rhs;
 			push(res);
 			break;
+		case ISUB:
+			rhs = pop();
+			lhs = pop();
+			res = lhs - rhs;
+			push(res);
+			break;
+		case IMUL:
+			rhs = pop();
+			lhs = pop();
+			res = lhs*rhs;
+			push(res);
+			break;
+		case IDIV:
+			rhs = pop();
+			lhs = pop();
+			res = lhs/rhs;
+			push(res);
+			break;
 		case PRINT:
 			vm.out(String.format("%x", pop()));
 			break;

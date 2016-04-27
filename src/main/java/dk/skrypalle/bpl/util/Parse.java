@@ -42,28 +42,6 @@ public final class Parse {
 		return t.getText();
 	}
 
-	public static byte[] concat(byte[] a, byte[] b) {
-		byte[] res = new byte[a.length + b.length];
-		System.arraycopy(a, 0, res, 0, a.length);
-		System.arraycopy(b, 0, res, a.length, b.length);
-		return res;
-	}
-
-	public static byte[] append(byte[] a, int... bytes) {
-		byte[] res = new byte[a.length + bytes.length];
-		System.arraycopy(a, 0, res, 0, a.length);
-		for (int i = 0; i < bytes.length; i++)
-			res[a.length + i] = (byte) bytes[i];
-		return res;
-	}
-
-	public static byte[] prepend(byte b, byte[] a) {
-		byte[] res = new byte[a.length + 1];
-		res[0] = b;
-		System.arraycopy(a, 0, res, 1, a.length);
-		return res;
-	}
-
 	private Parse() { /**/ }
 
 }

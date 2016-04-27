@@ -30,8 +30,9 @@ compilationUnit
 	;
 
 expr
-	: lhs=expr '+' rhs=expr #AddExpr
-	| val=INT               #IntExpr
+	: lhs=expr op=('/'|'*') rhs=expr #BinOpExpr
+	| lhs=expr op=('+'|'-') rhs=expr #BinOpExpr
+	| val=INT                        #IntExpr
 	;
 
 print : 'print' '(' arg=expr ')' ;

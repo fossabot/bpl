@@ -23,46 +23,42 @@
  *
  */
 
-package dk.skrypalle.bpl.vm;
+package dk.skrypalle.bpl.util;
 
-import java.util.*;
+public final class Array {
 
-public final class Bytecode {
-
-	public static final byte NOP   = (byte) 0x00;
-	public static final byte IPUSH = (byte) 0x01;
-	public static final byte IADD  = (byte) 0x02;
-	public static final byte ISUB  = (byte) 0x03;
-	public static final byte IMUL  = (byte) 0x04;
-	public static final byte IDIV  = (byte) 0x05;
-
-	public static final byte PRINT = (byte) 0xfe;
-	public static final byte HALT  = (byte) 0xff;
-
-	static class Op {
-		final String name;
-		final int    nArgs;
-
-		Op(String name, int nArgs) {
-			this.name = name;
-			this.nArgs = nArgs;
+	public static byte[] concat(Object... bytes) {
+		int len = 0;
+		for (Object o : bytes) {
+			if (o instanceof byte[])
+				len += ((byte[]) o).length;
+			else if (o instanceof Byte)
+				len++;
+			else
+				throw new IllegalArgumentException("Type of var_args must be byte or byte[]");
 		}
+
+		int idx = 0;
+		byte[] res = new byte[len];
+		for (Object o : bytes) {
+			if (o instanceof byte[]) {
+				for (byte b : ((byte[]) o))
+					res[idx++] = b;
+			} else {
+				res[idx++] = (byte) o;
+			}
+		}
+
+		return res;
 	}
 
-	static final Map<Byte, Op> opcodes;
-
-	static {
-		opcodes = new HashMap<>();
-		opcodes.put(NOP, new Op("nop", 0));
-		opcodes.put(IPUSH, new Op("ipush", 8));
-		opcodes.put(IADD, new Op("iadd", 0));
-		opcodes.put(ISUB, new Op("isub", 0));
-		opcodes.put(IMUL, new Op("imul", 0));
-		opcodes.put(IDIV, new Op("idiv", 0));
-		opcodes.put(PRINT, new Op("print", 0));
-		opcodes.put(HALT, new Op("halt", 0));
+	public static byte[] prepend(byte b, byte[] a) {
+		byte[] res = new byte[a.length + 1];
+		res[0] = b;
+		System.arraycopy(a, 0, res, 1, a.length);
+		return res;
 	}
 
-	private Bytecode() { /**/ }
+	private Array() { /**/ }
 
 }
