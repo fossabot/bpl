@@ -33,9 +33,9 @@ import java.math.*;
 import static dk.skrypalle.bpl.antlr.BPLParser.*;
 import static dk.skrypalle.bpl.util.Parse.*;
 
-public class C89Visitor extends BPLBaseVisitor<String> {
+public class C99Visitor extends BPLBaseVisitor<String> {
 
-	public C89Visitor() { }
+	public C99Visitor() { }
 
 	@Override
 	public String visitCompilationUnit(CompilationUnitContext ctx) {

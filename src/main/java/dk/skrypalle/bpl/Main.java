@@ -51,14 +51,14 @@ public final class Main {
 
 		Path tmpDir = IO.makeTmpDir("_bplc_");
 		try {
-			String c89 = compileC89(bpl);
-			Path c89out = tmpDir.resolve("out.c");
-			IO.writeAll(c89out, c89);
-			ExecRes gcc = Exec.gcc(c89out);
+			String c99 = compileC99(bpl);
+			Path c99out = tmpDir.resolve("out.c");
+			IO.writeAll(c99out, c99);
+			ExecRes gcc = Exec.gcc(c99out);
 			if (!gcc.isEmpty())
 				throw new Error(gcc.toString());
 			ExecRes run = Exec.exec(tmpDir.resolve("out." + OS.exeEXT()));
-			System.out.println(c89);
+			System.out.println(c99);
 			System.out.println(run);
 		} finally {
 			IO.delRec(tmpDir);
@@ -70,9 +70,9 @@ public final class Main {
 		return new BCVisitor().visit(t);
 	}
 
-	public static String compileC89(String bpl) {
+	public static String compileC99(String bpl) {
 		ParseTree t = parse(bpl);
-		return new C89Visitor().visit(t);
+		return new C99Visitor().visit(t);
 	}
 
 	private static ParseTree parse(String bpl) {

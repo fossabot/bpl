@@ -16,11 +16,11 @@ The syntax is heavily influenced by [Go](https://golang.org/).
 ###How?
 The language offers two compilation targets:
 * BPLVM Bytecode
-* [C89](https://en.wikipedia.org/wiki/ANSI_C)
+* [C99](https://en.wikipedia.org/wiki/C99)
 
 BPLVM Bytecode can be executed with the BPL Virtual Machine, which is also part
 of this project. The BPLVM enables extensive compile-time code execution for the
-C89 target and Java-Style debugging (hot swap of code during runtime).
+C99 target and Java-Style debugging (hot swap of code during runtime).
 
 The idea is to support BPL anywhere, where the standard gcc toolchain is
 available.

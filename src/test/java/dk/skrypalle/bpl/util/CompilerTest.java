@@ -76,11 +76,11 @@ public class CompilerTest {
 	}
 
 	@Test(dataProvider = "provideData")
-	public void testTargetC89(String bpl, String exp) throws IOException {
-		String c89 = Main.compileC89(bpl);
-		Path c89out = tmpDir.resolve("out.c");
-		IO.writeAll(c89out, c89);
-		ExecRes gcc = Exec.gcc(c89out);
+	public void testTargetC99(String bpl, String exp) throws IOException {
+		String c99 = Main.compileC99(bpl);
+		Path c99out = tmpDir.resolve("out.c");
+		IO.writeAll(c99out, c99);
+		ExecRes gcc = Exec.gcc(c99out);
 		if (!gcc.isEmpty())
 			System.err.println(gcc);
 		Assert.assertEquals(gcc.exit, 0, "gcc exit status");
