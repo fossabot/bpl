@@ -26,13 +26,15 @@
 grammar BPL;
 
 compilationUnit
-	: expr
+	: (print ';')*
 	;
 
 expr
 	: lhs=expr '+' rhs=expr #AddExpr
 	| val=INT               #IntExpr
 	;
+
+print : 'print' '(' arg=expr ')' ;
 
 INT : [0-9]+            ;
 WS  : [ \t\r\n] -> skip ;

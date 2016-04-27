@@ -37,11 +37,12 @@ import java.nio.file.*;
 public final class Main {
 
 	public static void main(String[] args) throws IOException {
-		String bpl = "255";
-		bpl = "65535";
-		bpl = "4294967295";
-		bpl = "08446744073709551615";
-		bpl = "18446744073709551568+42+5";
+		String bpl = "";
+		bpl += "print(255);";
+		bpl += "print(65535);";
+		bpl += "print(4294967295);";
+		bpl += "print(08446744073709551615);";
+		bpl += "print(18446744073709551568+42+5);";
 
 		byte[] bplbc = compileBC(bpl);
 		System.out.println("Instructions:");

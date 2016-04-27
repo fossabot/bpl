@@ -39,6 +39,8 @@ public class C89Visitor extends BPLBaseVisitor<String> {
 
 	private final Deque<IntType> tStack;
 
+	private int n;
+
 	public C89Visitor() {
 		this.tStack = new ArrayDeque<>();
 	}
@@ -46,41 +48,7 @@ public class C89Visitor extends BPLBaseVisitor<String> {
 	@Override
 	public String visitCompilationUnit(CompilationUnitContext ctx) {
 		String cld = visitChildren(ctx);
-		IntType t = tStack.pop();
-		String cType;
-		String cExt = "";
-		switch (t) {
-		case U8:
-			cType = "uint8_t";
-			cExt = "U";
-			break;
-		case U16:
-			cType = "uint16_t";
-			cExt = "U";
-			break;
-		case U32:
-			cType = "uint32_t";
-			cExt = "UL";
-			break;
-		case U64:
-			cType = "uint64_t";
-			cExt = "ULL";
-			break;
-		case S8:
-			cType = "int8_t";
-			break;
-		case S16:
-			cType = "int16_t";
-			break;
-		case S32:
-			cType = "int32_t";
-			break;
-		case S64:
-			cType = "int64_t";
-			break;
-		default:
-			throw new Error();
-		}
+
 		return String.join("\n",
 			"#include <stdio.h>",
 			"#include <stdint.h>",
@@ -91,8 +59,7 @@ public class C89Visitor extends BPLBaseVisitor<String> {
 			"",
 			"int main(void)",
 			"{",
-			"	" + cType + " a = " + cld + cExt + ";",
-			"	_printHex(&a, sizeof(a));",
+			cld,
 			"	return 0;",
 			"}",
 			"",
@@ -144,6 +111,54 @@ public class C89Visitor extends BPLBaseVisitor<String> {
 		BigInteger res = new BigInteger(val, 10);
 		tStack.push(IntType.parse(res));
 		return res.toString();
+	}
+
+	@Override
+	public String visitPrint(PrintContext ctx) {
+		String cld = visitChildren(ctx);
+		IntType t = tStack.pop();
+		String cType;
+		String cExt = "";
+		switch (t) {
+		case U8:
+			cType = "uint8_t";
+			cExt = "U";
+			break;
+		case U16:
+			cType = "uint16_t";
+			cExt = "U";
+			break;
+		case U32:
+			cType = "uint32_t";
+			cExt = "UL";
+			break;
+		case U64:
+			cType = "uint64_t";
+			cExt = "ULL";
+			break;
+		case S8:
+			cType = "int8_t";
+			break;
+		case S16:
+			cType = "int16_t";
+			break;
+		case S32:
+			cType = "int32_t";
+			break;
+		case S64:
+			cType = "int64_t";
+			break;
+		default:
+			throw new Error();
+		}
+
+		String var = "_" + n++;
+
+		return String.join("\n",
+			"	" + cType + " " + var + " = " + cld + cExt + ";",
+			"	_printHex(&" + var + ", sizeof(" + var + "));",
+			""
+		);
 	}
 
 	//region aggregate, default, visit

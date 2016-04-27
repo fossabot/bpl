@@ -52,12 +52,7 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 	@Override
 	public byte[] visitCompilationUnit(CompilationUnitContext ctx) {
 		byte[] cld = visitChildren(ctx);
-		IntType t = tStack.pop();
-		return append(
-			cld,
-			PRINT, t.width/8, 0, 0, 0,
-			HALT
-		);
+		return append(cld, HALT);
 	}
 
 	@Override
@@ -151,6 +146,16 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 
 		tStack.push(t);
 		return prepend(op, toBA(val, 10, t));
+	}
+
+	@Override
+	public byte[] visitPrint(PrintContext ctx) {
+		byte[] cld = visitChildren(ctx);
+		IntType t = tStack.pop();
+		return append(
+			cld,
+			PRINT, t.width/8, 0, 0, 0
+		);
 	}
 
 	//region aggregate, default, visit
