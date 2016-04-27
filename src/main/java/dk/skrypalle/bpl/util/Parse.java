@@ -25,8 +25,11 @@
 
 package dk.skrypalle.bpl.util;
 
+import dk.skrypalle.bpl.compiler.type.*;
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.*;
+
+import java.math.*;
 
 public final class Parse {
 
@@ -54,6 +57,30 @@ public final class Parse {
 		System.arraycopy(a, 0, res, 0, a.length);
 		for (int i = 0; i < bytes.length; i++)
 			res[a.length + i] = (byte) bytes[i];
+		return res;
+	}
+
+	public static byte[] prepend(byte b, byte[] a) {
+		byte[] res = new byte[a.length + 1];
+		res[0] = b;
+		System.arraycopy(a, 0, res, 1, a.length);
+		return res;
+	}
+
+	public static byte[] toBA(String val, int radix, IntType t) {
+		return toBA(new BigInteger(val, radix), t);
+	}
+
+	public static byte[] toBA(BigInteger val, IntType t) {
+		int len = t.width/8;
+		byte[] res = new byte[len];
+		byte[] bi = val.toByteArray();
+
+		int i = len;
+		int j = bi.length;
+
+		while (i > 0 && j > 0)
+			res[--i] = bi[--j];
 		return res;
 	}
 

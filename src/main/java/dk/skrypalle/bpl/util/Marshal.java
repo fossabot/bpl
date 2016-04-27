@@ -41,6 +41,24 @@ public final class Marshal {
 			| ((int) data[pos + 3]) << 24;
 	}
 
+	public static byte[] padLE(byte[] src, int len) {
+		if (src.length == len)
+			return src;
+
+		byte[] res = new byte[len];
+		System.arraycopy(src, 0, res, 0, src.length);
+		return res;
+	}
+
+	public static byte[] padBE(byte[] src, int len) {
+		if (src.length == len)
+			return src;
+
+		byte[] res = new byte[len];
+		System.arraycopy(src, 0, res, len - src.length, src.length);
+		return res;
+	}
+
 	private Marshal() { /**/ }
 
 }

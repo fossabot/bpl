@@ -23,16 +23,19 @@
  *
  */
 
-grammar BPL;
+package dk.skrypalle.bpl.vm.err;
 
-compilationUnit
-	: expr
-	;
+public class BPLVMArithmeticOverflowError extends Error {
 
-expr
-	: lhs=expr '+' rhs=expr #AddExpr
-	| val=INT               #IntExpr
-	;
+	private static final long serialVersionUID = 2944811024706784593L;
 
-INT : [0-9]+            ;
-WS  : [ \t\r\n] -> skip ;
+	public BPLVMArithmeticOverflowError(String msg) {
+		super(msg);
+	}
+
+	@Override
+	public String getLocalizedMessage() {
+		return getMessage();
+	}
+
+}

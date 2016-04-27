@@ -23,16 +23,48 @@
  *
  */
 
-grammar BPL;
+package dk.skrypalle.bpl.compiler.type;
 
-compilationUnit
-	: expr
-	;
+import java.math.*;
 
-expr
-	: lhs=expr '+' rhs=expr #AddExpr
-	| val=INT               #IntExpr
-	;
+public enum IntType {
+	U8(8, false), U16(16, false), U32(32, false), U64(64, false),
+	S8(8, true), S16(16, true), S32(32, true), S64(64, true);
 
-INT : [0-9]+            ;
-WS  : [ \t\r\n] -> skip ;
+	public final int     width;
+	public final boolean isSigned;
+
+	IntType(int width, boolean isSigned) {
+		this.width = width;
+		this.isSigned = isSigned;
+	}
+
+	public IntType next() {
+		for (IntType t : values()) {
+			if (t.isSigned != isSigned)
+				continue;
+			if (t.width == width*2)
+				return t;
+		}
+		throw new IllegalStateException("cannot widen " + this); // TODO
+	}
+
+	public static IntType parse(BigInteger val) {
+		int size = val.bitLength();
+		if (size <= 8) {
+			return val.signum() == -1 ? S8 : U8;
+		} else if (size <= 16) {
+			return val.signum() == -1 ? S16 : U16;
+		} else if (size <= 32) {
+			return val.signum() == -1 ? S32 : U32;
+		} else if (size <= 64) {
+			return val.signum() == -1 ? S64 : U64;
+		} else {
+			throw new IllegalStateException("unreachable"); // TODO
+		}
+	}
+
+	public static IntType parse(String val) {
+		return parse(new BigInteger(val));
+	}
+}

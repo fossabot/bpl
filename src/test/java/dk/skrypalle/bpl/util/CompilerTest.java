@@ -52,8 +52,10 @@ public class CompilerTest {
 		return new Object[][]{
 			{"1", "01"},
 			{"255", "ff"},
-			{"256", "0001"},
-			{"1234567890", "d2029649"},
+			{"256", "0100"},
+			{"1234567890", "499602d2"},
+			{"1+42+5+6", "36"},
+			{"18446744073709551568+42+5", "ffffffffffffffff"},
 		};
 	}
 
@@ -78,6 +80,8 @@ public class CompilerTest {
 		Path c89out = tmpDir.resolve("out.c");
 		IO.writeAll(c89out, c89);
 		ExecRes gcc = Exec.gcc(c89out);
+		if (!gcc.isEmpty())
+			System.err.println(gcc);
 		Assert.assertEquals(gcc.exit, 0, "gcc exit status");
 		Assert.assertEquals(gcc.out, "", "gcc out stream");
 		Assert.assertEquals(gcc.err, "", "gcc err stream");

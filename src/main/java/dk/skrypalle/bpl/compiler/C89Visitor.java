@@ -26,43 +26,72 @@
 package dk.skrypalle.bpl.compiler;
 
 import dk.skrypalle.bpl.antlr.*;
+import dk.skrypalle.bpl.compiler.type.*;
+import dk.skrypalle.bpl.util.*;
 import org.antlr.v4.runtime.tree.*;
 
 import java.math.*;
+import java.util.*;
 
 import static dk.skrypalle.bpl.antlr.BPLParser.*;
-import static dk.skrypalle.bpl.util.Parse.*;
 
 public class C89Visitor extends BPLBaseVisitor<String> {
 
+	private final Deque<IntType> tStack;
+
+	public C89Visitor() {
+		this.tStack = new ArrayDeque<>();
+	}
+
 	@Override
 	public String visitCompilationUnit(CompilationUnitContext ctx) {
-		String val = ttos(ctx.INT());
-		BigInteger i = new BigInteger(val);
-		int size = i.bitLength();
-		String res;
-		if (size <= 8) {
-			res = "uint8_t a = " + val + "U;";
-		} else if (size <= 16) {
-			res = "uint16_t a = " + val + "U;";
-		} else if (size <= 32) {
-			res = "uint32_t a = " + val + "UL;";
-		} else if (size <= 64) {
-			res = "uint64_t a = " + val + "ULL;";
-		} else {
-			throw new IllegalStateException(); // TODO
+		String cld = visitChildren(ctx);
+		IntType t = tStack.pop();
+		String cType;
+		String cExt = "";
+		switch (t) {
+		case U8:
+			cType = "uint8_t";
+			cExt = "U";
+			break;
+		case U16:
+			cType = "uint16_t";
+			cExt = "U";
+			break;
+		case U32:
+			cType = "uint32_t";
+			cExt = "UL";
+			break;
+		case U64:
+			cType = "uint64_t";
+			cExt = "ULL";
+			break;
+		case S8:
+			cType = "int8_t";
+			break;
+		case S16:
+			cType = "int16_t";
+			break;
+		case S32:
+			cType = "int32_t";
+			break;
+		case S64:
+			cType = "int64_t";
+			break;
+		default:
+			throw new Error();
 		}
-
 		return String.join("\n",
 			"#include <stdio.h>",
 			"#include <stdint.h>",
+			"#include <limits.h>",
 			"",
 			"#define TO_HEX(i) ((i) <= 9 ? '0' + (i) : 'a' - 10 + (i))",
 			"static void _printHex(void* p, int len);",
 			"",
 			"int main(void)",
 			"{",
-			"	" + res,
+			"	" + cType + " a = " + cld + cExt + ";",
 			"	_printHex(&a, sizeof(a));",
 			"	return 0;",
 			"}",
@@ -70,7 +99,8 @@ public class C89Visitor extends BPLBaseVisitor<String> {
 			"void _printHex(void* p, int len)",
 			"{",
 			"	int i;",
-			"	for(i=0; i<len; ++i) {",
+			"",
+			"	for(i=len-1; i>=0; --i) {",
 			"		uint8_t* cur = (uint8_t*) p+i;",
 			"		uint8_t  val = (*cur)&0xff;",
 			"		putchar(TO_HEX(val>>4 & 0xf));",
@@ -78,6 +108,42 @@ public class C89Visitor extends BPLBaseVisitor<String> {
 			"	}",
 			"}"
 		);
+	}
+
+	@Override
+	public String visitAddExpr(AddExprContext ctx) {
+		String lhs = visit(ctx.lhs);
+		IntType lhs_t = tStack.pop();
+		String rhs = visit(ctx.rhs);
+		IntType rhs_t = tStack.pop();
+		IntType res_t = lhs_t;
+
+		// Check matching types
+		if (lhs_t != rhs_t) {
+			if (lhs_t.isSigned != rhs_t.isSigned)
+				throw new IllegalStateException("sign error: " + lhs_t + " != " + rhs_t); // TODO
+
+			// Auto widen int literals
+			if (lhs_t.width < rhs_t.width)
+				res_t = rhs_t;
+		}
+
+		// Auto widen result
+		BigInteger res = new BigInteger(lhs).add(new BigInteger(rhs));
+		if (res.bitLength() > res_t.width)
+			res_t = res_t.next();
+
+		tStack.push(res_t);
+
+		return res.toString();
+	}
+
+	@Override
+	public String visitIntExpr(IntExprContext ctx) {
+		String val = Parse.ttos(ctx.val);
+		BigInteger res = new BigInteger(val, 10);
+		tStack.push(IntType.parse(res));
+		return res.toString();
 	}
 
 	//region aggregate, default, visit

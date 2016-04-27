@@ -25,9 +25,13 @@
 
 package dk.skrypalle.bpl.vm;
 
+import dk.skrypalle.bpl.compiler.type.*;
 import dk.skrypalle.bpl.util.*;
 import dk.skrypalle.bpl.vm.err.*;
 
+import java.math.*;
+
+import static dk.skrypalle.bpl.util.Parse.*;
 import static dk.skrypalle.bpl.vm.Bytecode.*;
 
 class CPU {
@@ -57,6 +61,8 @@ class CPU {
 		if (vm.trace)
 			disassemble();
 
+		String lval, rval;
+		BigInteger lhs, rhs, res;
 		int len;
 		switch (op) {
 		case NOP:
@@ -72,6 +78,55 @@ class CPU {
 			break;
 		case PUSH64:
 			cpyCS(8);
+			break;
+		case ADDU8:
+			lval = Hex.num(pop(1));
+			rval = Hex.num(pop(1));
+			lhs = new BigInteger(lval, 16);
+			rhs = new BigInteger(rval, 16);
+			res = lhs.add(rhs);
+			if (res.bitLength() > 8)
+				throw new BPLVMArithmeticOverflowError(String.format("%s + %s overflows u8", lval, rval));
+			push(toBA(res, IntType.U8));
+			break;
+		case ADDU16:
+			lval = Hex.num(pop(2));
+			rval = Hex.num(pop(2));
+			lhs = new BigInteger(lval, 16);
+			rhs = new BigInteger(rval, 16);
+			res = lhs.add(rhs);
+			if (res.bitLength() > 16)
+				throw new BPLVMArithmeticOverflowError(String.format("%s + %s overflows u16", lval, rval));
+			push(toBA(res, IntType.U16));
+			break;
+		case ADDU32:
+			lval = Hex.num(pop(4));
+			rval = Hex.num(pop(4));
+			lhs = new BigInteger(lval, 16);
+			rhs = new BigInteger(rval, 16);
+			res = lhs.add(rhs);
+			if (res.bitLength() > 32)
+				throw new BPLVMArithmeticOverflowError(String.format("%s + %s overflows u32", lval, rval));
+			push(toBA(res, IntType.U32));
+			break;
+		case ADDU64:
+			lval = Hex.num(pop(8));
+			rval = Hex.num(pop(8));
+			lhs = new BigInteger(lval, 16);
+			rhs = new BigInteger(rval, 16);
+			res = lhs.add(rhs);
+			if (res.bitLength() > 64)
+				throw new BPLVMArithmeticOverflowError(String.format("%s + %s overflows u64", lval, rval));
+			push(toBA(res, IntType.U64));
+			break;
+		case WIDEN:
+			int from = (fetch() & 0xff)/8;
+			int to = (fetch() & 0xff)/8;
+			byte[] src = pop(from);
+//			System.out.println(to);
+//			System.out.println(from);
+//			System.out.println(Hex.dump(src));
+			push(Marshal.padBE(src, to));
 			break;
 		case PRINT:
 			len = Marshal.s32LE(code, ip);
@@ -118,6 +173,11 @@ class CPU {
 		if (sp == stack.length)
 			growStack();
 		stack[sp] = v;
+	}
+
+	private void push(byte[] v) {
+		for (byte b : v)
+			push(b);
 	}
 
 	private byte pop() {

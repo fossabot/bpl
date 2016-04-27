@@ -27,62 +27,130 @@ package dk.skrypalle.bpl.compiler;
 
 import dk.skrypalle.bpl.antlr.*;
 import dk.skrypalle.bpl.antlr.BPLParser.*;
+import dk.skrypalle.bpl.compiler.type.*;
+import dk.skrypalle.bpl.util.*;
 import org.antlr.v4.runtime.tree.*;
 
 import java.math.*;
+import java.util.*;
 
 import static dk.skrypalle.bpl.util.Parse.*;
 import static dk.skrypalle.bpl.vm.Bytecode.*;
 
 public class BCVisitor extends BPLBaseVisitor<byte[]> {
 
+	private static final byte[] EMPTY = {};
+
+	private final Deque<IntType> tStack;
+
+	private BigInteger arithRes;
+
+	public BCVisitor() {
+		this.tStack = new ArrayDeque<>();
+	}
+
 	@Override
 	public byte[] visitCompilationUnit(CompilationUnitContext ctx) {
-		BigInteger i = new BigInteger(ttos(ctx.INT()));
-		int size = i.bitLength();
-		byte[] val = i.toByteArray();
-		int len = val.length;
-		byte[] res;
-		if (size <= 8) {
-			res = new byte[]{
-				PUSH8,
-				val[len - 1],
-			};
-		} else if (size <= 16) {
-			res = new byte[]{
-				PUSH16,
-				val[len - 1],
-				val[len - 2],
-			};
-		} else if (size <= 32) {
-			res = new byte[]{
-				PUSH32,
-				val[len - 1],
-				val[len - 2],
-				val[len - 3],
-				val[len - 4],
-			};
-		} else if (size <= 64) {
-			res = new byte[]{
-				PUSH64,
-				val[len - 1],
-				val[len - 2],
-				val[len - 3],
-				val[len - 4],
-				val[len - 5],
-				val[len - 6],
-				val[len - 7],
-				val[len - 8],
-			};
-		} else {
-			throw new IllegalStateException(); // TODO
-		}
-
+		byte[] cld = visitChildren(ctx);
+		IntType t = tStack.pop();
 		return append(
-			res,
-			PRINT, res.length - 1, 0, 0, 0,
+			cld,
+			PRINT, t.width/8, 0, 0, 0,
 			HALT
 		);
+	}
+
+	@Override
+	public byte[] visitAddExpr(AddExprContext ctx) {
+		byte[] lhs = visit(ctx.lhs);
+		IntType lhs_t = tStack.pop();
+		BigInteger lval = arithRes;
+		byte[] rhs = visit(ctx.rhs);
+		IntType rhs_t = tStack.pop();
+		IntType res_t = lhs_t;
+		BigInteger rval = arithRes;
+
+		if (lhs_t != rhs_t) {
+			if (lhs_t.isSigned != rhs_t.isSigned)
+				throw new IllegalStateException("sign error: " + lhs_t + " != " + rhs_t); // TODO
+
+			if (rhs_t.width > lhs_t.width) {
+				lhs = append(lhs, WIDEN, lhs_t.width, rhs_t.width);
+				res_t = rhs_t;
+			} else if (rhs_t.width < lhs_t.width) {
+				rhs = append(rhs, WIDEN, rhs_t.width, lhs_t.width);
+				res_t = lhs_t;
+			}
+		}
+
+		arithRes = lval.add(rval);
+		if (arithRes.bitLength() > res_t.width) {
+			res_t = res_t.next();
+			lhs = append(lhs, WIDEN, lhs_t.width, res_t.width);
+			rhs = append(rhs, WIDEN, rhs_t.width, res_t.width);
+		}
+
+		byte op;
+		switch (res_t) {
+		case U8:
+			op = ADDU8;
+			break;
+		case U16:
+			op = ADDU16;
+			break;
+		case U32:
+			op = ADDU32;
+			break;
+		case U64:
+			op = ADDU64;
+			break;
+		case S8:
+			op = ADDS8;
+			break;
+		case S16:
+			op = ADDS16;
+			break;
+		case S32:
+			op = ADDS32;
+			break;
+		case S64:
+			op = ADDS64;
+			break;
+		default:
+			throw new IllegalStateException("unreachable"); // TODO
+		}
+
+		tStack.push(res_t);
+
+		return append(concat(lhs, rhs), op);
+	}
+
+	@Override
+	public byte[] visitIntExpr(IntExprContext ctx) {
+		String val = Parse.ttos(ctx.val);
+		arithRes = new BigInteger(val);
+		IntType t = IntType.parse(val);
+
+		byte op;
+		switch (t.width) {
+		case 8:
+			op = PUSH8;
+			break;
+		case 16:
+			op = PUSH16;
+			break;
+		case 32:
+			op = PUSH32;
+			break;
+		case 64:
+			op = PUSH64;
+			break;
+		default:
+			throw new IllegalStateException("unreachable"); // TODO
+		}
+
+		tStack.push(t);
+		return prepend(op, toBA(val, 10, t));
 	}
 
 	//region aggregate, default, visit
@@ -96,7 +164,7 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 
 	@Override
 	protected byte[] defaultResult() {
-		return null;
+		return EMPTY;
 	}
 
 	@Override
