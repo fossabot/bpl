@@ -23,9 +23,10 @@
  *
  */
 
-package dk.skrypalle.bpl.util;
+package dk.skrypalle.bpl.compiler;
 
 import dk.skrypalle.bpl.*;
+import dk.skrypalle.bpl.util.*;
 import dk.skrypalle.bpl.vm.*;
 import org.testng.*;
 import org.testng.annotations.*;
