@@ -27,35 +27,21 @@ package dk.skrypalle.bpl.util;
 
 public final class Marshal {
 
-	public static int s32BE(byte[] data, int pos) {
-		return ((int) data[pos]) << 24
-			| ((int) data[pos + 1]) << 16
-			| ((int) data[pos + 2]) << 8
-			| ((int) data[pos + 3]);
+	public static long s64BE(byte[] data, int pos) {
+		return ((long) (data[pos] & 0xff)) << 56L
+			| ((long) (data[pos + 1] & 0xff)) << 48L
+			| ((long) (data[pos + 2] & 0xff)) << 40L
+			| ((long) (data[pos + 3] & 0xff)) << 32L
+			| ((long) (data[pos + 4] & 0xff)) << 24L
+			| ((long) (data[pos + 5] & 0xff)) << 16L
+			| ((long) (data[pos + 6] & 0xff)) << 8L
+			| ((long) (data[pos + 7] & 0xff));
 	}
 
-	public static int s32LE(byte[] data, int pos) {
-		return ((int) data[pos])
-			| ((int) data[pos + 1]) << 8
-			| ((int) data[pos + 2]) << 16
-			| ((int) data[pos + 3]) << 24;
-	}
-
-	public static byte[] padLE(byte[] src, int len) {
-		if (src.length == len)
-			return src;
-
-		byte[] res = new byte[len];
-		System.arraycopy(src, 0, res, 0, src.length);
-		return res;
-	}
-
-	public static byte[] padBE(byte[] src, int len) {
-		if (src.length == len)
-			return src;
-
-		byte[] res = new byte[len];
-		System.arraycopy(src, 0, res, len - src.length, src.length);
+	public static byte[] bytesS64BE(long l) {
+		byte[] res = new byte[8];
+		for (int i = 0; i < 8; i++)
+			res[7 - i] = (byte) (l >> (i*8));
 		return res;
 	}
 

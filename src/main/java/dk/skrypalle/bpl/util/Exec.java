@@ -71,6 +71,8 @@ public final class Exec {
 			"-Wall",
 			"-Wextra",
 			"-Wpedantic",
+			"-Wno-format",
+//			"-Wnoformat-extra-args",
 			"-save-temps",
 			"-o" + fName + "." + OS.exeEXT(),
 			fName + ".c"

@@ -31,26 +31,36 @@ import org.testng.annotations.*;
 public class MarshalTest {
 
 	@DataProvider
-	public Object[][] provideS32() {
+	public Object[][] provideS64() {
 		return new Object[][]{
-			{0x00, 0x00, 0x00, 0x00, 0x00000000},
-			{0x00, 0x00, 0x00, 0x01, 0x00000001},
-			{0xff, 0xff, 0xff, 0xff, 0xffffffff},
-			{0x80, 0x00, 0x00, 0x00, 0x80000000},
+			{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0000000000000000L},
+			{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x0000000000000001L},
+			{0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xffffffffffffffffL},
+			{0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x8000000000000000L},
 		};
 	}
 
-	@Test(dataProvider = "provideS32")
-	public void testS32BE(int b0, int b1, int b2, int b3, int exp) {
-		byte[] data = new byte[]{(byte) b0, (byte) b1, (byte) b2, (byte) b3};
-		int act = Marshal.s32BE(data, 0);
+	@Test(dataProvider = "provideS64")
+	public void testS64BE(int b0, int b1, int b2, int b3,
+						  int b4, int b5, int b6, int b7,
+						  long exp) {
+		byte[] data = new byte[]{
+			(byte) b0, (byte) b1, (byte) b2, (byte) b3,
+			(byte) b4, (byte) b5, (byte) b6, (byte) b7
+		};
+		long act = Marshal.s64BE(data, 0);
 		Assert.assertEquals(act, exp);
 	}
 
-	@Test(dataProvider = "provideS32")
-	public void testS32LE(int b0, int b1, int b2, int b3, int exp) {
-		byte[] data = new byte[]{(byte) b3, (byte) b2, (byte) b1, (byte) b0};
-		int act = Marshal.s32LE(data, 0);
+	@Test(dataProvider = "provideS64")
+	public void testBytesS64BE(int b0, int b1, int b2, int b3,
+							   int b4, int b5, int b6, int b7,
+							   long val) {
+		byte[] exp = new byte[]{
+			(byte) b0, (byte) b1, (byte) b2, (byte) b3,
+			(byte) b4, (byte) b5, (byte) b6, (byte) b7
+		};
+		byte[] act = Marshal.bytesS64BE(val);
 		Assert.assertEquals(act, exp);
 	}
 

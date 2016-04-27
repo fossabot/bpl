@@ -29,23 +29,12 @@ import java.util.*;
 
 public final class Bytecode {
 
-	public static final byte NOP    = (byte) 0x00;
-	public static final byte PUSH8  = (byte) 0x01;
-	public static final byte PUSH16 = (byte) 0x02;
-	public static final byte PUSH32 = (byte) 0x03;
-	public static final byte PUSH64 = (byte) 0x04;
-	public static final byte ADDU8  = (byte) 0x05;
-	public static final byte ADDU16 = (byte) 0x06;
-	public static final byte ADDU32 = (byte) 0x07;
-	public static final byte ADDU64 = (byte) 0x08;
-	public static final byte ADDS8  = (byte) 0x09;
-	public static final byte ADDS16 = (byte) 0x0a;
-	public static final byte ADDS32 = (byte) 0x0b;
-	public static final byte ADDS64 = (byte) 0x0c;
-	public static final byte WIDEN  = (byte) 0x0d;
-	public static final byte PRINT  = (byte) 0xfc;
-	public static final byte DUMP   = (byte) 0xfe;
-	public static final byte HALT   = (byte) 0xff;
+	public static final byte NOP   = (byte) 0x00;
+	public static final byte IPUSH = (byte) 0x01;
+	public static final byte IADD  = (byte) 0x02;
+
+	public static final byte PRINT = (byte) 0xfe;
+	public static final byte HALT  = (byte) 0xff;
 
 	static class Op {
 		final String name;
@@ -62,21 +51,9 @@ public final class Bytecode {
 	static {
 		opcodes = new HashMap<>();
 		opcodes.put(NOP, new Op("nop", 0));
-		opcodes.put(PUSH8, new Op("push8", 1));
-		opcodes.put(PUSH16, new Op("push16", 2));
-		opcodes.put(PUSH32, new Op("push32", 4));
-		opcodes.put(PUSH64, new Op("push64", 8));
-		opcodes.put(ADDU8, new Op("addu8", 0));
-		opcodes.put(ADDU16, new Op("addu16", 0));
-		opcodes.put(ADDU32, new Op("addu32", 0));
-		opcodes.put(ADDU64, new Op("addu64", 0));
-		opcodes.put(ADDS8, new Op("adds8", 0));
-		opcodes.put(ADDS16, new Op("adds16", 0));
-		opcodes.put(ADDS32, new Op("adds32", 0));
-		opcodes.put(ADDS64, new Op("adds64", 0));
-		opcodes.put(WIDEN, new Op("widen", 2)); // widen 8,64 : widens TOS 8bit to 64bit
-		opcodes.put(PRINT, new Op("print", 4));
-		opcodes.put(DUMP, new Op("dump", 4));
+		opcodes.put(IPUSH, new Op("ipush", 8));
+		opcodes.put(IADD, new Op("iadd", 0));
+		opcodes.put(PRINT, new Op("print", 0));
 		opcodes.put(HALT, new Op("halt", 0));
 	}
 

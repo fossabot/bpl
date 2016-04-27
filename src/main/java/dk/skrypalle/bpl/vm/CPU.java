@@ -25,13 +25,9 @@
 
 package dk.skrypalle.bpl.vm;
 
-import dk.skrypalle.bpl.compiler.type.*;
 import dk.skrypalle.bpl.util.*;
 import dk.skrypalle.bpl.vm.err.*;
 
-import java.math.*;
-
-import static dk.skrypalle.bpl.util.Parse.*;
 import static dk.skrypalle.bpl.vm.Bytecode.*;
 
 class CPU {
@@ -45,14 +41,14 @@ class CPU {
 	private byte op;
 
 	byte[] code;
-	byte[] stack;
+	private long[] stack;
 
 	CPU(VM vm, byte[] code, int ip) {
 		this.vm = vm;
 		this.ip = ip;
 		this.sp = -1;
 		this.code = code;
-		this.stack = new byte[1];
+		this.stack = new long[1];
 	}
 
 	void step() {
@@ -61,88 +57,21 @@ class CPU {
 		if (vm.trace)
 			disassemble();
 
-		String lval, rval;
-		BigInteger lhs, rhs, res;
-		int len;
+		long lhs, rhs, res;
 		switch (op) {
 		case NOP:
 			break;
-		case PUSH8:
-			cpyCS(1);
+		case IPUSH:
+			push(fetchS64());
 			break;
-		case PUSH16:
-			cpyCS(2);
-			break;
-		case PUSH32:
-			cpyCS(4);
-			break;
-		case PUSH64:
-			cpyCS(8);
-			break;
-		case ADDU8:
-			lval = Hex.num(pop(1));
-			rval = Hex.num(pop(1));
-			lhs = new BigInteger(lval, 16);
-			rhs = new BigInteger(rval, 16);
-			res = lhs.add(rhs);
-			if (res.bitLength() > 8)
-				throw new BPLVMArithmeticOverflowError(String.format("%s + %s overflows u8", lval, rval));
-			push(toBA(res, IntType.U8));
-			break;
-		case ADDU16:
-			lval = Hex.num(pop(2));
-			rval = Hex.num(pop(2));
-			lhs = new BigInteger(lval, 16);
-			rhs = new BigInteger(rval, 16);
-			res = lhs.add(rhs);
-			if (res.bitLength() > 16)
-				throw new BPLVMArithmeticOverflowError(String.format("%s + %s overflows u16", lval, rval));
-			push(toBA(res, IntType.U16));
-			break;
-		case ADDU32:
-			lval = Hex.num(pop(4));
-			rval = Hex.num(pop(4));
-			lhs = new BigInteger(lval, 16);
-			rhs = new BigInteger(rval, 16);
-			res = lhs.add(rhs);
-			if (res.bitLength() > 32)
-				throw new BPLVMArithmeticOverflowError(String.format("%s + %s overflows u32", lval, rval));
-			push(toBA(res, IntType.U32));
-			break;
-		case ADDU64:
-			lval = Hex.num(pop(8));
-			rval = Hex.num(pop(8));
-			lhs = new BigInteger(lval, 16);
-			rhs = new BigInteger(rval, 16);
-			res = lhs.add(rhs);
-			if (res.bitLength() > 64)
-				throw new BPLVMArithmeticOverflowError(String.format("%s + %s overflows u64", lval, rval));
-			push(toBA(res, IntType.U64));
-			break;
-		case WIDEN:
-			int from = (fetch() & 0xff)/8;
-			int to = (fetch() & 0xff)/8;
-			byte[] src = pop(from);
-//			System.out.println(to);
-//			System.out.println(from);
-//			System.out.println(Hex.dump(src));
-			push(Marshal.padBE(src, to));
+		case IADD:
+			rhs = pop();
+			lhs = pop();
+			res = lhs + rhs;
+			push(res);
 			break;
 		case PRINT:
-			len = Marshal.s32LE(code, ip);
-			ip += 4;
-			sp -= len;
-			if (sp < -1)
-				throw new BPLVMStackUnderflowError();
-			vm.out(Hex.num(stack, sp + 1, len));
-			break;
-		case DUMP:
-			len = Marshal.s32LE(code, ip);
-			ip += 4;
-			sp -= len;
-			if (sp < -1)
-				throw new BPLVMStackUnderflowError();
-			vm.out(Hex.dump(stack, sp + 1, len));
+			vm.out(String.format("%x", pop()));
 			break;
 		case HALT:
 			break;
@@ -164,42 +93,27 @@ class CPU {
 		return code[ip++];
 	}
 
+	private long fetchS64() {
+		long val = Marshal.s64BE(code, ip);
+		ip += 8;
+		return val;
+	}
+
 	//endregion
 
 	//region mem stack
 
-	private void push(byte v) {
+	private void push(long v) {
 		sp++;
 		if (sp == stack.length)
 			growStack();
 		stack[sp] = v;
 	}
 
-	private void push(byte[] v) {
-		for (byte b : v)
-			push(b);
-	}
-
-	private byte pop() {
+	private long pop() {
 		if (sp < 0)
 			throw new BPLVMStackUnderflowError();
 		return stack[sp--];
-	}
-
-	private byte[] pop(int len) {
-		byte[] res = new byte[len];
-		System.arraycopy(stack, sp - len + 1, res, 0, len);
-		sp -= len;
-		return res;
-	}
-
-	private void cpyCS(int n) {
-		while (sp + n + 1 > stack.length)
-			growStack();
-
-		System.arraycopy(code, ip, stack, sp + 1, n);
-		ip += n;
-		sp += n;
 	}
 
 	private void growStack() {
@@ -207,7 +121,7 @@ class CPU {
 		if (newLen > MAX_STACK_SIZE)
 			throw new BPLVMStackOverflowError(newLen, MAX_STACK_SIZE);
 
-		byte[] newStack = new byte[newLen];
+		long[] newStack = new long[newLen];
 		System.arraycopy(stack, 0, newStack, 0, stack.length);
 		stack = newStack;
 	}
@@ -239,7 +153,7 @@ class CPU {
 		StringBuilder stackBuf = new StringBuilder();
 		stackBuf.append('[');
 		for (int i = 0; i < sp + 1; i++) {
-			stackBuf.append(String.format("0x%02x", stack[i]));
+			stackBuf.append(String.format("0x%x", stack[i]));
 			if (i < sp)
 				stackBuf.append(", ");
 		}

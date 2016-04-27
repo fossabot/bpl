@@ -50,13 +50,13 @@ public class CompilerTest {
 	@DataProvider
 	public Object[][] provideData() {
 		return new Object[][]{
-			{"print(1);", "01"},
+			{"print(1);", "1"},
 			{"print(255);", "ff"},
-			{"print(256);", "0100"},
+			{"print(256);", "100"},
 			{"print(1234567890);", "499602d2"},
 			{"print(1+42+5+6);", "36"},
 			{"print(18446744073709551568+42+5);", "ffffffffffffffff"},
-			{"print(255+1);print(65535);", "0100ffff"},
+			{"print(255+1);print(65535);", "100ffff"},
 		};
 	}
 

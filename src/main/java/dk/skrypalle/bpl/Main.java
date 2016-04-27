@@ -45,8 +45,6 @@ public final class Main {
 		bpl += "print(18446744073709551568+42+5);";
 
 		byte[] bplbc = compileBC(bpl);
-		System.out.println("Instructions:");
-		System.out.println(Hex.dump(bplbc));
 		VM vm = new VM(bplbc, 0, true);
 		vm.run();
 		System.out.println();
