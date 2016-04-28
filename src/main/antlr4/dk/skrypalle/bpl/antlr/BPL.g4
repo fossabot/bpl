@@ -26,23 +26,29 @@
 grammar BPL;
 
 compilationUnit
-	: stmt*
+	: funcDecl*
 	;
 
 stmt
 	: varDecl   ';'
 	| varAssign ';'
+	| funcCall  ';'
 	| print     ';'
+	| ret       ';'
 	;
 
-varDecl   : 'var' id=ID 'int'        ;
-varAssign : lhs=ID '=' rhs=expr      ;
-print     : 'print' '(' arg=expr ')' ;
+funcDecl  : 'func' id=ID '('')' 'int' '{' stmts=stmt* '}' ;
+funcCall  : id=ID '('')'                                  ;
+varDecl   : 'var' id=ID 'int'                             ;
+varAssign : lhs=ID '=' rhs=expr                           ;
+print     : 'print' '(' arg=expr ')'                      ;
+ret       : 'return' expr                                 ;
 
 expr
 	: lhs=expr op=('/'|'*') rhs=expr #BinOpExpr
 	| lhs=expr op=('+'|'-') rhs=expr #BinOpExpr
 	| varAssign                      #AssignExpr
+	| funcCall                       #FuncCallExpr
 	| val=INT                        #IntExpr
 	| val=ID                         #IdExpr
 	;

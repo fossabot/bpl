@@ -37,9 +37,13 @@ import static dk.skrypalle.bpl.util.Parse.*;
 
 public class C99Visitor extends BPLBaseVisitor<String> {
 
-	private final Map<String, Integer> symTbl;
+	private final Map<String, Integer> funcTbl;
+
+	private Map<String, Integer> symTbl;
+	private boolean              returns;
 
 	public C99Visitor() {
+		funcTbl = new HashMap<>();
 		symTbl = new HashMap<>();
 	}
 
@@ -51,11 +55,7 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 			"#include <stdio.h>",
 			"#include <stdint.h>",
 			"",
-			"int main(void)",
-			"{",
 			cld.trim(),
-			"return 0;",
-			"}",
 			""
 		);
 	}
@@ -75,6 +75,11 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 	@Override
 	public String visitAssignExpr(AssignExprContext ctx) {
 		return visit(ctx.varAssign());
+	}
+
+	@Override
+	public String visitFuncCallExpr(FuncCallExprContext ctx) {
+		return visit(ctx.funcCall());
 	}
 
 	@Override
@@ -113,6 +118,49 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 
 		symTbl.put(id, symTbl.size());
 		return "int " + id;
+	}
+
+	@Override
+	public String visitFuncDecl(FuncDeclContext ctx) {
+		String id = ttos(ctx.id);
+		if (funcTbl.containsKey(id))
+			throw new IllegalStateException(); // TODO
+		funcTbl.put(id, funcTbl.size());
+
+		Map<String, Integer> oldSymTbl = symTbl;
+		symTbl = new HashMap<>(symTbl);
+		returns = false;
+
+		String res = String.join("\n",
+			"int " + id + "(void)",
+			"{",
+			visitChildren(ctx).trim(),
+			"}",
+			""
+		);
+
+		if (!returns)
+			throw new IllegalStateException(); // TODO
+		symTbl = oldSymTbl;
+		return res;
+	}
+
+	@Override
+	public String visitRet(RetContext ctx) {
+		if (returns)
+			throw new IllegalStateException(); // TODO
+		returns = true;
+
+		return "return " + visitChildren(ctx);
+	}
+
+	@Override
+	public String visitFuncCall(FuncCallContext ctx) {
+		String id = ttos(ctx.id);
+		if (!funcTbl.containsKey(id))
+			throw new IllegalStateException(); // TODO
+
+		return id + "()";
 	}
 
 	@Override

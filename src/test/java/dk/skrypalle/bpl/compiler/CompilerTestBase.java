@@ -47,6 +47,15 @@ public class CompilerTestBase {
 		IO.delRec(tmpDir);
 	}
 
+	protected String wrapMain(String stmts) {
+		return String.join("\n",
+			"func main() int {",
+			stmts,
+			"return 0;",
+			"}"
+		);
+	}
+
 	protected byte[] compileBC(String bpl) {
 		return Main.compileBC(bpl);
 	}
@@ -57,9 +66,9 @@ public class CompilerTestBase {
 		ByteArrayOutputStream dbg = new ByteArrayOutputStream();
 		VM vm = new VM(bc, 0, false,
 			new PrintStream(out), new PrintStream(err), new PrintStream(dbg));
-		vm.run();
+		int exit = vm.run();
 
-		return new VMExecRes(out.toString(), err.toString(), dbg.toString());
+		return new VMExecRes(exit, out.toString(), err.toString(), dbg.toString());
 	}
 
 	protected ExecRes compileC99(String bpl) {
@@ -80,11 +89,13 @@ public class CompilerTestBase {
 	//region inner class VMExecRes
 
 	static class VMExecRes {
+		final int    exit;
 		final String out;
 		final String err;
 		final String dbg;
 
-		public VMExecRes(String out, String err, String dbg) {
+		public VMExecRes(int exit, String out, String err, String dbg) {
+			this.exit = exit;
 			this.out = out;
 			this.err = err;
 			this.dbg = dbg;

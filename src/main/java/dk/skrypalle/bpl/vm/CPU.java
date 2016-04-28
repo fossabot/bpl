@@ -59,8 +59,9 @@ class CPU {
 		if (vm.trace)
 			disassemble();
 
-		int off;
+		int addr, off, nArgs;
 		long lhs, rhs, res;
+		long rval;
 		switch (op) {
 		case NOP:
 			break;
@@ -96,11 +97,34 @@ class CPU {
 			break;
 		case ISTORE:
 			off = fetchS32();
-			sput(fp + off, pop());
+			sput(fp + off + 1, pop());
 			break;
 		case ILOAD:
 			off = fetchS32();
-			push(sget(fp + off));
+			push(sget(fp + off + 1));
+			break;
+		case CALL:
+			addr = fetchS32();
+			nArgs = fetchS32();
+			push(nArgs);
+			push(fp);
+			push(ip);
+			fp = sp;
+			ip = addr;
+			break;
+		case RET:
+			rval = pop();
+			sp = fp;
+			ip = (int) pop();
+			fp = (int) pop();
+			nArgs = (int) pop();
+			sp -= nArgs;
+			push(rval);
+			break;
+		case LOCALS:
+			sp += fetchS32();
+			while (sp >= stack.length)
+				growStack();
 			break;
 		case PRINT:
 			vm.out(String.format("%x", pop()));
@@ -117,6 +141,10 @@ class CPU {
 
 	boolean hasInstructions() {
 		return op != HALT && ip < code.length;
+	}
+
+	int exitCode() {
+		return (int) stack[sp];
 	}
 
 	//region mem code

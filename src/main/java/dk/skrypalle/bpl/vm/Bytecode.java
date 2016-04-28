@@ -38,6 +38,9 @@ public final class Bytecode {
 	public static final byte IDIV   = (byte) 0x06;
 	public static final byte ILOAD  = (byte) 0x07;
 	public static final byte ISTORE = (byte) 0x08;
+	public static final byte CALL   = (byte) 0x09;
+	public static final byte RET    = (byte) 0x10;
+	public static final byte LOCALS = (byte) 0x11;
 
 	public static final byte PRINT = (byte) 0xfe;
 	public static final byte HALT  = (byte) 0xff;
@@ -57,15 +60,18 @@ public final class Bytecode {
 	static {
 		//fmt:off
 		opCodes = new HashMap<>();
-		opCodes.put(NOP,     new Op("nop",    0));
-		opCodes.put(POP,     new Op("pop",    0));
-		opCodes.put(IPUSH,   new Op("ipush",  8));
-		opCodes.put(IADD,    new Op("iadd",   0));
-		opCodes.put(ISUB,    new Op("isub",   0));
-		opCodes.put(IMUL,    new Op("imul",   0));
-		opCodes.put(IDIV,    new Op("idiv",   0));
-		opCodes.put(ILOAD,   new Op("iload",  4));
-		opCodes.put(ISTORE,  new Op("istore", 4));
+		opCodes.put(NOP,    new Op("nop",    0));
+		opCodes.put(POP,    new Op("pop",    0));
+		opCodes.put(IPUSH,  new Op("ipush",  8));
+		opCodes.put(IADD,   new Op("iadd",   0));
+		opCodes.put(ISUB,   new Op("isub",   0));
+		opCodes.put(IMUL,   new Op("imul",   0));
+		opCodes.put(IDIV,   new Op("idiv",   0));
+		opCodes.put(ILOAD,  new Op("iload",  4));
+		opCodes.put(ISTORE, new Op("istore", 4));
+		opCodes.put(CALL,   new Op("call",   8));
+		opCodes.put(RET,    new Op("ret",    0));
+		opCodes.put(LOCALS, new Op("locals", 4));
 
 		opCodes.put(PRINT, new Op("print", 0));
 		opCodes.put(HALT,  new Op("halt",  0));

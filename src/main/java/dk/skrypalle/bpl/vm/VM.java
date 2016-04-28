@@ -56,16 +56,23 @@ public class VM {
 		this.trace = trace;
 	}
 
-	public void run() {
+	public int run() {
 		while (cpu.hasInstructions()) {
 			cpu.step();
 			flush();
+//			try {
+//				Thread.sleep(500);
+//			} catch (InterruptedException e) {
+//				e.printStackTrace();
+//			}
 		}
 
 		if (trace) {
 			dbg.printf("\nCode memory: %d bytes\n", cpu.code.length);
 			dbg.println(Hex.dump(cpu.code));
 		}
+
+		return cpu.exitCode();
 	}
 
 	void trace(String s) {

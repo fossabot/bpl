@@ -38,14 +38,25 @@ public final class Main {
 
 	public static void main(String[] args) throws IOException {
 		String bpl = String.join("\n",
-			"var a int; var b int; var c int;",
-			"a=2; b=a+2; c=b*a-7;",
-			"print(c*a+b/a);"
+			"func foo() int {",
+			"var a int; a = 4;",
+			"return a;",
+			"}",
+			"func bar() int {",
+			"var a int; a = foo();",
+			"return a;",
+			"}",
+			"func main() int {",
+			"return bar()*foo();",
+			"}"
 		);
 
 		byte[] bplbc = compileBC(bpl);
+		System.out.println(Hex.dump(bplbc));
+//		System.exit(1);
 		VM vm = new VM(bplbc, 0, true);
-		vm.run();
+		int vmExit = vm.run();
+		System.out.printf("VM finished with exit code 0x%08x\n", vmExit);
 		System.out.println();
 
 		Path tmpDir = IO.makeTmpDir("_bplc_");

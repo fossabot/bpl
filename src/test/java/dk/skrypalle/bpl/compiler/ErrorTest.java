@@ -55,23 +55,23 @@ public class ErrorTest extends CompilerTestBase {
 
 	@Test(dataProvider = "provideCompileSwitch",
 		expectedExceptions = BPLCErrSymUndeclared.class,
-		expectedExceptionsMessageRegExp = "1:7: error: symbol 'x' undeclared")
+		expectedExceptionsMessageRegExp = "2:7: error: symbol 'x' undeclared")
 	public void testErrVarUndeclaredOnRead(Target t) throws Exception {
-		t.compile(this, "print(x);");
+		t.compile(this, wrapMain("print(x);"));
 	} // test eval via thrown exception
 
 	@Test(dataProvider = "provideCompileSwitch",
 		expectedExceptions = BPLCErrSymUndeclared.class,
-		expectedExceptionsMessageRegExp = "1:1: error: symbol 'x' undeclared")
+		expectedExceptionsMessageRegExp = "2:1: error: symbol 'x' undeclared")
 	public void testErrVarUndeclaredOnWrite(Target t) throws Exception {
-		t.compile(this, "x=12;");
+		t.compile(this, wrapMain("x=12;"));
 	} // test eval via thrown exception
 
 	@Test(dataProvider = "provideCompileSwitch",
 		expectedExceptions = BPLCErrSymRedeclared.class,
-		expectedExceptionsMessageRegExp = "1:16: error: symbol 'x' redeclared")
+		expectedExceptionsMessageRegExp = "2:16: error: symbol 'x' redeclared")
 	public void testErrVarRedeclared(Target t) throws Exception {
-		t.compile(this, "var x int; var x int;");
+		t.compile(this, wrapMain("var x int; var x int;"));
 	} // test eval via thrown exception
 
 }
