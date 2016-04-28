@@ -53,6 +53,33 @@ public class ErrorTest extends CompilerTestBase {
 
 	//endregion
 
+	//region func
+
+	@Test(dataProvider = "provideCompileSwitch",
+		expectedExceptions = BPLCErrFuncRedeclared.class,
+		expectedExceptionsMessageRegExp = "1:33: error: function 'x' redeclared")
+	public void testErrFuncRedeclared(Target t) throws Exception {
+		t.compile(this, "func x() int { return 0; } func x() int { return 0; }");
+	} // test eval via thrown exception
+
+	@Test(dataProvider = "provideCompileSwitch",
+		expectedExceptions = BPLCErrFuncUndeclared.class,
+		expectedExceptionsMessageRegExp = "2:1: error: function 'x' undeclared")
+	public void testErrFuncUndeclared(Target t) throws Exception {
+		t.compile(this, wrapMain("x();"));
+	} // test eval via thrown exception
+
+	@Test(dataProvider = "provideCompileSwitch",
+		expectedExceptions = BPLCErrReturnMissing.class,
+		expectedExceptionsMessageRegExp = "1:19: error: missing return statement before '}'")
+	public void testErrReturnMissing(Target t) throws Exception {
+		t.compile(this, "func main() int { }");
+	} // test eval via thrown exception
+
+	//endregion
+
+	//region var
+
 	@Test(dataProvider = "provideCompileSwitch",
 		expectedExceptions = BPLCErrSymUndeclared.class,
 		expectedExceptionsMessageRegExp = "2:7: error: symbol 'x' undeclared")
@@ -73,5 +100,7 @@ public class ErrorTest extends CompilerTestBase {
 	public void testErrVarRedeclared(Target t) throws Exception {
 		t.compile(this, wrapMain("var x int; var x int;"));
 	} // test eval via thrown exception
+
+	//endregion
 
 }

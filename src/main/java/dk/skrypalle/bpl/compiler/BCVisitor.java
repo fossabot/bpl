@@ -57,7 +57,7 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 	public byte[] visitCompilationUnit(CompilationUnitContext ctx) {
 		byte[] cld = visitChildren(ctx);
 		if (!funcTbl.containsKey("main"))
-			throw new IllegalStateException(); // TODO
+			throw new IllegalStateException("no main function found"); // TODO
 
 		return concat(CALL, Marshal.bytesS32BE(funcTbl.get("main")), Marshal.bytesS32BE(0), HALT, cld);
 	}
@@ -69,8 +69,8 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 
 	@Override
 	public byte[] visitRet(RetContext ctx) {
-		if (returns)
-			throw new IllegalStateException(); // TODO
+//		if (returns)
+//			throw new IllegalStateException("function already returned"); // TODO
 		returns = true;
 
 		return concat(visitChildren(ctx), RET);
@@ -112,7 +112,8 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 	public byte[] visitFuncDecl(FuncDeclContext ctx) {
 		String id = ttos(ctx.id);
 		if (funcTbl.containsKey(id))
-			throw new IllegalStateException(); // TODO
+			throw new BPLCErrFuncRedeclared(ctx.id);
+
 		funcTbl.put(id, fOff);
 
 		Map<String, Integer> oldSymTbl = symTbl;
@@ -123,7 +124,7 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 		byte[] res = visitChildren(ctx);
 
 		if (!returns)
-			throw new IllegalStateException(); // TODO
+			throw new BPLCErrReturnMissing(ctx.stop);
 
 		int nSyms = symTbl.size() - nOldSyms;
 		symTbl = oldSymTbl;
@@ -140,7 +141,7 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 	public byte[] visitFuncCall(FuncCallContext ctx) {
 		String id = ttos(ctx.id);
 		if (!funcTbl.containsKey(id))
-			throw new IllegalStateException(); // TODO
+			throw new BPLCErrFuncUndeclared(ctx.id);
 
 		int addr = funcTbl.get(id);
 		return concat(CALL, Marshal.bytesS32BE(addr), Marshal.bytesS32BE(0));

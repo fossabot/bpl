@@ -53,7 +53,6 @@ public final class Main {
 
 		byte[] bplbc = compileBC(bpl);
 		System.out.println(Hex.dump(bplbc));
-//		System.exit(1);
 		VM vm = new VM(bplbc, 0, true);
 		int vmExit = vm.run();
 		System.out.printf("VM finished with exit code 0x%08x\n", vmExit);

@@ -51,6 +51,9 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 	public String visitCompilationUnit(CompilationUnitContext ctx) {
 		String cld = visitChildren(ctx);
 
+		if (!funcTbl.containsKey("main"))
+			throw new IllegalStateException("no main function found"); // TODO
+
 		return String.join("\n",
 			"#include <stdio.h>",
 			"#include <stdint.h>",
@@ -67,8 +70,8 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 
 	@Override
 	public String visitRet(RetContext ctx) {
-		if (returns)
-			throw new IllegalStateException(); // TODO
+//		if (returns)
+//			throw new IllegalStateException("function already returned"); // TODO
 		returns = true;
 
 		return "return " + visitChildren(ctx);
@@ -108,7 +111,8 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 	public String visitFuncDecl(FuncDeclContext ctx) {
 		String id = ttos(ctx.id);
 		if (funcTbl.containsKey(id))
-			throw new IllegalStateException(); // TODO
+			throw new BPLCErrFuncRedeclared(ctx.id);
+
 		funcTbl.put(id, funcTbl.size());
 
 		Map<String, Integer> oldSymTbl = symTbl;
@@ -124,7 +128,7 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 		);
 
 		if (!returns)
-			throw new IllegalStateException(); // TODO
+			throw new BPLCErrReturnMissing(ctx.stop);
 		symTbl = oldSymTbl;
 		return res;
 	}
@@ -133,7 +137,7 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 	public String visitFuncCall(FuncCallContext ctx) {
 		String id = ttos(ctx.id);
 		if (!funcTbl.containsKey(id))
-			throw new IllegalStateException(); // TODO
+			throw new BPLCErrFuncUndeclared(ctx.id);
 
 		return id + "()";
 	}
