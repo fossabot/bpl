@@ -25,28 +25,15 @@
 
 package dk.skrypalle.bpl.compiler;
 
-import dk.skrypalle.bpl.*;
 import dk.skrypalle.bpl.util.*;
-import dk.skrypalle.bpl.vm.*;
 import org.testng.*;
 import org.testng.annotations.*;
 
 import java.io.*;
-import java.nio.file.*;
 
-public class CompilerTest {
+public class CompilerTest extends CompilerTestBase {
 
-	private Path tmpDir;
-
-	@BeforeTest
-	public void setup() throws IOException {
-		tmpDir = IO.makeTmpDir("_bplc_");
-	}
-
-	@AfterTest
-	public void teardown() throws IOException {
-		IO.delRec(tmpDir);
-	}
+	//region data provider
 
 	@DataProvider
 	public Object[][] provideData() {
@@ -76,37 +63,35 @@ public class CompilerTest {
 		};
 	}
 
+	//endregion
+
+	//region targets
+
 	@Test(dataProvider = "provideData")
 	public void testTargetBC(String bpl, String exp) {
-		byte[] bc = Main.compileBC(bpl);
-		ByteArrayOutputStream out = new ByteArrayOutputStream();
-		ByteArrayOutputStream err = new ByteArrayOutputStream();
-		ByteArrayOutputStream dbg = new ByteArrayOutputStream();
-		VM vm = new VM(bc, 0, false,
-			new PrintStream(out), new PrintStream(err), new PrintStream(dbg));
-		vm.run();
+		byte[] bc = compileBC(bpl);
+		VMExecRes res = runBC(bc);
 
-		Assert.assertEquals(out.toString(), exp);
-		Assert.assertEquals(err.toString(), "");
-		Assert.assertEquals(dbg.toString(), "");
+		Assert.assertEquals(res.out, exp, "BPLVM out stream");
+		Assert.assertEquals(res.err, "", "BPLVM err stream");
+		Assert.assertEquals(res.dbg, "", "BPLVM dbg stream");
 	}
 
 	@Test(dataProvider = "provideData")
 	public void testTargetC99(String bpl, String exp) throws IOException {
-		String c99 = Main.compileC99(bpl);
-		Path c99out = tmpDir.resolve("out.c");
-		IO.writeAll(c99out, c99);
-		ExecRes gcc = Exec.gcc(c99out);
+		ExecRes gcc = compileC99(bpl);
 		if (!gcc.isEmpty())
 			System.err.println(gcc);
 		Assert.assertEquals(gcc.exit, 0, "gcc exit status");
 		Assert.assertEquals(gcc.out, "", "gcc out stream");
 		Assert.assertEquals(gcc.err, "", "gcc err stream");
 
-		ExecRes run = Exec.exec(tmpDir.resolve("out." + OS.exeEXT()));
+		ExecRes run = runC99();
 		Assert.assertEquals(run.exit, 0, "run exit status");
 		Assert.assertEquals(run.out, exp, "run out stream");
 		Assert.assertEquals(run.err, "", "run err stream");
 	}
+
+	//endregion
 
 }

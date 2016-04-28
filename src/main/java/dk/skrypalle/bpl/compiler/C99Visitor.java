@@ -26,16 +26,22 @@
 package dk.skrypalle.bpl.compiler;
 
 import dk.skrypalle.bpl.antlr.*;
+import dk.skrypalle.bpl.compiler.err.*;
 import org.antlr.v4.runtime.tree.*;
 
 import java.math.*;
+import java.util.*;
 
 import static dk.skrypalle.bpl.antlr.BPLParser.*;
 import static dk.skrypalle.bpl.util.Parse.*;
 
 public class C99Visitor extends BPLBaseVisitor<String> {
 
-	public C99Visitor() { }
+	private final Map<String, Integer> symTbl;
+
+	public C99Visitor() {
+		symTbl = new HashMap<>();
+	}
 
 	@Override
 	public String visitCompilationUnit(CompilationUnitContext ctx) {
@@ -91,19 +97,31 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 
 	@Override
 	public String visitIdExpr(IdExprContext ctx) {
-		return ttos(ctx.val);
+		String id = ttos(ctx.val);
+		if (!symTbl.containsKey(id))
+			throw new BPLCErrSymUndeclared(ctx.val);
+		return id;
 	}
 
 	//endregion
 
 	@Override
 	public String visitVarDecl(VarDeclContext ctx) {
-		return "int " + ttos(ctx.id);
+		String id = ttos(ctx.id);
+		if (symTbl.containsKey(id))
+			throw new BPLCErrSymRedeclared(ctx.id);
+
+		symTbl.put(id, symTbl.size());
+		return "int " + id;
 	}
 
 	@Override
 	public String visitVarAssign(VarAssignContext ctx) {
-		return ttos(ctx.lhs) + "=" + visit(ctx.rhs);
+		String id = ttos(ctx.lhs);
+		if (!symTbl.containsKey(id))
+			throw new BPLCErrSymUndeclared(ctx.lhs);
+
+		return id + "=" + visit(ctx.rhs);
 	}
 
 	@Override

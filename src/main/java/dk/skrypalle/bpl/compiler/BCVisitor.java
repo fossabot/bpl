@@ -27,6 +27,7 @@ package dk.skrypalle.bpl.compiler;
 
 import dk.skrypalle.bpl.antlr.*;
 import dk.skrypalle.bpl.antlr.BPLParser.*;
+import dk.skrypalle.bpl.compiler.err.*;
 import dk.skrypalle.bpl.util.*;
 import org.antlr.v4.runtime.tree.*;
 
@@ -40,10 +41,10 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 
 	private static final byte[] EMPTY = {};
 
-	private final Map<String, Integer> varTbl;
+	private final Map<String, Integer> symTbl;
 
 	public BCVisitor() {
-		varTbl = new HashMap<>();
+		symTbl = new HashMap<>();
 	}
 
 	@Override
@@ -52,7 +53,7 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 
 		// Temporary "calling convention"
 		// Push "garbage" values
-		int nVars = varTbl.size();
+		int nVars = symTbl.size();
 		byte[] locals = new byte[nVars*9];
 		Random r = new Random(System.nanoTime());
 		for (int i = 0; i < locals.length; i++)
@@ -105,10 +106,10 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 	@Override
 	public byte[] visitIdExpr(IdExprContext ctx) {
 		String id = ttos(ctx.val);
-		if (!varTbl.containsKey(id))
-			throw new IllegalStateException(); // TODO
+		if (!symTbl.containsKey(id))
+			throw new BPLCErrSymUndeclared(ctx.val);
 
-		int idx = varTbl.get(id);
+		int idx = symTbl.get(id);
 		return concat(ILOAD, Marshal.bytesS32BE(idx));
 	}
 
@@ -117,20 +118,20 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 	@Override
 	public byte[] visitVarDecl(VarDeclContext ctx) {
 		String id = ttos(ctx.id);
-		if (varTbl.containsKey(id))
-			throw new IllegalStateException(); // TODO
+		if (symTbl.containsKey(id))
+			throw new BPLCErrSymRedeclared(ctx.id);
 
-		varTbl.put(id, varTbl.size());
+		symTbl.put(id, symTbl.size());
 		return EMPTY;
 	}
 
 	@Override
 	public byte[] visitVarAssign(VarAssignContext ctx) {
 		String id = ttos(ctx.lhs);
-		if (!varTbl.containsKey(id))
-			throw new IllegalStateException(); // TODO
+		if (!symTbl.containsKey(id))
+			throw new BPLCErrSymUndeclared(ctx.lhs);
 
-		int idx = varTbl.get(id);
+		int idx = symTbl.get(id);
 		return concat(visit(ctx.rhs), ISTORE, Marshal.bytesS32BE(idx));
 	}
 

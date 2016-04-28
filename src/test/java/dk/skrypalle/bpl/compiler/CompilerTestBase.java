@@ -23,64 +23,74 @@
  *
  */
 
-package dk.skrypalle.bpl;
+package dk.skrypalle.bpl.compiler;
 
-import dk.skrypalle.bpl.compiler.*;
+import dk.skrypalle.bpl.*;
 import dk.skrypalle.bpl.util.*;
 import dk.skrypalle.bpl.vm.*;
-import org.antlr.v4.runtime.*;
-import org.antlr.v4.runtime.tree.*;
+import org.testng.annotations.*;
 
 import java.io.*;
 import java.nio.file.*;
 
-public final class Main {
+public class CompilerTestBase {
 
-	public static void main(String[] args) throws IOException {
-		String bpl = String.join("\n",
-			"var a int; var b int; var c int;",
-			"a=2; b=a+2; c=b*a-7;",
-			"print(c*a+b/a);"
-		);
+	private Path tmpDir;
 
-		byte[] bplbc = compileBC(bpl);
-		VM vm = new VM(bplbc, 0, true);
+	@BeforeTest
+	public void setup() throws IOException {
+		tmpDir = IO.makeTmpDir("_bplc_");
+	}
+
+	@AfterTest
+	public void teardown() throws IOException {
+		IO.delRec(tmpDir);
+	}
+
+	protected byte[] compileBC(String bpl) {
+		return Main.compileBC(bpl);
+	}
+
+	protected VMExecRes runBC(byte[] bc) {
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		ByteArrayOutputStream err = new ByteArrayOutputStream();
+		ByteArrayOutputStream dbg = new ByteArrayOutputStream();
+		VM vm = new VM(bc, 0, false,
+			new PrintStream(out), new PrintStream(err), new PrintStream(dbg));
 		vm.run();
-		System.out.println();
 
-		Path tmpDir = IO.makeTmpDir("_bplc_");
+		return new VMExecRes(out.toString(), err.toString(), dbg.toString());
+	}
+
+	protected ExecRes compileC99(String bpl) {
 		try {
-			String c99 = compileC99(bpl);
+			String c99 = Main.compileC99(bpl);
 			Path c99out = tmpDir.resolve("out.c");
 			IO.writeAll(c99out, c99);
-			ExecRes gcc = Exec.gcc(c99out);
-			if (!gcc.isEmpty())
-				throw new Error(gcc.toString());
-			ExecRes run = Exec.exec(tmpDir.resolve("out." + OS.exeEXT()));
-			System.out.println(c99);
-			System.out.println(run);
-		} finally {
-			IO.delRec(tmpDir);
+			return Exec.gcc(c99out);
+		} catch (IOException e) {
+			throw new RuntimeException(e);
 		}
 	}
 
-	public static byte[] compileBC(String bpl) {
-		ParseTree t = parse(bpl);
-		return new BCVisitor().visit(t);
+	protected ExecRes runC99() throws IOException {
+		return Exec.exec(tmpDir.resolve("out." + OS.exeEXT()));
 	}
 
-	public static String compileC99(String bpl) {
-		ParseTree t = parse(bpl);
-		return new C99Visitor().visit(t);
+	//region inner class VMExecRes
+
+	static class VMExecRes {
+		final String out;
+		final String err;
+		final String dbg;
+
+		public VMExecRes(String out, String err, String dbg) {
+			this.out = out;
+			this.err = err;
+			this.dbg = dbg;
+		}
 	}
 
-	private static ParseTree parse(String bpl) {
-		ANTLRInputStream ais = new ANTLRInputStream(bpl);
-		BPLLexer lex = new BPLLexer(ais);
-		BPLParser prs = new BPLParser(new CommonTokenStream(lex));
-		return prs.compilationUnit();
-	}
-
-	private Main() { /**/ }
+	//endregion
 
 }
