@@ -50,7 +50,7 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 	public BCVisitor() {
 		funcTbl = new HashMap<>();
 		symTbl = new HashMap<>();
-		fOff = 10;
+		fOff = 10; // CALL(8), HALT
 	}
 
 	@Override
@@ -66,6 +66,87 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 	public byte[] visitStmt(StmtContext ctx) {
 		return visitChildren(ctx);
 	}
+
+	@Override
+	public byte[] visitRet(RetContext ctx) {
+		if (returns)
+			throw new IllegalStateException(); // TODO
+		returns = true;
+
+		return concat(visitChildren(ctx), RET);
+	}
+
+	@Override
+	public byte[] visitPrint(PrintContext ctx) {
+		byte[] cld = visitChildren(ctx);
+		return concat(cld, PRINT);
+	}
+
+	//region var
+
+	@Override
+	public byte[] visitVarDecl(VarDeclContext ctx) {
+		String id = ttos(ctx.id);
+		if (symTbl.containsKey(id))
+			throw new BPLCErrSymRedeclared(ctx.id);
+
+		symTbl.put(id, symTbl.size());
+		return EMPTY;
+	}
+
+	@Override
+	public byte[] visitVarAssign(VarAssignContext ctx) {
+		String id = ttos(ctx.lhs);
+		if (!symTbl.containsKey(id))
+			throw new BPLCErrSymUndeclared(ctx.lhs);
+
+		int idx = symTbl.get(id);
+		return concat(visit(ctx.rhs), ISTORE, Marshal.bytesS32BE(idx));
+	}
+
+	//endregion
+
+	//region func
+
+	@Override
+	public byte[] visitFuncDecl(FuncDeclContext ctx) {
+		String id = ttos(ctx.id);
+		if (funcTbl.containsKey(id))
+			throw new IllegalStateException(); // TODO
+		funcTbl.put(id, fOff);
+
+		Map<String, Integer> oldSymTbl = symTbl;
+		symTbl = new HashMap<>(symTbl);
+		returns = false;
+		int nOldSyms = symTbl.size();
+
+		byte[] res = visitChildren(ctx);
+
+		if (!returns)
+			throw new IllegalStateException(); // TODO
+
+		int nSyms = symTbl.size() - nOldSyms;
+		symTbl = oldSymTbl;
+
+		if (nSyms > 0)
+			res = concat(LOCALS, Marshal.bytesS32BE(nSyms), res);
+
+		fOff += res.length;
+
+		return res;
+	}
+
+	@Override
+	public byte[] visitFuncCall(FuncCallContext ctx) {
+		String id = ttos(ctx.id);
+		if (!funcTbl.containsKey(id))
+			throw new IllegalStateException(); // TODO
+
+		int addr = funcTbl.get(id);
+		return concat(CALL, Marshal.bytesS32BE(addr), Marshal.bytesS32BE(0));
+	}
+
+	//endregion
 
 	//region expr
 
@@ -115,79 +196,6 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 	}
 
 	//endregion
-
-	@Override
-	public byte[] visitVarDecl(VarDeclContext ctx) {
-		String id = ttos(ctx.id);
-		if (symTbl.containsKey(id))
-			throw new BPLCErrSymRedeclared(ctx.id);
-
-		symTbl.put(id, symTbl.size());
-		return EMPTY;
-	}
-
-	@Override
-	public byte[] visitVarAssign(VarAssignContext ctx) {
-		String id = ttos(ctx.lhs);
-		if (!symTbl.containsKey(id))
-			throw new BPLCErrSymUndeclared(ctx.lhs);
-
-		int idx = symTbl.get(id);
-		return concat(visit(ctx.rhs), ISTORE, Marshal.bytesS32BE(idx));
-	}
-
-	@Override
-	public byte[] visitFuncDecl(FuncDeclContext ctx) {
-		String id = ttos(ctx.id);
-		if (funcTbl.containsKey(id))
-			throw new IllegalStateException(); // TODO
-		funcTbl.put(id, fOff);
-
-		Map<String, Integer> oldSymTbl = symTbl;
-		symTbl = new HashMap<>(symTbl);
-		returns = false;
-		int nOldSyms = symTbl.size();
-
-		byte[] res = visitChildren(ctx);
-
-		if (!returns)
-			throw new IllegalStateException(); // TODO
-
-		int nSyms = symTbl.size() - nOldSyms;
-		symTbl = oldSymTbl;
-
-		if (nSyms > 0)
-			res = concat(LOCALS, Marshal.bytesS32BE(nSyms), res);
-
-		fOff += res.length;
-
-		return res;
-	}
-
-	@Override
-	public byte[] visitRet(RetContext ctx) {
-		if (returns)
-			throw new IllegalStateException(); // TODO
-		returns = true;
-
-		return concat(visitChildren(ctx), RET);
-	}
-
-	@Override
-	public byte[] visitFuncCall(FuncCallContext ctx) {
-		String id = ttos(ctx.id);
-		if (!funcTbl.containsKey(id))
-			throw new IllegalStateException(); // TODO
-
-		int addr = funcTbl.get(id);
-		return concat(CALL, Marshal.bytesS32BE(addr), Marshal.bytesS32BE(0));
-	}
-
-	@Override
-	public byte[] visitPrint(PrintContext ctx) {
-		byte[] cld = visitChildren(ctx);
-		return concat(cld, PRINT);
-	}
 
 	//region aggregate, default, visit
 
