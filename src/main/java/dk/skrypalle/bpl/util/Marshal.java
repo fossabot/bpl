@@ -27,6 +27,13 @@ package dk.skrypalle.bpl.util;
 
 public final class Marshal {
 
+	public static int s32BE(byte[] data, int pos) {
+		return ((data[pos] & 0xff)) << 24L
+			| ((data[pos + 1] & 0xff)) << 16L
+			| ((data[pos + 2] & 0xff)) << 8L
+			| ((data[pos + 3] & 0xff));
+	}
+
 	public static long s64BE(byte[] data, int pos) {
 		return ((long) (data[pos] & 0xff)) << 56L
 			| ((long) (data[pos + 1] & 0xff)) << 48L
@@ -36,6 +43,13 @@ public final class Marshal {
 			| ((long) (data[pos + 5] & 0xff)) << 16L
 			| ((long) (data[pos + 6] & 0xff)) << 8L
 			| ((long) (data[pos + 7] & 0xff));
+	}
+
+	public static byte[] bytesS32BE(int l) {
+		byte[] res = new byte[4];
+		for (int i = 0; i < 4; i++)
+			res[3 - i] = (byte) (l >> (i*8));
+		return res;
 	}
 
 	public static byte[] bytesS64BE(long l) {

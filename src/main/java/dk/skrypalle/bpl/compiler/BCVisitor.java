@@ -30,6 +30,8 @@ import dk.skrypalle.bpl.antlr.BPLParser.*;
 import dk.skrypalle.bpl.util.*;
 import org.antlr.v4.runtime.tree.*;
 
+import java.util.*;
+
 import static dk.skrypalle.bpl.util.Array.*;
 import static dk.skrypalle.bpl.util.Parse.*;
 import static dk.skrypalle.bpl.vm.Bytecode.*;
@@ -38,13 +40,37 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 
 	private static final byte[] EMPTY = {};
 
-	public BCVisitor() { }
+	private final Map<String, Integer> varTbl;
+
+	public BCVisitor() {
+		varTbl = new HashMap<>();
+	}
 
 	@Override
 	public byte[] visitCompilationUnit(CompilationUnitContext ctx) {
 		byte[] cld = visitChildren(ctx);
-		return concat(cld, HALT);
+
+		// Temporary "calling convention"
+		// Push "garbage" values
+		int nVars = varTbl.size();
+		byte[] locals = new byte[nVars*9];
+		Random r = new Random(System.nanoTime());
+		for (int i = 0; i < locals.length; i++)
+			locals[i] = (byte) r.nextInt(0xff);
+		for (int i = 0; i < nVars; i++)
+			locals[i*9] = IPUSH;
+		byte[] pops = new byte[nVars];
+		for (int i = 0; i < pops.length; i++)
+			pops[i] = POP;
+		return concat(locals, cld, pops, HALT);
 	}
+
+	@Override
+	public byte[] visitStmt(StmtContext ctx) {
+		return visitChildren(ctx);
+	}
+
+	//region expr
 
 	@Override
 	public byte[] visitBinOpExpr(BinOpExprContext ctx) {
@@ -65,10 +91,47 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 	}
 
 	@Override
+	public byte[] visitAssignExpr(AssignExprContext ctx) {
+		return visit(ctx.varAssign());
+	}
+
+	@Override
 	public byte[] visitIntExpr(IntExprContext ctx) {
 		String val = Parse.ttos(ctx.val);
 		byte[] res = Marshal.bytesS64BE(Long.parseUnsignedLong(val, 10));
 		return concat(IPUSH, res);
+	}
+
+	@Override
+	public byte[] visitIdExpr(IdExprContext ctx) {
+		String id = ttos(ctx.val);
+		if (!varTbl.containsKey(id))
+			throw new IllegalStateException(); // TODO
+
+		int idx = varTbl.get(id);
+		return concat(ILOAD, Marshal.bytesS32BE(idx));
+	}
+
+	//endregion
+
+	@Override
+	public byte[] visitVarDecl(VarDeclContext ctx) {
+		String id = ttos(ctx.id);
+		if (varTbl.containsKey(id))
+			throw new IllegalStateException(); // TODO
+
+		varTbl.put(id, varTbl.size());
+		return EMPTY;
+	}
+
+	@Override
+	public byte[] visitVarAssign(VarAssignContext ctx) {
+		String id = ttos(ctx.lhs);
+		if (!varTbl.containsKey(id))
+			throw new IllegalStateException(); // TODO
+
+		int idx = varTbl.get(id);
+		return concat(visit(ctx.rhs), ISTORE, Marshal.bytesS32BE(idx));
 	}
 
 	@Override

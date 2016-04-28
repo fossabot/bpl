@@ -51,6 +51,7 @@ public class CompilerTest {
 	@DataProvider
 	public Object[][] provideData() {
 		return new Object[][]{
+			{"print(0);", "0"},
 			{"print(1);", "1"},
 			{"print(255);", "ff"},
 			{"print(256);", "100"},
@@ -67,6 +68,11 @@ public class CompilerTest {
 			{"print(8/3*4);", "8"},
 			{"print(2+3*3);", "b"},
 			{"print(9-2*3);", "3"},
+
+			{"var foo int; foo=42; print(foo);", "2a"},
+			{"var foo int; foo=42; print(foo+2);", "2c"},
+			{"var a int; var b int; a=2; b=5; print(a+b);", "7"},
+			{"var a int; var b int; var c int; a=2; b=5; c=9; print(c*a+b/a);", "14"},
 		};
 	}
 

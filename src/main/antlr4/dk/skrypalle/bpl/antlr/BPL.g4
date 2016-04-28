@@ -26,16 +26,27 @@
 grammar BPL;
 
 compilationUnit
-	: (print ';')*
+	: stmt*
 	;
+
+stmt
+	: varDecl   ';'
+	| varAssign ';'
+	| print     ';'
+	;
+
+varDecl   : 'var' id=ID 'int'        ;
+varAssign : lhs=ID '=' rhs=expr      ;
+print     : 'print' '(' arg=expr ')' ;
 
 expr
 	: lhs=expr op=('/'|'*') rhs=expr #BinOpExpr
 	| lhs=expr op=('+'|'-') rhs=expr #BinOpExpr
+	| varAssign                      #AssignExpr
 	| val=INT                        #IntExpr
+	| val=ID                         #IdExpr
 	;
 
-print : 'print' '(' arg=expr ')' ;
-
 INT : [0-9]+            ;
+ID  : [a-zA-Z0-9_]+     ;
 WS  : [ \t\r\n] -> skip ;

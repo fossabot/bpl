@@ -38,6 +38,7 @@ class CPU {
 
 	private int  ip;
 	private int  sp;
+	private int  fp;
 	private byte op;
 
 	byte[] code;
@@ -47,6 +48,7 @@ class CPU {
 		this.vm = vm;
 		this.ip = ip;
 		this.sp = -1;
+		this.fp = 0;
 		this.code = code;
 		this.stack = new long[1];
 	}
@@ -57,9 +59,13 @@ class CPU {
 		if (vm.trace)
 			disassemble();
 
+		int off;
 		long lhs, rhs, res;
 		switch (op) {
 		case NOP:
+			break;
+		case POP:
+			pop();
 			break;
 		case IPUSH:
 			push(fetchS64());
@@ -88,6 +94,14 @@ class CPU {
 			res = lhs/rhs;
 			push(res);
 			break;
+		case ISTORE:
+			off = fetchS32();
+			sput(fp + off, pop());
+			break;
+		case ILOAD:
+			off = fetchS32();
+			push(sget(fp + off));
+			break;
 		case PRINT:
 			vm.out(String.format("%x", pop()));
 			break;
@@ -111,6 +125,12 @@ class CPU {
 		return code[ip++];
 	}
 
+	private int fetchS32() {
+		int val = Marshal.s32BE(code, ip);
+		ip += 4;
+		return val;
+	}
+
 	private long fetchS64() {
 		long val = Marshal.s64BE(code, ip);
 		ip += 8;
@@ -132,6 +152,18 @@ class CPU {
 		if (sp < 0)
 			throw new BPLVMStackUnderflowError();
 		return stack[sp--];
+	}
+
+	private long sget(int addr) {
+		if (addr < 0)
+			throw new BPLVMStackUnderflowError();
+		return stack[addr];
+	}
+
+	private void sput(int addr, long val) {
+		if (addr < 0)
+			throw new BPLVMStackUnderflowError();
+		stack[addr] = val;
 	}
 
 	private void growStack() {

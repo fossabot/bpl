@@ -55,19 +55,60 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 	}
 
 	@Override
+	public String visitStmt(StmtContext ctx) {
+		return visitChildren(ctx) + ";\n";
+	}
+
+	//region expr
+
+	@Override
 	public String visitBinOpExpr(BinOpExprContext ctx) {
 		return visit(ctx.lhs) + ttos(ctx.op) + visit(ctx.rhs);
 	}
 
 	@Override
+	public String visitAssignExpr(AssignExprContext ctx) {
+		return visit(ctx.varAssign());
+	}
+
+	@Override
 	public String visitIntExpr(IntExprContext ctx) {
-		String val = new BigInteger(ttos(ctx.val)).toString();
-		return val + "ULL";
+		BigInteger i = new BigInteger(ttos(ctx.val));
+		String val = i.toString();
+		if (i.signum() > 0)
+			val += "U";
+
+		if (i.bitLength() <= 16)
+			return val;
+
+		if (i.bitLength() <= 32)
+			val += "L";
+		else if (i.bitLength() <= 64)
+			val += "LL";
+
+		return val;
+	}
+
+	@Override
+	public String visitIdExpr(IdExprContext ctx) {
+		return ttos(ctx.val);
+	}
+
+	//endregion
+
+	@Override
+	public String visitVarDecl(VarDeclContext ctx) {
+		return "int " + ttos(ctx.id);
+	}
+
+	@Override
+	public String visitVarAssign(VarAssignContext ctx) {
+		return ttos(ctx.lhs) + "=" + visit(ctx.rhs);
 	}
 
 	@Override
 	public String visitPrint(PrintContext ctx) {
-		return "printf(\"%llx\", " + visitChildren(ctx) + ");\n";
+		return "printf(\"%llx\", " + visitChildren(ctx) + ")";
 	}
 
 	//region aggregate, default, visit
