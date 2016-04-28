@@ -46,7 +46,7 @@ public class VM {
 	}
 
 	public VM(byte[] code, int start, boolean trace,
-			  PrintStream out, PrintStream err, PrintStream dbg) {
+	          PrintStream out, PrintStream err, PrintStream dbg) {
 		this.out = out;
 		this.err = err;
 		this.dbg = dbg;

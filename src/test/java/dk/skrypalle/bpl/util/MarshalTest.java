@@ -52,7 +52,7 @@ public class MarshalTest {
 
 	@Test(dataProvider = "provideS32")
 	public void testS32BE(int b0, int b1, int b2, int b3,
-						  int exp) {
+	                      int exp) {
 		byte[] data = new byte[]{
 			(byte) b0, (byte) b1, (byte) b2, (byte) b3,
 		};
@@ -62,7 +62,7 @@ public class MarshalTest {
 
 	@Test(dataProvider = "provideS32")
 	public void testBytesS32BE(int b0, int b1, int b2, int b3,
-							   int val) {
+	                           int val) {
 		byte[] exp = new byte[]{
 			(byte) b0, (byte) b1, (byte) b2, (byte) b3,
 		};
@@ -72,8 +72,8 @@ public class MarshalTest {
 
 	@Test(dataProvider = "provideS64")
 	public void testS64BE(int b0, int b1, int b2, int b3,
-						  int b4, int b5, int b6, int b7,
-						  long exp) {
+	                      int b4, int b5, int b6, int b7,
+	                      long exp) {
 		byte[] data = new byte[]{
 			(byte) b0, (byte) b1, (byte) b2, (byte) b3,
 			(byte) b4, (byte) b5, (byte) b6, (byte) b7
@@ -84,8 +84,8 @@ public class MarshalTest {
 
 	@Test(dataProvider = "provideS64")
 	public void testBytesS64BE(int b0, int b1, int b2, int b3,
-							   int b4, int b5, int b6, int b7,
-							   long val) {
+	                           int b4, int b5, int b6, int b7,
+	                           long val) {
 		byte[] exp = new byte[]{
 			(byte) b0, (byte) b1, (byte) b2, (byte) b3,
 			(byte) b4, (byte) b5, (byte) b6, (byte) b7
