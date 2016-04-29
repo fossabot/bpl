@@ -35,18 +35,21 @@ stmt
 	| funcCall  ';'
 	| print     ';'
 	| ret       ';'
+	| branch
 	;
 
+branch    : 'if' '(' cond=expr ')' onTrue=block 'else' onFalse=block          ;
+block     : '{' stmts+=stmt* '}'                                              ;
 funcDecl  : 'func' id=ID '(' params=paramList? ')' 'int' '{' stmts+=stmt* '}' ;
-funcCall  : id=ID '(' args=argList? ')'                                      ;
-varDecl   : 'var' id=ID 'int'                                                ;
-varAssign : lhs=ID '=' rhs=expr                                              ;
-print     : 'print' '(' arg ')'                                              ;
-ret       : 'return' expr                                                    ;
-param     : 'int' id=ID                                                      ;
-paramList : param (',' param)*                                               ;
-arg       : expr                                                             ;
-argList   : arg (',' arg)*                                                   ;
+funcCall  : id=ID '(' args=argList? ')'                                       ;
+varDecl   : 'var' id=ID 'int'                                                 ;
+varAssign : lhs=ID '=' rhs=expr                                               ;
+print     : 'print' '(' arg ')'                                               ;
+ret       : 'return' expr                                                     ;
+param     : 'int' id=ID                                                       ;
+paramList : param (',' param)*                                                ;
+arg       : expr                                                              ;
+argList   : arg (',' arg)*                                                    ;
 
 expr
 	: lhs=expr op=('/'|'*') rhs=expr #BinOpExpr

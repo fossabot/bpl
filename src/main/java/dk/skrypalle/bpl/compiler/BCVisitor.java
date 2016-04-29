@@ -98,6 +98,36 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 		return concat(cld, PRINT);
 	}
 
+	@Override
+	public byte[] visitBranch(BranchContext ctx) {
+		/* BRNE <true_addr>
+		 * <false_code>
+		 * JMP <end_if>
+		 * <true_code>
+		 */
+
+		byte[] cond = visit(ctx.cond);
+		byte[] onTrue = visit(ctx.onTrue);
+		byte[] onFalse = visit(ctx.onFalse);
+
+		return concat(
+			cond,
+			BRNE, Marshal.bytesS32BE(onFalse.length + 5),
+			onFalse,
+			JMP, Marshal.bytesS32BE(onTrue.length + 4),
+			onTrue
+		);
+	}
+
+	@Override
+	public byte[] visitBlock(BlockContext ctx) {
+		Map<String, Integer> oldSymTbl = symTbl;
+		symTbl = new HashMap<>(symTbl);
+		byte[] cld = visitChildren(ctx);
+		symTbl = oldSymTbl;
+		return cld;
+	}
+
 	//region var
 
 	@Override

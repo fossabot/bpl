@@ -65,6 +65,8 @@ public class VM {
 		if (trace) {
 			dbg.printf("\nCode memory: %d bytes\n", cpu.code.length);
 			dbg.println(Hex.dump(cpu.code));
+			dbg.printf("\nCode disassembly: %d bytes\n", cpu.code.length);
+			dbg.println(disassemble(cpu.code));
 		}
 
 		return cpu.exitCode();
@@ -91,6 +93,32 @@ public class VM {
 				out.println();
 			outBuf.delete(0, outBuf.capacity());
 		}
+	}
+
+	private String disassemble(byte[] code) {
+		StringBuilder buf = new StringBuilder();
+		int ip = 0;
+		while (ip < code.length) {
+			int _ip = ip;
+			byte op = code[ip++];
+			Bytecode.Op inst = Bytecode.opCodes.get(op);
+			if (inst == null)
+				throw new IllegalStateException(String.format("Illegal op code 0x%02x", op));
+
+			StringBuilder argBuf = new StringBuilder();
+			argBuf.append('[');
+			for (int i = 0; i < inst.nArgs; i++) {
+				argBuf.append(String.format("0x%02x", code[ip++]));
+				if (i < inst.nArgs - 1)
+					argBuf.append(", ");
+			}
+			argBuf.append(']');
+
+			String trace = String.format("%08x  (0x%02x) %-6s %s", _ip, op, inst.name, argBuf.toString());
+
+			buf.append(String.format("%-80s\n", trace));
+		}
+		return buf.toString();
 	}
 
 }

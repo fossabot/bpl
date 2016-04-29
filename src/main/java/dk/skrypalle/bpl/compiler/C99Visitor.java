@@ -95,6 +95,26 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 		return "printf(\"%llx\", " + visitChildren(ctx) + ")";
 	}
 
+	@Override
+	public String visitBranch(BranchContext ctx) {
+		return String.join("\n",
+			"if (" + visit(ctx.cond) + ") {",
+			visit(ctx.onTrue).trim(),
+			"} else {",
+			visit(ctx.onFalse).trim(),
+			"}"
+		);
+	}
+
+	@Override
+	public String visitBlock(BlockContext ctx) {
+		Map<String, Integer> oldSymTbl = symTbl;
+		symTbl = new HashMap<>(symTbl);
+		String cld = visitChildren(ctx);
+		symTbl = oldSymTbl;
+		return cld;
+	}
+
 	//region var
 
 	@Override

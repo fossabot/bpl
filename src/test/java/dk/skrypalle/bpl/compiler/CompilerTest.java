@@ -68,6 +68,44 @@ public class CompilerTest extends CompilerTestBase {
 			{"func sub(int a, int b) int { return a-b; } func main() int { print(sub(4,42)); return 0; }", "ffffffffffffffda"},
 
 			{"func main() int { print(sub(4,42)); return 0; } func sub(int a, int b) int { return a-b; }", "ffffffffffffffda"},
+
+			{"" +
+				"func main() int {" +
+				"   if(0) {" +
+				"       print(81);" +
+				"   } else {" +
+				"       print(42);" +
+				"   }" +
+				"   return 0;" +
+				"}", "2a"
+			},
+			{"" +
+				"func main() int {" +
+				"   if(1) {" +
+				"       print(81);" +
+				"   } else {" +
+				"       print(42);" +
+				"   }" +
+				"   return 0;" +
+				"}", "51"
+			},
+			{"" +
+				"func fact(int n) int {" +
+				"   if(n) {" +
+				"       if(n-1) {" +
+				"           return n*fact(n-1);" +
+				"       } else {" + // n==1
+				"           return 1;" +
+				"       }" +
+				"   } else {" + // n==0
+				"       return 1;" +
+				"   }" +
+				"}" +
+				"func main() int {" +
+				"   print(fact(20));" +
+				"   return 0;" +
+				"}", "21c3677c82b40000"
+			},
 		};
 	}
 

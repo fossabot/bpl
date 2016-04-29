@@ -40,22 +40,22 @@ public final class Main {
 
 	public static void main(String[] args) throws IOException {
 		String bpl = String.join("\n",
+			"func fact(int n) int {",
+			"   if(n) {",
+			"       if(n-1) {",
+			"           return n*fact(n-1);",
+			"       } else {", // n==1
+			"           return 1;",
+			"       }",
+			"   } else {", // n==0
+			"       return 1;",
+			"   }",
+			"}",
 			"func main() int {",
-			"var a int; var b int; var c int;",
-			"a=1; b=2; c=3;",
-			"print(add(b));",
-//			"print(add(a,b,c));",
-			"return 0;",
-			"}",
-			"func add(int a, int b) int {",
-			"return a+b;",
-			"}",
-			"func add(int a, int b, int c) int {",
-			"return a+b;",
+			"   print(fact(20));",
+			"   return 0;",
 			"}"
 		);
-
-//		bpl = "func x(int i) int { return i; } func main() int { return x(); }";
 
 		byte[] bplbc = null;
 		try {

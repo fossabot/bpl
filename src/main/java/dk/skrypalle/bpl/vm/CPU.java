@@ -61,7 +61,7 @@ class CPU {
 
 		int addr, off, nArgs;
 		long lhs, rhs, res;
-		long rval;
+		long val;
 		switch (op) {
 		case NOP:
 			break;
@@ -113,13 +113,13 @@ class CPU {
 			ip = addr;
 			break;
 		case RET:
-			rval = pop();
+			val = pop();
 			sp = fp;
 			ip = (int) pop();
 			fp = (int) pop();
 			nArgs = (int) pop();
 			sp -= nArgs;
-			push(rval);
+			push(val);
 			break;
 		case LOCALS:
 //			sp += fetchS32();
@@ -129,6 +129,15 @@ class CPU {
 			// simulate garbage in local storage
 			for (int i = 0; i < l; i++)
 				push((long) (Math.random()*23452345.0));
+			break;
+		case JMP:
+			ip += fetchS32();
+			break;
+		case BRNE:
+			off = fetchS32();
+			val = pop();
+			if (val != 0)
+				ip += off;
 			break;
 		case PRINT:
 			vm.out(String.format("%x", pop()));
