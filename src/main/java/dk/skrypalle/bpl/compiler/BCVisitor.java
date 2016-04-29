@@ -40,7 +40,8 @@ import static dk.skrypalle.bpl.vm.Bytecode.*;
 
 public class BCVisitor extends BPLBaseVisitor<byte[]> {
 
-	private static final byte[] EMPTY = {};
+	private static final byte[] EMPTY       = {};
+	private static final int    PREABLE_LEN = 0x0a; // CALL(8), HALT
 
 	private final Map<String, Func> funcTbl;
 
@@ -48,20 +49,32 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 	private boolean              returns;
 	private int                  fOff;
 
-	public BCVisitor() {
-		funcTbl = new HashMap<>();
+	public BCVisitor(Map<String, Func> funcTbl) {
+		this.funcTbl = funcTbl;
 		symTbl = new HashMap<>();
-		fOff = 10; // CALL(8), HALT
+		fOff = PREABLE_LEN;
+	}
+
+	private int nUnresolved() {
+		int res = 0;
+		for (Func f : funcTbl.values()) {
+			if (f.entry == -1)
+				res++;
+		}
+		return res;
 	}
 
 	@Override
 	public byte[] visitCompilationUnit(CompilationUnitContext ctx) {
+		while (nUnresolved() > 0) {
+			fOff = PREABLE_LEN;
+			visitChildren(ctx);
+		}
+
+		fOff = PREABLE_LEN;
 		byte[] cld = visitChildren(ctx);
-		if (!funcTbl.containsKey("main"))
-			throw new IllegalStateException("no main function found"); // TODO
 
 		Func main = funcTbl.get("main");
-
 		return concat(CALL, Marshal.bytesS32BE(main.entry), Marshal.bytesS32BE(0), HALT, cld);
 	}
 
@@ -123,14 +136,8 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 	@Override
 	public byte[] visitFuncDecl(FuncDeclContext ctx) {
 		String id = ttos(ctx.id);
-		if (funcTbl.containsKey(id))
-			throw new BPLCErrFuncRedeclared(ctx.id);
-
-		curF = new Func();
-		curF.id = id;
+		curF = funcTbl.get(id);
 		curF.entry = fOff;
-
-		funcTbl.put(id, curF);
 
 		Map<String, Integer> oldSymTbl = symTbl;
 		symTbl = new HashMap<>(symTbl);

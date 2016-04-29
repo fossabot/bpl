@@ -66,6 +66,8 @@ public class CompilerTest extends CompilerTestBase {
 
 			{"func add(int a, int b) int { return a+b; } func main() int { print(add(4,42)); return 0; }", "2e"},
 			{"func sub(int a, int b) int { return a-b; } func main() int { print(sub(4,42)); return 0; }", "ffffffffffffffda"},
+
+			{"func main() int { print(sub(4,42)); return 0; } func sub(int a, int b) int { return a-b; }", "ffffffffffffffda"},
 		};
 	}
 

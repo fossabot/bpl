@@ -126,9 +126,9 @@ class CPU {
 //			while (sp >= stack.length)
 //				growStack();
 			int l = fetchS32();
-			for (int i = 0; i < l; i++) {
+			// simulate garbage in local storage
+			for (int i = 0; i < l; i++)
 				push((long) (Math.random()*23452345.0));
-			}
 			break;
 		case PRINT:
 			vm.out(String.format("%x", pop()));

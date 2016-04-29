@@ -34,7 +34,7 @@ public final class Func {
 
 	@Override
 	public String toString() {
-		return "func " + id + '(' + nParams + ")@" + entry;
+		return String.format("func %s(%d)@0x%x", id, nParams, entry);
 	}
 
 }

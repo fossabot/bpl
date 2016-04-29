@@ -26,6 +26,7 @@
 package dk.skrypalle.bpl;
 
 import dk.skrypalle.bpl.compiler.*;
+import dk.skrypalle.bpl.compiler.type.*;
 import dk.skrypalle.bpl.util.*;
 import dk.skrypalle.bpl.vm.*;
 import org.antlr.v4.runtime.*;
@@ -33,51 +34,75 @@ import org.antlr.v4.runtime.tree.*;
 
 import java.io.*;
 import java.nio.file.*;
+import java.util.*;
 
 public final class Main {
 
 	public static void main(String[] args) throws IOException {
 		String bpl = String.join("\n",
+			"func main() int {",
+			"var a int; var b int; var c int;",
+//			"var a int; var b int; var c int;",
+			"print(a*b*c+add(3,42));",
+			"return 0;",
+			"}",
 			"func add(int a, int b) int {",
 			"return a-b;",
-			"}",
-			"func main() int {",
-			"print(add(3,42));",
-			"return 0;",
 			"}"
 		);
 
-		byte[] bplbc = compileBC(bpl);
-		System.out.println(Hex.dump(bplbc));
-		VM vm = new VM(bplbc, 0, true);
-		int vmExit = vm.run();
-		System.out.printf("VM finished with exit code 0x%08x\n", vmExit);
-		System.out.println();
-
-		Path tmpDir = IO.makeTmpDir("_bplc_");
+		byte[] bplbc = null;
 		try {
-			String c99 = compileC99(bpl);
+			bplbc = compileBC(bpl);
+			VM vm = new VM(bplbc, 0, true);
+			int vmExit = vm.run();
+			System.out.printf("VM finished with exit code 0x%08x\n", vmExit);
+			System.out.println();
+		} catch (Throwable t) {
+			System.err.printf("Target BPLBC failed: %s: %s\n", t.getClass().getSimpleName(), t.getMessage());
+			if (bplbc != null)
+				System.err.printf("Code memory:\n%s\n", Hex.dump(bplbc));
+			t.printStackTrace();
+		}
+
+		Path tmpDir = null;
+		String c99 = null;
+		try {
+			tmpDir = IO.makeTmpDir("_bplc_");
+			c99 = compileC99(bpl);
 			Path c99out = tmpDir.resolve("out.c");
 			IO.writeAll(c99out, c99);
 			ExecRes gcc = Exec.gcc(c99out);
 			if (!gcc.isEmpty())
-				throw new Error(gcc.toString());
+				throw new Error(String.format(
+					"GCC compile error (exit status %d)\n%s%s",
+					gcc.exit, gcc.out, gcc.err
+				));
 			ExecRes run = Exec.exec(tmpDir.resolve("out." + OS.exeEXT()));
 			System.out.println(c99);
 			System.out.println(run);
-		} finally {
 			IO.delRec(tmpDir);
+		} catch (Throwable t) {
+			System.err.printf("Target C99 failed: %s: %s\n", t.getClass().getSimpleName(), t.getMessage());
+			if (c99 != null)
+				System.err.printf("Code memory:\n%s\n", c99);
+			t.printStackTrace();
+
+			if (tmpDir != null)
+				IO.delRec(tmpDir);
 		}
 	}
 
 	public static byte[] compileBC(String bpl) {
 		ParseTree t = parse(bpl);
-		return new BCVisitor().visit(t);
+		Map<String, Func> funcTbl = new FuncResolvePass().visit(t);
+		return new BCVisitor(funcTbl).visit(t);
 	}
 
 	public static String compileC99(String bpl) {
 		ParseTree t = parse(bpl);
-		return new C99Visitor().visit(t);
+		Map<String, Func> funcTbl = new FuncResolvePass().visit(t);
+		return new C99Visitor(funcTbl).visit(t);
 	}
 
 	private static ParseTree parse(String bpl) {

@@ -43,8 +43,8 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 	private Map<String, Integer> symTbl;
 	private boolean              returns;
 
-	public C99Visitor() {
-		funcTbl = new HashMap<>();
+	public C99Visitor(Map<String, Func> funcTbl) {
+		this.funcTbl = funcTbl;
 		symTbl = new HashMap<>();
 	}
 
@@ -52,13 +52,24 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 	public String visitCompilationUnit(CompilationUnitContext ctx) {
 		String cld = visitChildren(ctx);
 
-		if (!funcTbl.containsKey("main"))
-			throw new IllegalStateException("no main function found"); // TODO
+		StringBuilder protos = new StringBuilder();
+		for (Func f : funcTbl.values()) {
+			if ("main".equals(f.id))
+				continue;
+			protos.append("static int64_t ").append(f.id).append("(");
+			for (int i = 0; i < f.nParams; i++) {
+				protos.append("int64_t");
+				if (i < f.nParams - 1)
+					protos.append(",");
+			}
+			protos.append(");\n");
+		}
 
 		return String.join("\n",
 			"#include <stdio.h>",
 			"#include <stdint.h>",
 			"",
+			protos,
 			cld.trim(),
 			""
 		);
@@ -114,14 +125,8 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 	@Override
 	public String visitFuncDecl(FuncDeclContext ctx) {
 		String id = ttos(ctx.id);
-		if (funcTbl.containsKey(id))
-			throw new BPLCErrFuncRedeclared(ctx.id);
-
-		curF = new Func();
+		curF = funcTbl.get(id);
 		curF.id = id;
-		curF.entry = -1;    // unused in C99 target
-
-		funcTbl.put(id, curF);
 
 		Map<String, Integer> oldSymTbl = symTbl;
 		symTbl = new HashMap<>(symTbl);
