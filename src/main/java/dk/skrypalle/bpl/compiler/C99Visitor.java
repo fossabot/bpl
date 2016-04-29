@@ -119,7 +119,7 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 		symTbl = new HashMap<>(symTbl);
 		returns = false;
 
-		String ret_t = "uint64_t";
+		String ret_t = "int64_t";
 		if ("main".equals(id))
 			ret_t = "int";
 

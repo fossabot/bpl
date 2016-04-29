@@ -114,8 +114,8 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 
 	//region func
 
-	int nParams;
-	int nArgs;
+	private int nParams;
+	private int nArgs;
 
 	@Override
 	public byte[] visitFuncDecl(FuncDeclContext ctx) {
@@ -146,12 +146,6 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 			if (off >= 0)
 				nLocals++;
 		}
-
-		System.out.println(id);
-		System.out.println(symTbl);
-		System.out.println(curSymTbl);
-		System.out.println("locals=" + nLocals);
-		System.out.println("++++++++++++++++");
 
 		symTbl = oldSymTbl;
 
