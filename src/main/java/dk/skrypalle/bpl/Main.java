@@ -42,14 +42,20 @@ public final class Main {
 		String bpl = String.join("\n",
 			"func main() int {",
 			"var a int; var b int; var c int;",
-//			"var a int; var b int; var c int;",
-			"print(a*b*c+add(3,42));",
+			"a=1; b=2; c=3;",
+			"print(add(b));",
+//			"print(add(a,b,c));",
 			"return 0;",
 			"}",
 			"func add(int a, int b) int {",
-			"return a-b;",
+			"return a+b;",
+			"}",
+			"func add(int a, int b, int c) int {",
+			"return a+b;",
 			"}"
 		);
+
+//		bpl = "func x(int i) int { return i; } func main() int { return x(); }";
 
 		byte[] bplbc = null;
 		try {

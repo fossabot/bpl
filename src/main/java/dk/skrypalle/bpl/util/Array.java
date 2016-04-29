@@ -59,6 +59,13 @@ public final class Array {
 		return res;
 	}
 
+	public static int[] toIntArray(Integer[] l) {
+		int[] res = new int[l.length];
+		for (int i = 0; i < l.length; i++)
+			res[i] = l[i];
+		return res;
+	}
+
 	private Array() { /**/ }
 
 }

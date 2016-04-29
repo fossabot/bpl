@@ -72,8 +72,8 @@ public final class Exec {
 			"-Wextra",
 			"-Wpedantic",
 			"-Wno-format",
-//			"-Wnoformat-extra-args",
-			"-save-temps",
+			"-Wno-unused-parameter",
+			"--save-temps",
 			"-o" + fName + "." + OS.exeEXT(),
 			fName + ".c"
 		};

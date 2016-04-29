@@ -42,6 +42,15 @@ public final class Parse {
 		return t.getText();
 	}
 
+	public static String paramstos(int n) {
+		if (n == 0)
+			return "V";
+		StringBuilder buf = new StringBuilder();
+		for (int i = 0; i < n; i++)
+			buf.append("I");
+		return buf.toString();
+	}
+
 	private Parse() { /**/ }
 
 }

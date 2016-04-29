@@ -28,6 +28,7 @@ package dk.skrypalle.bpl.compiler;
 import dk.skrypalle.bpl.antlr.*;
 import dk.skrypalle.bpl.compiler.err.*;
 import dk.skrypalle.bpl.compiler.type.*;
+import dk.skrypalle.bpl.util.*;
 import org.antlr.v4.runtime.tree.*;
 
 import java.math.*;
@@ -54,9 +55,9 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 
 		StringBuilder protos = new StringBuilder();
 		for (Func f : funcTbl.values()) {
-			if ("main".equals(f.id))
+			if ("main:V>I".equals(f.id))
 				continue;
-			protos.append("static int64_t ").append(f.id).append("(");
+			protos.append("static int64_t ").append(mangle(f.id)).append("(");
 			for (int i = 0; i < f.nParams; i++) {
 				protos.append("int64_t");
 				if (i < f.nParams - 1)
@@ -125,6 +126,9 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 	@Override
 	public String visitFuncDecl(FuncDeclContext ctx) {
 		String id = ttos(ctx.id);
+		int nParams = ctx.params == null ? 0 : ctx.params.param().size();
+		id = id + ":" + paramstos(nParams) + ">I";
+
 		curF = funcTbl.get(id);
 		curF.id = id;
 
@@ -133,11 +137,11 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 		returns = false;
 
 		String ret_t = "int64_t";
-		if ("main".equals(id))
+		if ("main:V>I".equals(id))
 			ret_t = "int";
 
 		String res = String.join("\n",
-			ret_t + " " + id + "(" + visit(ctx.params) + ")",
+			ret_t + " " + mangle(id) + "(" + visit(ctx.params) + ")",
 			"{",
 			visit(ctx.stmts, "").trim(),
 			"}",
@@ -153,6 +157,29 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 	@Override
 	public String visitFuncCall(FuncCallContext ctx) {
 		String id = ttos(ctx.id);
+		int nParams = ctx.args == null ? 0 : ctx.args.arg().size();
+		id = id + ":" + paramstos(nParams) + ">I";
+
+		List<Integer> ovlds = new ArrayList<>();
+		for (Map.Entry<String, Func> e : funcTbl.entrySet()) {
+			String k = e.getKey();
+			int iCol = k.indexOf(':');
+			String name = k.substring(0, iCol);
+
+			if (ttos(ctx.id).equals(name)) {
+				// Found base_name, check params
+				int have = nParams;
+				int want = e.getValue().nParams;
+				if (have != want)
+					ovlds.add(want);
+			}
+		}
+
+		if (!ovlds.isEmpty()) {
+			int[] wants = Array.toIntArray(ovlds.toArray(new Integer[ovlds.size()]));
+			throw new BPLCErrWrongNumArgs(ctx.id, nParams, wants);
+		}
+
 		if (!funcTbl.containsKey(id))
 			throw new BPLCErrFuncUndeclared(ctx.id);
 
@@ -163,7 +190,7 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 		if (nArgs != f.nParams)
 			throw new BPLCErrWrongNumArgs(ctx.id, nArgs, f.nParams);
 
-		return id + "(" + args + ")";
+		return mangle(id) + "(" + args + ")";
 	}
 
 	@Override
@@ -272,5 +299,19 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 	}
 
 	//endregion
+
+	private String mangle(String internal) {
+		int iCln = internal.indexOf(':');
+		int iRsh = internal.indexOf('>');
+
+		String id = internal.substring(0, iCln);
+		String args = internal.substring(iCln + 1, iRsh);
+		String ret = internal.substring(iRsh + 1);
+
+		if ("main".equals(id))
+			return id;
+
+		return "__bplc_" + id + "_" + args + "_" + ret;
+	}
 
 }

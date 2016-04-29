@@ -51,7 +51,7 @@ public class FuncResolvePass extends BPLBaseVisitor<Map<String, Func>> {
 	public Map<String, Func> visitCompilationUnit(CompilationUnitContext ctx) {
 		visitChildren(ctx);
 
-		if (!funcTbl.containsKey("main"))
+		if (!funcTbl.containsKey("main:V>I"))
 			throw new IllegalStateException("no main function found"); // TODO
 
 		return funcTbl;
@@ -60,6 +60,9 @@ public class FuncResolvePass extends BPLBaseVisitor<Map<String, Func>> {
 	@Override
 	public Map<String, Func> visitFuncDecl(FuncDeclContext ctx) {
 		String id = ttos(ctx.id);
+		int nParams = ctx.params == null ? 0 : ctx.params.param().size();
+		id = id + ":" + paramstos(nParams) + ">I";
+
 		if (funcTbl.containsKey(id))
 			throw new BPLCErrFuncRedeclared(ctx.id);
 
