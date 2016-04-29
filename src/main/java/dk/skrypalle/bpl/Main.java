@@ -38,16 +38,12 @@ public final class Main {
 
 	public static void main(String[] args) throws IOException {
 		String bpl = String.join("\n",
-			"func foo() int {",
-			"var a int; a = 4;",
-			"return a;",
-			"}",
-			"func bar() int {",
-			"var a int; a = foo();",
-			"return a;",
+			"func add(int a, int b) int {",
+			"return a-b;",
 			"}",
 			"func main() int {",
-			"return bar()*foo();",
+			"print(add(4,42));",
+			"return 0;",
 			"}"
 		);
 

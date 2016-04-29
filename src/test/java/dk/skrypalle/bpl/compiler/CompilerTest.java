@@ -63,6 +63,8 @@ public class CompilerTest extends CompilerTestBase {
 
 			{"func rnd() int { return 4; } func main() int { print(rnd()); return 0; }", "4"},
 			{"func rnd() int { var i int; i=42; return i; } func main() int { var i int; i=8; print(rnd()+i); return 0; }", "32"},
+
+			{"func add(int a, int b) int { return a-b; } func main() int { print(add(4,42)); return 0; }", "ffffffffffffffda"},
 		};
 	}
 

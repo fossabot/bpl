@@ -91,7 +91,7 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 			throw new BPLCErrSymRedeclared(ctx.id);
 
 		symTbl.put(id, symTbl.size());
-		return "int " + id;
+		return "int64_t " + id;
 	}
 
 	@Override
@@ -119,10 +119,14 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 		symTbl = new HashMap<>(symTbl);
 		returns = false;
 
+		String ret_t = "uint64_t";
+		if ("main".equals(id))
+			ret_t = "int";
+
 		String res = String.join("\n",
-			"int " + id + "(void)",
+			ret_t + " " + id + "(" + visit(ctx.params) + ")",
 			"{",
-			visitChildren(ctx).trim(),
+			visit(ctx.stmts, "").trim(),
 			"}",
 			""
 		);
@@ -139,7 +143,32 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 		if (!funcTbl.containsKey(id))
 			throw new BPLCErrFuncUndeclared(ctx.id);
 
-		return id + "()";
+		return id + "(" + visit(ctx.args) + ")";
+	}
+
+	@Override
+	public String visitParamList(ParamListContext ctx) {
+		return visit(ctx.param(), ", ");
+	}
+
+	@Override
+	public String visitParam(ParamContext ctx) {
+		String id = ttos(ctx.id);
+		if (symTbl.containsKey(id))
+			throw new BPLCErrSymRedeclared(ctx.id);
+
+		symTbl.put(id, symTbl.size());
+		return "int64_t " + id;
+	}
+
+	@Override
+	public String visitArgList(ArgListContext ctx) {
+		return visit(ctx.arg(), ", ");
+	}
+
+	@Override
+	public String visitArg(ArgContext ctx) {
+		return visit(ctx.expr());
 	}
 
 	//endregion
@@ -206,6 +235,17 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 	@Override
 	public String visit(ParseTree t) {
 		return t == null ? defaultResult() : t.accept(this);
+	}
+
+	private String visit(List<? extends ParseTree> list, String delim) {
+		StringBuilder sb = new StringBuilder();
+		int i = 0;
+		for (ParseTree t : list) {
+			sb.append(visit(t));
+			if (++i < list.size())
+				sb.append(delim);
+		}
+		return sb.toString();
 	}
 
 	//endregion

@@ -90,7 +90,13 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 		if (symTbl.containsKey(id))
 			throw new BPLCErrSymRedeclared(ctx.id);
 
-		symTbl.put(id, symTbl.size());
+		int pos = 0;
+		for (int i : symTbl.values()) {
+			if (i >= 0)
+				pos++;
+		}
+
+		symTbl.put(id, pos);
 		return EMPTY;
 	}
 
@@ -108,6 +114,9 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 
 	//region func
 
+	int nParams;
+	int nArgs;
+
 	@Override
 	public byte[] visitFuncDecl(FuncDeclContext ctx) {
 		String id = ttos(ctx.id);
@@ -119,18 +128,35 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 		Map<String, Integer> oldSymTbl = symTbl;
 		symTbl = new HashMap<>(symTbl);
 		returns = false;
-		int nOldSyms = symTbl.size();
 
 		byte[] res = visitChildren(ctx);
 
 		if (!returns)
 			throw new BPLCErrReturnMissing(ctx.stop);
 
-		int nSyms = symTbl.size() - nOldSyms;
+		Map<String, Integer> curSymTbl = new HashMap<>();
+		for (Map.Entry<String, Integer> e : symTbl.entrySet()) {
+			if (oldSymTbl.containsKey(e.getKey()))
+				continue;
+			curSymTbl.put(e.getKey(), e.getValue());
+		}
+
+		int nLocals = 0;
+		for (int off : curSymTbl.values()) {
+			if (off >= 0)
+				nLocals++;
+		}
+
+		System.out.println(id);
+		System.out.println(symTbl);
+		System.out.println(curSymTbl);
+		System.out.println("locals=" + nLocals);
+		System.out.println("++++++++++++++++");
+
 		symTbl = oldSymTbl;
 
-		if (nSyms > 0)
-			res = concat(LOCALS, Marshal.bytesS32BE(nSyms), res);
+		if (nLocals > 0)
+			res = concat(LOCALS, Marshal.bytesS32BE(nLocals), res);
 
 		fOff += res.length;
 
@@ -143,8 +169,38 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 		if (!funcTbl.containsKey(id))
 			throw new BPLCErrFuncUndeclared(ctx.id);
 
+		nArgs = 0;
+		byte[] args = visit(ctx.args);
+
 		int addr = funcTbl.get(id);
-		return concat(CALL, Marshal.bytesS32BE(addr), Marshal.bytesS32BE(0));
+		return concat(args, CALL, Marshal.bytesS32BE(addr), Marshal.bytesS32BE(nArgs));
+	}
+
+	@Override
+	public byte[] visitParamList(ParamListContext ctx) {
+		nParams = ctx.param().size();
+		return visitChildren(ctx);
+	}
+
+	@Override
+	public byte[] visitParam(ParamContext ctx) {
+		String id = ttos(ctx.id);
+		if (symTbl.containsKey(id))
+			throw new BPLCErrSymRedeclared(ctx.id);
+
+		symTbl.put(id, -3 - (nParams--));
+		return EMPTY;
+	}
+
+	@Override
+	public byte[] visitArgList(ArgListContext ctx) {
+		return visitChildren(ctx);
+	}
+
+	@Override
+	public byte[] visitArg(ArgContext ctx) {
+		nArgs++;
+		return visit(ctx.expr());
 	}
 
 	//endregion
