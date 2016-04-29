@@ -76,6 +76,20 @@ public class ErrorTest extends CompilerTestBase {
 		t.compile(this, "func main() int { }");
 	} // test eval via thrown exception
 
+	@Test(dataProvider = "provideCompileSwitch",
+		expectedExceptions = BPLCErrWrongNumArgs.class,
+		expectedExceptionsMessageRegExp = "1:58: error: too few arguments fo function 'x' - have 0 want 1")
+	public void testErrTooFewArgsOnCall(Target t) throws Exception {
+		t.compile(this, "func x(int i) int { return i; } func main() int { return x(); }");
+	} // test eval via thrown exception
+
+	@Test(dataProvider = "provideCompileSwitch",
+		expectedExceptions = BPLCErrWrongNumArgs.class,
+		expectedExceptionsMessageRegExp = "1:53: error: too many arguments fo function 'x' - have 1 want 0")
+	public void testErrTooManyArgsOnCall(Target t) throws Exception {
+		t.compile(this, "func x() int { return 0; } func main() int { return x(1); }");
+	} // test eval via thrown exception
+
 	//endregion
 
 	//region var

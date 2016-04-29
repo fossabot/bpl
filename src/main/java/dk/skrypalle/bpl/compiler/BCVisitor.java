@@ -28,6 +28,7 @@ package dk.skrypalle.bpl.compiler;
 import dk.skrypalle.bpl.antlr.*;
 import dk.skrypalle.bpl.antlr.BPLParser.*;
 import dk.skrypalle.bpl.compiler.err.*;
+import dk.skrypalle.bpl.compiler.type.*;
 import dk.skrypalle.bpl.util.*;
 import org.antlr.v4.runtime.tree.*;
 
@@ -41,7 +42,7 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 
 	private static final byte[] EMPTY = {};
 
-	private final Map<String, Integer> funcTbl;
+	private final Map<String, Func> funcTbl;
 
 	private Map<String, Integer> symTbl;
 	private boolean              returns;
@@ -59,7 +60,9 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 		if (!funcTbl.containsKey("main"))
 			throw new IllegalStateException("no main function found"); // TODO
 
-		return concat(CALL, Marshal.bytesS32BE(funcTbl.get("main")), Marshal.bytesS32BE(0), HALT, cld);
+		Func main = funcTbl.get("main");
+
+		return concat(CALL, Marshal.bytesS32BE(main.entry), Marshal.bytesS32BE(0), HALT, cld);
 	}
 
 	@Override
@@ -114,8 +117,8 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 
 	//region func
 
-	private int nParams;
-	private int nArgs;
+	private Func curF;
+	private int  nArgs;
 
 	@Override
 	public byte[] visitFuncDecl(FuncDeclContext ctx) {
@@ -123,7 +126,11 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 		if (funcTbl.containsKey(id))
 			throw new BPLCErrFuncRedeclared(ctx.id);
 
-		funcTbl.put(id, fOff);
+		curF = new Func();
+		curF.id = id;
+		curF.entry = fOff;
+
+		funcTbl.put(id, curF);
 
 		Map<String, Integer> oldSymTbl = symTbl;
 		symTbl = new HashMap<>(symTbl);
@@ -166,13 +173,17 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 		nArgs = 0;
 		byte[] args = visit(ctx.args);
 
-		int addr = funcTbl.get(id);
-		return concat(args, CALL, Marshal.bytesS32BE(addr), Marshal.bytesS32BE(nArgs));
+		Func f = funcTbl.get(id);
+		if (nArgs != f.nParams)
+			throw new BPLCErrWrongNumArgs(ctx.id, nArgs, f.nParams);
+
+		return concat(args, CALL, Marshal.bytesS32BE(f.entry), Marshal.bytesS32BE(nArgs));
 	}
 
 	@Override
 	public byte[] visitParamList(ParamListContext ctx) {
-		nParams = ctx.param().size();
+		curF.nParams = ctx.param().size();
+		curF.paramCnt = curF.nParams;
 		return visitChildren(ctx);
 	}
 
@@ -182,7 +193,7 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 		if (symTbl.containsKey(id))
 			throw new BPLCErrSymRedeclared(ctx.id);
 
-		symTbl.put(id, -3 - (nParams--));
+		symTbl.put(id, -3 - (curF.paramCnt--));
 		return EMPTY;
 	}
 

@@ -42,7 +42,7 @@ public final class Main {
 			"return a-b;",
 			"}",
 			"func main() int {",
-			"print(add(4,42));",
+			"print(add(3,42));",
 			"return 0;",
 			"}"
 		);

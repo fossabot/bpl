@@ -27,6 +27,7 @@ package dk.skrypalle.bpl.compiler;
 
 import dk.skrypalle.bpl.antlr.*;
 import dk.skrypalle.bpl.compiler.err.*;
+import dk.skrypalle.bpl.compiler.type.*;
 import org.antlr.v4.runtime.tree.*;
 
 import java.math.*;
@@ -37,7 +38,7 @@ import static dk.skrypalle.bpl.util.Parse.*;
 
 public class C99Visitor extends BPLBaseVisitor<String> {
 
-	private final Map<String, Integer> funcTbl;
+	private final Map<String, Func> funcTbl;
 
 	private Map<String, Integer> symTbl;
 	private boolean              returns;
@@ -107,13 +108,20 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 
 	//region func
 
+	private Func curF;
+	private int  nArgs;
+
 	@Override
 	public String visitFuncDecl(FuncDeclContext ctx) {
 		String id = ttos(ctx.id);
 		if (funcTbl.containsKey(id))
 			throw new BPLCErrFuncRedeclared(ctx.id);
 
-		funcTbl.put(id, funcTbl.size());
+		curF = new Func();
+		curF.id = id;
+		curF.entry = -1;    // unused in C99 target
+
+		funcTbl.put(id, curF);
 
 		Map<String, Integer> oldSymTbl = symTbl;
 		symTbl = new HashMap<>(symTbl);
@@ -143,11 +151,20 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 		if (!funcTbl.containsKey(id))
 			throw new BPLCErrFuncUndeclared(ctx.id);
 
-		return id + "(" + visit(ctx.args) + ")";
+		nArgs = 0;
+		String args = visit(ctx.args);
+
+		Func f = funcTbl.get(id);
+		if (nArgs != f.nParams)
+			throw new BPLCErrWrongNumArgs(ctx.id, nArgs, f.nParams);
+
+		return id + "(" + args + ")";
 	}
 
 	@Override
 	public String visitParamList(ParamListContext ctx) {
+		curF.nParams = ctx.param().size();
+		curF.paramCnt = curF.nParams;
 		return visit(ctx.param(), ", ");
 	}
 
@@ -168,6 +185,7 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 
 	@Override
 	public String visitArg(ArgContext ctx) {
+		nArgs++;
 		return visit(ctx.expr());
 	}
 
