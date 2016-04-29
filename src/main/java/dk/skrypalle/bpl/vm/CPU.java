@@ -95,6 +95,42 @@ class CPU {
 			res = lhs/rhs;
 			push(res);
 			break;
+		case ILT:
+			rhs = pop();
+			lhs = pop();
+			res = lhs < rhs ? 1 : 0;
+			push(res);
+			break;
+		case IGT:
+			rhs = pop();
+			lhs = pop();
+			res = lhs > rhs ? 1 : 0;
+			push(res);
+			break;
+		case ILTE:
+			rhs = pop();
+			lhs = pop();
+			res = lhs <= rhs ? 1 : 0;
+			push(res);
+			break;
+		case IGTE:
+			rhs = pop();
+			lhs = pop();
+			res = lhs >= rhs ? 1 : 0;
+			push(res);
+			break;
+		case IEQ:
+			rhs = pop();
+			lhs = pop();
+			res = lhs == rhs ? 1 : 0;
+			push(res);
+			break;
+		case INEQ:
+			rhs = pop();
+			lhs = pop();
+			res = lhs != rhs ? 1 : 0;
+			push(res);
+			break;
 		case ISTORE:
 			off = fetchS32();
 			sput(fp + off + 1, pop());

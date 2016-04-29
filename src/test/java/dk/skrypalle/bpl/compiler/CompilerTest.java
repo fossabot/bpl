@@ -56,6 +56,19 @@ public class CompilerTest extends CompilerTestBase {
 			{"int precedence -*", wrapMain("print(9-2*3);"),                                    "3"},
 			{"calc max int64",    wrapMain("print(18446744073709551568+42+5);"), "ffffffffffffffff"},
 			{"overflow int8",     wrapMain("print(255+1);"),                                  "100"},
+
+			{"ilt  true",         wrapMain("print(1 < 2);"),                                    "1"},
+			{"ilt  false",        wrapMain("print(2 < 2);"),                                    "0"},
+			{"igt  true",         wrapMain("print(3 > 2);"),                                    "1"},
+			{"igt  false",        wrapMain("print(2 > 2);"),                                    "0"},
+			{"ilte true",         wrapMain("print(2 <= 2);"),                                   "1"},
+			{"ilte false",        wrapMain("print(3 <= 1);"),                                   "0"},
+			{"igte true",         wrapMain("print(2 >= 2);"),                                   "1"},
+			{"igte false",        wrapMain("print(1 >= 2);"),                                   "0"},
+			{"ieq true",          wrapMain("print(2 == 2);"),                                   "1"},
+			{"ieq false",         wrapMain("print(1 == 2);"),                                   "0"},
+			{"ineq true",         wrapMain("print(1 != 2);"),                                   "1"},
+			{"ineq false",        wrapMain("print(2 != 2);"),                                   "0"},
 			//fmt:on
 
 			loadTestFile("var/simple"),
@@ -72,6 +85,7 @@ public class CompilerTest extends CompilerTestBase {
 			loadTestFile("branch/if_1"),
 
 			loadTestFile("recursion/factorial"),
+			loadTestFile("recursion/factorial_v2"),
 		};
 	}
 

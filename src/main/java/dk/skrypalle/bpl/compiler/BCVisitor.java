@@ -99,12 +99,6 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 
 	@Override
 	public byte[] visitBranch(BranchContext ctx) {
-		/* BRNE <true_addr>
-		 * <false_code>
-		 * JMP <end_if>
-		 * <true_code>
-		 */
-
 		boolean trueRet;
 		boolean falseRet;
 
@@ -292,10 +286,16 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 		byte op;
 		//fmt:off
 		switch (op_str) {
-		case "+": op = IADD; break;
-		case "-": op = ISUB; break;
-		case "*": op = IMUL; break;
-		case "/": op = IDIV; break;
+		case "+":  op = IADD; break;
+		case "-":  op = ISUB; break;
+		case "*":  op = IMUL; break;
+		case "/":  op = IDIV; break;
+		case "<":  op = ILT;  break;
+		case ">":  op = IGT;  break;
+		case "<=": op = ILTE; break;
+		case ">=": op = IGTE; break;
+		case "==": op = IEQ;  break;
+		case "!=": op = INEQ; break;
 		default : throw new IllegalStateException("unreachable");
 		}
 		//fmt:on

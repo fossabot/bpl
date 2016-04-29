@@ -29,21 +29,28 @@ import java.util.*;
 
 public final class Bytecode {
 
-	public static final byte NOP    = (byte) 0x00;
-	public static final byte POP    = (byte) 0x01;
-	public static final byte IPUSH  = (byte) 0x02;
-	public static final byte IADD   = (byte) 0x03;
-	public static final byte ISUB   = (byte) 0x04;
-	public static final byte IMUL   = (byte) 0x05;
-	public static final byte IDIV   = (byte) 0x06;
-	public static final byte ILOAD  = (byte) 0x07;
-	public static final byte ISTORE = (byte) 0x08;
-	public static final byte CALL   = (byte) 0x09;
-	public static final byte RET    = (byte) 0x10;
-	public static final byte LOCALS = (byte) 0x11;
+	public static final byte NOP   = (byte) 0x00;
+	public static final byte POP   = (byte) 0x01;
+	public static final byte IPUSH = (byte) 0x02;
+	public static final byte IADD  = (byte) 0x03;
+	public static final byte ISUB  = (byte) 0x04;
+	public static final byte IMUL  = (byte) 0x05;
+	public static final byte IDIV  = (byte) 0x06;
+	public static final byte ILT   = (byte) 0x07;
+	public static final byte IGT   = (byte) 0x08;
+	public static final byte ILTE  = (byte) 0x09;
+	public static final byte IGTE  = (byte) 0x10;
+	public static final byte IEQ   = (byte) 0x11;
+	public static final byte INEQ  = (byte) 0x12;
 
-	public static final byte JMP  = (byte) 0x12;
-	public static final byte BRNE = (byte) 0x13;
+	public static final byte ILOAD  = (byte) 0x30;
+	public static final byte ISTORE = (byte) 0x31;
+	public static final byte CALL   = (byte) 0x32;
+	public static final byte RET    = (byte) 0x33;
+	public static final byte LOCALS = (byte) 0x34;
+
+	public static final byte JMP  = (byte) 0x40;
+	public static final byte BRNE = (byte) 0x41;
 
 	public static final byte PRINT = (byte) 0xfe;
 	public static final byte HALT  = (byte) 0xff;
@@ -70,17 +77,24 @@ public final class Bytecode {
 		opCodes.put(ISUB,   new Op("isub",   0));
 		opCodes.put(IMUL,   new Op("imul",   0));
 		opCodes.put(IDIV,   new Op("idiv",   0));
+		opCodes.put(ILT,    new Op("igt",    0));
+		opCodes.put(IGT,    new Op("ilt",    0));
+		opCodes.put(ILTE,   new Op("igte",   0));
+		opCodes.put(IGTE,   new Op("ilte",   0));
+		opCodes.put(IEQ,    new Op("ieq",    0));
+		opCodes.put(INEQ,   new Op("ineq",   0));
+
 		opCodes.put(ILOAD,  new Op("iload",  4));
 		opCodes.put(ISTORE, new Op("istore", 4));
 		opCodes.put(CALL,   new Op("call",   8));
 		opCodes.put(RET,    new Op("ret",    0));
 		opCodes.put(LOCALS, new Op("locals", 4));
 
-		opCodes.put(JMP,  new Op("jmp", 4));
-		opCodes.put(BRNE, new Op("brne", 4));
+		opCodes.put(JMP,    new Op("jmp",    4));
+		opCodes.put(BRNE,   new Op("brne",   4));
 
-		opCodes.put(PRINT, new Op("print", 0));
-		opCodes.put(HALT,  new Op("halt",  0));
+		opCodes.put(PRINT,  new Op("print",  0));
+		opCodes.put(HALT,   new Op("halt",   0));
 		//fmt:on
 	}
 

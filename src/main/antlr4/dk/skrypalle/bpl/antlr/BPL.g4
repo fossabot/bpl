@@ -52,12 +52,13 @@ arg       : expr                                                              ;
 argList   : arg (',' arg)*                                                    ;
 
 expr
-	: lhs=expr op=('/'|'*') rhs=expr #BinOpExpr
-	| lhs=expr op=('+'|'-') rhs=expr #BinOpExpr
-	| varAssign                      #AssignExpr
-	| funcCall                       #FuncCallExpr
-	| val=INT                        #IntExpr
-	| val=ID                         #IdExpr
+	: lhs=expr op=('/'|'*')                     rhs=expr #BinOpExpr
+	| lhs=expr op=('+'|'-')                     rhs=expr #BinOpExpr
+	| lhs=expr op=('<'|'>'|'<='|'>='|'=='|'!=') rhs=expr #BinOpExpr
+	| varAssign                                          #AssignExpr
+	| funcCall                                           #FuncCallExpr
+	| val=INT                                            #IntExpr
+	| val=ID                                             #IdExpr
 	;
 
 INT : [0-9]+            ;
