@@ -49,7 +49,7 @@ public final class IO {
 	}
 
 	public static String readAll(InputStream in) {
-		Scanner sc = new Scanner(in).useDelimiter("\\A");
+		Scanner sc = new Scanner(in, "UTF8").useDelimiter("\\A");
 		return sc.hasNext() ? sc.next() : "";
 	}
 
