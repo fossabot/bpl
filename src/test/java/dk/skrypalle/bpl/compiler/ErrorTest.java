@@ -71,7 +71,7 @@ public class ErrorTest extends CompilerTestBase {
 
 	@Test(dataProvider = "provideCompileSwitch",
 		expectedExceptions = BPLCErrReturnMissing.class,
-		expectedExceptionsMessageRegExp = "1:19: error: missing return statement before '}'")
+		expectedExceptionsMessageRegExp = "1:19: error: missing return statement before '\\}'")
 	public void testErrReturnMissing(Target t) throws Exception {
 		t.compile(this, "func main() int { }");
 	} // test eval via thrown exception
@@ -109,6 +109,20 @@ public class ErrorTest extends CompilerTestBase {
 		expectedExceptionsMessageRegExp = "1:94: error: wrong number of arguments to function 'x' - have 1 want \\[0, 2\\]")
 	public void testErrWrongNumArgsOnOverloadCall(Target t) throws Exception {
 		t.compile(this, "func x() int { return 0; } func x(int a, int b) int { return a+b; } func main() int { return x(1); }");
+	} // test eval via thrown exception
+
+	@Test(dataProvider = "provideCompileSwitch",
+		expectedExceptions = BPLCErrStatementUnreachable.class,
+		expectedExceptionsMessageRegExp = "1:58: error: unreachable statement 'return'")
+	public void testErrStatementUnreachableInBranch(Target t) throws Exception {
+		t.compile(this, "func main() int { if(1) { return 1; } else { return 2; } return 0; }");
+	} // test eval via thrown exception
+
+	@Test(dataProvider = "provideCompileSwitch",
+		expectedExceptions = BPLCErrReturnMissing.class,
+		expectedExceptionsMessageRegExp = "1:48: error: missing return statement before '\\}'")
+	public void testErrReturnMissingInBranch(Target t) throws Exception {
+		t.compile(this, "func main() int { if(1) { return 1; } else { } }");
 	} // test eval via thrown exception
 
 	//endregion

@@ -40,20 +40,17 @@ public final class Main {
 
 	public static void main(String[] args) throws IOException {
 		String bpl = String.join("\n",
-			"func fact(int n) int {",
-			"   if(n) {",
-			"       if(n-1) {",
-			"           return n*fact(n-1);",
-			"       } else {", // n==1
-			"           return 1;",
-			"       }",
-			"   } else {", // n==0
-			"       return 1;",
-			"   }",
-			"}",
 			"func main() int {",
-			"   print(fact(20));",
-			"   return 0;",
+			"   if(1) {",
+			"       if(1) {",
+			"           return 1;",
+			"       } else {",
+			"           return 2;",
+			"       }",
+			"       return 1;", // unreachable
+			"   } else {",
+			"       return 2;",
+			"   }",
 			"}"
 		);
 

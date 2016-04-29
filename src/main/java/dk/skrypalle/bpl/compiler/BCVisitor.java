@@ -80,15 +80,14 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 
 	@Override
 	public byte[] visitStmt(StmtContext ctx) {
+		if (returns)
+			throw new BPLCErrStatementUnreachable(ctx.start);
 		return visitChildren(ctx);
 	}
 
 	@Override
 	public byte[] visitRet(RetContext ctx) {
-//		if (returns)
-//			throw new IllegalStateException("function already returned"); // TODO
 		returns = true;
-
 		return concat(visitChildren(ctx), RET);
 	}
 
@@ -106,9 +105,20 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 		 * <true_code>
 		 */
 
+		boolean trueRet;
+		boolean falseRet;
+
 		byte[] cond = visit(ctx.cond);
+
+		returns = false;
 		byte[] onTrue = visit(ctx.onTrue);
+		trueRet = returns;
+
+		returns = false;
 		byte[] onFalse = visit(ctx.onFalse);
+		falseRet = returns;
+
+		returns = trueRet && falseRet;
 
 		return concat(
 			cond,

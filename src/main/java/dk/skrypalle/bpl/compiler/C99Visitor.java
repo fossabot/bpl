@@ -78,15 +78,14 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 
 	@Override
 	public String visitStmt(StmtContext ctx) {
+		if (returns)
+			throw new BPLCErrStatementUnreachable(ctx.start);
 		return visitChildren(ctx) + ";\n";
 	}
 
 	@Override
 	public String visitRet(RetContext ctx) {
-//		if (returns)
-//			throw new IllegalStateException("function already returned"); // TODO
 		returns = true;
-
 		return "return " + visitChildren(ctx);
 	}
 
@@ -97,11 +96,24 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 
 	@Override
 	public String visitBranch(BranchContext ctx) {
+		boolean trueRet;
+		boolean falseRet;
+
+		returns = false;
+		String onTrue = visit(ctx.onTrue).trim();
+		trueRet = returns;
+
+		returns = false;
+		String onFalse = visit(ctx.onFalse).trim();
+		falseRet = returns;
+
+		returns = trueRet && falseRet;
+
 		return String.join("\n",
 			"if (" + visit(ctx.cond) + ") {",
-			visit(ctx.onTrue).trim(),
+			onTrue,
 			"} else {",
-			visit(ctx.onFalse).trim(),
+			onFalse,
 			"}"
 		);
 	}
