@@ -35,13 +35,9 @@ public abstract class BPLCErr extends Error implements TokenAdapter {
 
 	private final TokenAdapter t;
 
-	BPLCErr(TokenAdapter t) {
-		this.t = t;
-	}
+	BPLCErr(TokenAdapter t) { this.t = t; }
 
-	BPLCErr(Token t) {
-		this(TokenAdapter.from(t));
-	}
+	BPLCErr(Token t) { this(TokenAdapter.from(t)); }
 
 	abstract String msg();
 
@@ -54,26 +50,18 @@ public abstract class BPLCErr extends Error implements TokenAdapter {
 	}
 
 	@Override
-	public final String getLocalizedMessage() {
-		return getMessage();
-	}
+	public final String getLocalizedMessage() { return getMessage(); }
 
 	//region TokenAdapter delegate
 
 	@Override
-	public int row() {
-		return t.row();
-	}
+	public int row() { return t.row(); }
 
 	@Override
-	public int col() {
-		return t.col();
-	}
+	public int col() { return t.col(); }
 
 	@Override
-	public String text() {
-		return t.text();
-	}
+	public String text() { return t.text(); }
 
 	//endregion
 

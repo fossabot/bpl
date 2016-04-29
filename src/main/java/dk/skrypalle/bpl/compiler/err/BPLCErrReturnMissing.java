@@ -31,13 +31,11 @@ public class BPLCErrReturnMissing extends BPLCErr {
 
 	private static final long serialVersionUID = 7656020722422323204L;
 
-	public BPLCErrReturnMissing(TokenAdapter t) {super(t); }
+	public BPLCErrReturnMissing(TokenAdapter t) { super(t); }
 
-	public BPLCErrReturnMissing(Token t) {super(t);}
+	public BPLCErrReturnMissing(Token t) { super(t); }
 
 	@Override
-	String msg() {
-		return "missing return statement before '%s'";
-	}
+	String msg() { return "missing return statement before '%s'"; }
 
 }

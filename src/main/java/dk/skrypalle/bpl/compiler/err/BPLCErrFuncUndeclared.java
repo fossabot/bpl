@@ -36,8 +36,6 @@ public class BPLCErrFuncUndeclared extends BPLCErr {
 	public BPLCErrFuncUndeclared(Token t) { super(t); }
 
 	@Override
-	String msg() {
-		return "function '%s' undeclared";
-	}
+	String msg() { return "function '%s' undeclared"; }
 
 }

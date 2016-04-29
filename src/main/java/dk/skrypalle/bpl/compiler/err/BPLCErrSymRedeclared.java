@@ -31,13 +31,11 @@ public class BPLCErrSymRedeclared extends BPLCErr {
 
 	private static final long serialVersionUID = 4775927756491259290L;
 
-	public BPLCErrSymRedeclared(TokenAdapter t) {super(t); }
+	public BPLCErrSymRedeclared(TokenAdapter t) { super(t); }
 
-	public BPLCErrSymRedeclared(Token t) {super(t);}
+	public BPLCErrSymRedeclared(Token t) { super(t); }
 
 	@Override
-	String msg() {
-		return "symbol '%s' redeclared";
-	}
+	String msg() { return "symbol '%s' redeclared"; }
 
 }

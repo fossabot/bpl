@@ -31,13 +31,11 @@ public class BPLCErrFuncRedeclared extends BPLCErr {
 
 	private static final long serialVersionUID = 923028093292039261L;
 
-	public BPLCErrFuncRedeclared(TokenAdapter t) {super(t); }
+	public BPLCErrFuncRedeclared(TokenAdapter t) { super(t); }
 
-	public BPLCErrFuncRedeclared(Token t) {super(t);}
+	public BPLCErrFuncRedeclared(Token t) { super(t); }
 
 	@Override
-	String msg() {
-		return "function '%s' redeclared";
-	}
+	String msg() { return "function '%s' redeclared"; }
 
 }

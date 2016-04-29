@@ -36,8 +36,6 @@ public class BPLCErrSymUndeclared extends BPLCErr {
 	public BPLCErrSymUndeclared(Token t) { super(t); }
 
 	@Override
-	String msg() {
-		return "symbol '%s' undeclared";
-	}
+	String msg() { return "symbol '%s' undeclared"; }
 
 }
