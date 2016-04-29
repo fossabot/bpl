@@ -1,0 +1,11 @@
+func main() int {
+	if(1) {
+		print(81);
+	} else {
+		print(42);
+	}
+	return 0;
+}
+
+::exp
+51

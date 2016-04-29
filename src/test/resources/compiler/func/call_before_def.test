@@ -1,0 +1,11 @@
+func main() int {
+	print(sub(4, 42));
+	return 0;
+}
+
+func sub(int a, int b) int {
+	return a-b;
+}
+
+::exp
+ffffffffffffffda

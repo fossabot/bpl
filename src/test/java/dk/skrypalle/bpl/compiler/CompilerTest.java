@@ -36,107 +36,83 @@ public class CompilerTest extends CompilerTestBase {
 	//region data provider
 
 	@DataProvider
-	public Object[][] provideData() {
+	public Object[][] provideData() throws IOException {
 		return new Object[][]{
-			{wrapMain("print(0);"), "0"},
-			{wrapMain("print(1);"), "1"},
-			{wrapMain("print(255);"), "ff"},
-			{wrapMain("print(256);"), "100"},
-			{wrapMain("print(1234567890);"), "499602d2"},
-			{wrapMain("print(1+42+5+6);"), "36"},
-			{wrapMain("print(18446744073709551568+42+5);"), "ffffffffffffffff"},
-			{wrapMain("print(255+1);print(65535);"), "100ffff"},
-			{wrapMain("print(3-2);"), "1"},
-			{wrapMain("print(2*3);"), "6"},
-			{wrapMain("print(6/2);"), "3"},
-			{wrapMain("print(7/2);"), "3"},
-			{wrapMain("print(8-2+5);"), "b"},
-			{wrapMain("print(8/2*4);"), "10"},
-			{wrapMain("print(8/3*4);"), "8"},
-			{wrapMain("print(2+3*3);"), "b"},
-			{wrapMain("print(9-2*3);"), "3"},
+			//fmt:off
+			{"print int8",        wrapMain("print(0);"),                                        "0"},
+			{"print int8",        wrapMain("print(1);"),                                        "1"},
+			{"print int8",        wrapMain("print(255);"),                                     "ff"},
+			{"print int16",       wrapMain("print(256);"),                                    "100"},
+			{"print int32",       wrapMain("print(1234567890);"),                        "499602d2"},
+			{"int add",           wrapMain("print(1+42+5+6);"),                                "36"},
+			{"int sub",           wrapMain("print(3-2);"),                                      "1"},
+			{"int mul",           wrapMain("print(2*3);"),                                      "6"},
+			{"int div",           wrapMain("print(6/2);"),                                      "3"},
+			{"int div",           wrapMain("print(7/2);"),                                      "3"},
+			{"int precedence -+", wrapMain("print(8-2+5);"),                                    "b"},
+			{"int precedence /*", wrapMain("print(8/2*4);"),                                   "10"},
+			{"int precedence /*", wrapMain("print(8/3*4);"),                                    "8"},
+			{"int precedence +*", wrapMain("print(2+3*3);"),                                    "b"},
+			{"int precedence -*", wrapMain("print(9-2*3);"),                                    "3"},
+			{"calc max int64",    wrapMain("print(18446744073709551568+42+5);"), "ffffffffffffffff"},
+			{"overflow int8",     wrapMain("print(255+1);"),                                  "100"},
+			//fmt:on
 
-			{wrapMain("var foo int; foo=42; print(foo);"), "2a"},
-			{wrapMain("var foo int; foo=42; print(foo+2);"), "2c"},
-			{wrapMain("var a int; var b int; a=2; b=5; print(a+b);"), "7"},
-			{wrapMain("var a int; var b int; var c int; a=2; b=5; c=9; print(c*a+b/a);"), "14"},
+			loadTestFile("var/simple"),
+			loadTestFile("var/simple_calc"),
+			loadTestFile("var/multi"),
+			loadTestFile("var/complex"),
 
-			{"func rnd() int { return 4; } func main() int { print(rnd()); return 0; }", "4"},
-			{"func rnd() int { var i int; i=42; return i; } func main() int { var i int; i=8; print(rnd()+i); return 0; }", "32"},
+			loadTestFile("func/call_simple"),
+			loadTestFile("func/call_simple_params"),
+			loadTestFile("func/call_before_and_after_def"),
+			loadTestFile("func/call_before_def"),
 
-			{"func add(int a, int b) int { return a+b; } func main() int { print(add(4,42)); return 0; }", "2e"},
-			{"func sub(int a, int b) int { return a-b; } func main() int { print(sub(4,42)); return 0; }", "ffffffffffffffda"},
+			loadTestFile("branch/if_0"),
+			loadTestFile("branch/if_1"),
 
-			{"func main() int { print(sub(4,42)); return 0; } func sub(int a, int b) int { return a-b; }", "ffffffffffffffda"},
-
-			{"" +
-				"func main() int {" +
-				"   if(0) {" +
-				"       print(81);" +
-				"   } else {" +
-				"       print(42);" +
-				"   }" +
-				"   return 0;" +
-				"}", "2a"
-			},
-			{"" +
-				"func main() int {" +
-				"   if(1) {" +
-				"       print(81);" +
-				"   } else {" +
-				"       print(42);" +
-				"   }" +
-				"   return 0;" +
-				"}", "51"
-			},
-			{"" +
-				"func fact(int n) int {" +
-				"   if(n) {" +
-				"       if(n-1) {" +
-				"           return n*fact(n-1);" +
-				"       } else {" + // n==1
-				"           return 1;" +
-				"       }" +
-				"   } else {" + // n==0
-				"       return 1;" +
-				"   }" +
-				"}" +
-				"func main() int {" +
-				"   print(fact(20));" +
-				"   return 0;" +
-				"}", "21c3677c82b40000"
-			},
+			loadTestFile("recursion/factorial"),
 		};
 	}
 
 	//endregion
 
+	private String[] loadTestFile(String name) throws IOException {
+		try (InputStream in = CompilerTest.class.getResourceAsStream("/compiler/" + name + ".test")) {
+			if (in == null)
+				throw new IllegalArgumentException(String.format("test '%s' not found", name));
+			String[] res = IO.readAll(in).split("::exp");
+
+			return new String[]{name, res[0].trim(), res[1].trim()};
+		}
+	}
+
 	//region targets
 
 	@Test(dataProvider = "provideData")
-	public void testTargetBC(String bpl, String exp) {
+	public void testTargetBC(String desc, String bpl, String exp) {
 		byte[] bc = compileBC(bpl);
 		VMExecRes res = runBC(bc);
 
-		Assert.assertEquals(res.exit, 0, "BPLVM exit status");
-		Assert.assertEquals(res.out, exp, "BPLVM out stream");
-		Assert.assertEquals(res.err, "", "BPLVM err stream");
-		Assert.assertEquals(res.dbg, "", "BPLVM dbg stream");
+		Assert.assertEquals(res.exit, 0, "BPLVM exit status (" + desc + ")");
+		Assert.assertEquals(res.out, exp, "BPLVM out stream (" + desc + ")");
+		Assert.assertEquals(res.err, "", "BPLVM err stream (" + desc + ")");
+		Assert.assertEquals(res.dbg, "", "BPLVM dbg stream (" + desc + ")");
 	}
 
 	@Test(dataProvider = "provideData")
-	public void testTargetC99(String bpl, String exp) throws IOException {
+	public void testTargetC99(String desc, String bpl, String exp) throws IOException {
 		ExecRes gcc = compileC99(bpl);
 		if (!gcc.isEmpty())
 			System.err.println(gcc);
-		Assert.assertEquals(gcc.exit, 0, "gcc exit status");
-		Assert.assertEquals(gcc.out, "", "gcc out stream");
-		Assert.assertEquals(gcc.err, "", "gcc err stream");
+		Assert.assertEquals(gcc.exit, 0, "gcc exit status (" + desc + ")");
+		Assert.assertEquals(gcc.out, "", "gcc out stream (" + desc + ")");
+		Assert.assertEquals(gcc.err, "", "gcc err stream (" + desc + ")");
 
 		ExecRes run = runC99();
-		Assert.assertEquals(run.exit, 0, "run exit status");
-		Assert.assertEquals(run.out, exp, "run out stream");
-		Assert.assertEquals(run.err, "", "run err stream");
+		Assert.assertEquals(run.exit, 0, "run exit status (" + desc + ")");
+		Assert.assertEquals(run.out, exp, "run out stream (" + desc + ")");
+		Assert.assertEquals(run.err, "", "run err stream (" + desc + ")");
 	}
 
 	//endregion

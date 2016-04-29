@@ -1,0 +1,11 @@
+func double(int i) int {
+	return i*2;
+}
+
+func main() int {
+	print(double(2));
+	return 0;
+}
+
+::exp
+4

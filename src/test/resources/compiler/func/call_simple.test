@@ -1,0 +1,11 @@
+func rnd() int {
+	return 4;
+}
+
+func main() int {
+	print(rnd());
+	return 0;
+}
+
+::exp
+4

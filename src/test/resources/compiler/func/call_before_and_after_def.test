@@ -1,0 +1,16 @@
+func add(int a, int b) int {
+	return a+b;
+}
+
+func main() int {
+	print(add(4, 42));
+	print(sub(4, 42));
+	return 0;
+}
+
+func sub(int a, int b) int {
+	return a-b;
+}
+
+::exp
+2effffffffffffffda
