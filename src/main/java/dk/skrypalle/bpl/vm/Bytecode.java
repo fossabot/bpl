@@ -50,7 +50,8 @@ public final class Bytecode {
 	public static final byte LOCALS = (byte) 0x34;
 
 	public static final byte JMP  = (byte) 0x40;
-	public static final byte BRNE = (byte) 0x41;
+	public static final byte BREQ = (byte) 0x41;
+	public static final byte BRNE = (byte) 0x42;
 
 	public static final byte PRINT = (byte) 0xfe;
 	public static final byte HALT  = (byte) 0xff;
@@ -91,6 +92,7 @@ public final class Bytecode {
 		opCodes.put(LOCALS, new Op("locals", 4));
 
 		opCodes.put(JMP,    new Op("jmp",    4));
+		opCodes.put(BREQ,    new Op("bre",    4));
 		opCodes.put(BRNE,   new Op("brne",   4));
 
 		opCodes.put(PRINT,  new Op("print",  0));

@@ -38,19 +38,30 @@ import java.util.*;
 
 public final class Main {
 
+	private static boolean x(int i) {
+		System.out.print(i);
+		return i != 0;
+	}
+
+	private static int main() {
+		System.out.print((x(0) && x(1) || x(1)) ? 1 : 0);
+		System.out.print((x(0) || x(1) && x(1)) ? 1 : 0);
+		System.out.println();
+		return 0;
+	}
+
 	public static void main(String[] args) throws IOException {
+		main();
 		String bpl = String.join("\n",
+			"func x(int i) int {",
+			"    print(i);",
+			"    return i;",
+			"}",
+			"",
 			"func main() int {",
-			"   if(1) {",
-			"       if(1) {",
-			"           return 1;",
-			"       } else {",
-			"           return 2;",
-			"       }",
-			"       return 1;", // unreachable
-			"   } else {",
-			"       return 2;",
-			"   }",
+			"    print(x(0) && x(1) || x(1));",
+			"    print(x(0) || x(1) && x(1));",
+			"    return 0;",
 			"}"
 		);
 

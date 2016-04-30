@@ -118,7 +118,7 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 			cond,
 			BRNE, Marshal.bytesS32BE(onFalse.length + 5),
 			onFalse,
-			JMP, Marshal.bytesS32BE(onTrue.length + 4),
+			JMP, Marshal.bytesS32BE(onTrue.length),
 			onTrue
 		);
 	}
@@ -286,20 +286,55 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 		byte op;
 		//fmt:off
 		switch (op_str) {
-		case "+":  op = IADD; break;
-		case "-":  op = ISUB; break;
-		case "*":  op = IMUL; break;
-		case "/":  op = IDIV; break;
-		case "<":  op = ILT;  break;
-		case ">":  op = IGT;  break;
+		case "+" : op = IADD; break;
+		case "-" : op = ISUB; break;
+		case "*" : op = IMUL; break;
+		case "/" : op = IDIV; break;
+		case "<" : op = ILT;  break;
+		case ">" : op = IGT;  break;
 		case "<=": op = ILTE; break;
 		case ">=": op = IGTE; break;
 		case "==": op = IEQ;  break;
 		case "!=": op = INEQ; break;
-		default : throw new IllegalStateException("unreachable");
+		default  : throw new IllegalStateException("unreachable");
 		}
 		//fmt:on
 		return concat(lhs, rhs, op);
+	}
+
+	@Override
+	public byte[] visitBoolOpExpr(BoolOpExprContext ctx) {
+		byte[] lhs = visit(ctx.lhs);
+		byte[] rhs = visit(ctx.rhs);
+		String op_str = ttos(ctx.op);
+		byte op;
+		int v0;
+		int v1;
+		//fmt:off
+		switch (op_str) {
+		case "&&": op = BREQ; v0 = 1; v1 = 0; break;
+		case "||": op = BRNE; v0 = 0; v1 = 1; break;
+		default  : throw new IllegalStateException("unreachable");
+		}
+		//fmt:on
+
+		int off1 = rhs.length + 5 + 9 + 5;
+		int off2 = 9 + 5;
+		int off3 = 9;
+
+		return concat(
+			/* ll=lhs.length;  */
+			/* rl=rhs.length;  */
+			/* rel. offsets    */
+			/*               0 */ lhs,
+			/*              ll */ op, Marshal.bytesS32BE(off1),   // op(BRNE/BREQ) :L1
+			/*               5 */ rhs,
+			/*              rl */ op, Marshal.bytesS32BE(off2),   // op(BRNE/BREQ) :L1
+			/*               5 */ IPUSH, Marshal.bytesS64BE(v0),
+			/*               9 */ JMP, Marshal.bytesS32BE(off3),  // JMP  :END
+			/* L:L1          5 */ IPUSH, Marshal.bytesS64BE(v1)
+			/* L:END         9 */
+		);
 	}
 
 	@Override

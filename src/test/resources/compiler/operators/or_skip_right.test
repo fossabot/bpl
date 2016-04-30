@@ -1,0 +1,12 @@
+func x(int i) int {
+	print(i);
+	return i;
+}
+
+func main() int {
+	print(x(1) || x(0));
+	return 0;
+}
+
+::exp
+11

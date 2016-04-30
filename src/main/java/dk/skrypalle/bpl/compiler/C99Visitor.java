@@ -263,6 +263,11 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 	}
 
 	@Override
+	public String visitBoolOpExpr(BoolOpExprContext ctx) {
+		return "(" + visit(ctx.lhs) + ttos(ctx.op) + visit(ctx.rhs) + ")";
+	}
+
+	@Override
 	public String visitAssignExpr(AssignExprContext ctx) {
 		return visit(ctx.varAssign());
 	}

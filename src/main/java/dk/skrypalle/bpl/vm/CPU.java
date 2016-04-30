@@ -167,12 +167,21 @@ class CPU {
 				push((long) (Math.random()*23452345.0));
 			break;
 		case JMP:
-			ip += fetchS32();
+			off = fetchS32();
+			ip += off;
+			if (ip < 0 || ip > code.length)
+				throw new ArrayIndexOutOfBoundsException(String.format("jmp to invalid addr 0x%08x --> 0x%08x\n", ip - off, ip));
 			break;
 		case BRNE:
 			off = fetchS32();
 			val = pop();
 			if (val != 0)
+				ip += off;
+			break;
+		case BREQ:
+			off = fetchS32();
+			val = pop();
+			if (val == 0)
 				ip += off;
 			break;
 		case PRINT:

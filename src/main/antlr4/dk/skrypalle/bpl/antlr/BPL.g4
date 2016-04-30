@@ -55,6 +55,8 @@ expr
 	: lhs=expr op=('/'|'*')                     rhs=expr #BinOpExpr
 	| lhs=expr op=('+'|'-')                     rhs=expr #BinOpExpr
 	| lhs=expr op=('<'|'>'|'<='|'>='|'=='|'!=') rhs=expr #BinOpExpr
+	| lhs=expr op= '&&'                         rhs=expr #BoolOpExpr
+	| lhs=expr op= '||'                         rhs=expr #BoolOpExpr
 	| varAssign                                          #AssignExpr
 	| funcCall                                           #FuncCallExpr
 	| val=INT                                            #IntExpr

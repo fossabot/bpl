@@ -57,10 +57,10 @@ public class CompilerTest extends CompilerTestBase {
 			{"calc max int64",    wrapMain("print(18446744073709551568+42+5);"), "ffffffffffffffff"},
 			{"overflow int8",     wrapMain("print(255+1);"),                                  "100"},
 
-			{"ilt  true",         wrapMain("print(1 < 2);"),                                    "1"},
-			{"ilt  false",        wrapMain("print(2 < 2);"),                                    "0"},
-			{"igt  true",         wrapMain("print(3 > 2);"),                                    "1"},
-			{"igt  false",        wrapMain("print(2 > 2);"),                                    "0"},
+			{"ilt true",          wrapMain("print(1 < 2);"),                                    "1"},
+			{"ilt false",         wrapMain("print(2 < 2);"),                                    "0"},
+			{"igt true",          wrapMain("print(3 > 2);"),                                    "1"},
+			{"igt false",         wrapMain("print(2 > 2);"),                                    "0"},
 			{"ilte true",         wrapMain("print(2 <= 2);"),                                   "1"},
 			{"ilte false",        wrapMain("print(3 <= 1);"),                                   "0"},
 			{"igte true",         wrapMain("print(2 >= 2);"),                                   "1"},
@@ -69,6 +69,13 @@ public class CompilerTest extends CompilerTestBase {
 			{"ieq false",         wrapMain("print(1 == 2);"),                                   "0"},
 			{"ineq true",         wrapMain("print(1 != 2);"),                                   "1"},
 			{"ineq false",        wrapMain("print(2 != 2);"),                                   "0"},
+
+			{"and true",          wrapMain("print(1 && 1);"),                                   "1"},
+			{"and left false",    wrapMain("print(0 && 1);"),                                   "0"},
+			{"and right false",   wrapMain("print(1 && 0);"),                                   "0"},
+			{"or false",          wrapMain("print(0 || 0);"),                                   "0"},
+			{"or left true",      wrapMain("print(0 || 1);"),                                   "1"},
+			{"or right true",     wrapMain("print(1 || 0);"),                                   "1"},
 			//fmt:on
 
 			loadTestFile("var/simple"),
@@ -86,6 +93,11 @@ public class CompilerTest extends CompilerTestBase {
 
 			loadTestFile("recursion/factorial"),
 			loadTestFile("recursion/factorial_v2"),
+			loadTestFile("recursion/fibonacci"),
+
+			loadTestFile("operators/and_skip_right"),
+			loadTestFile("operators/or_skip_right"),
+			loadTestFile("operators/and_or_precedence"),
 		};
 	}
 
