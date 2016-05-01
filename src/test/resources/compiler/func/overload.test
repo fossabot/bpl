@@ -1,10 +1,10 @@
 func f() int                      { return 0; }
-func f(int i) int                 { return i; }
-func f(int i, int j) int          { return j; }
-func f(string i) string           { return i; }
-func f(string i, string j) string { return j; }
-func f(int i, string j) string    { return j; }
-func f(string i, int j) int       { return j; }
+func f(i int) int                 { return i; }
+func f(i int, j int) int          { return j; }
+func f(i string) string           { return i; }
+func f(i string, j string) string { return j; }
+func f(i int, j string) string    { return j; }
+func f(i string, j int) int       { return j; }
 
 func main() int {
 	print(f());

@@ -80,7 +80,7 @@ public class ErrorTest extends CompilerTestBase {
 		expectedExceptions = BPLCErrWrongNumArgs.class,
 		expectedExceptionsMessageRegExp = "1:58: error: too few arguments to function 'x' - have \\[\\] want \\[\\[INT\\]\\]")
 	public void testErrTooFewArgsOnCall(Target t) throws Exception {
-		t.compile(this, "func x(int i) int { return i; } func main() int { return x(); }");
+		t.compile(this, "func x(i int) int { return i; } func main() int { return x(); }");
 	} // test eval via thrown exception
 
 	@Test(dataProvider = "provideCompileSwitch",
@@ -94,21 +94,21 @@ public class ErrorTest extends CompilerTestBase {
 		expectedExceptions = BPLCErrWrongNumArgs.class,
 		expectedExceptionsMessageRegExp = "1:85: error: too many arguments to function 'x' - have \\[INT, INT\\] want \\[\\[\\], \\[INT\\]\\]")
 	public void testErrTooManyArgsOnOverloadCall(Target t) throws Exception {
-		t.compile(this, "func x() int { return 0; } func x(int a) int { return a; } func main() int { return x(1,2); }");
+		t.compile(this, "func x() int { return 0; } func x(a int) int { return a; } func main() int { return x(1,2); }");
 	} // test eval via thrown exception
 
 	@Test(dataProvider = "provideCompileSwitch",
 		expectedExceptions = BPLCErrWrongNumArgs.class,
 		expectedExceptionsMessageRegExp = "1:99: error: too few arguments to function 'x' - have \\[\\] want \\[\\[INT\\], \\[INT, INT\\]\\]")
 	public void testErrTooFewArgsOnOverloadCall(Target t) throws Exception {
-		t.compile(this, "func x(int a) int { return a; } func x(int a, int b) int { return a+b; } func main() int { return x(); }");
+		t.compile(this, "func x(a int) int { return a; } func x(a int, b int) int { return a+b; } func main() int { return x(); }");
 	} // test eval via thrown exception
 
 	@Test(dataProvider = "provideCompileSwitch",
 		expectedExceptions = BPLCErrWrongNumArgs.class,
 		expectedExceptionsMessageRegExp = "1:94: error: wrong number of arguments to function 'x' - have \\[INT\\] want \\[\\[\\], \\[INT, INT\\]\\]")
 	public void testErrWrongNumArgsOnOverloadCall(Target t) throws Exception {
-		t.compile(this, "func x() int { return 0; } func x(int a, int b) int { return a+b; } func main() int { return x(1); }");
+		t.compile(this, "func x() int { return 0; } func x(a int, b int) int { return a+b; } func main() int { return x(1); }");
 	} // test eval via thrown exception
 
 	@Test(dataProvider = "provideCompileSwitch",

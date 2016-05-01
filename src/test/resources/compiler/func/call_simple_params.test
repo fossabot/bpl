@@ -1,4 +1,4 @@
-func double(int i) int {
+func double(i int) int {
 	return i*2;
 }
 

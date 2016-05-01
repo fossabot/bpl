@@ -52,16 +52,16 @@ public final class Main {
 	public static void main(String[] args) throws IOException {
 //		main();
 		String bpl = String.join("\n",
-			"func add(int a, int b) int {",
+			"func add(a int, b int) int {",
 			"   return a+b;",
 			"}",
-			"func add(int a, string b) int {",
+			"func add(a int, b string) int {",
 			"   return a;",
 			"}",
 			"func main() int {",
 			"    var s string;",
 			"    s = \"str\";",
-			"    add(1);",
+			"    add(1,2);",
 			"    return 0;",
 			"}"
 		);

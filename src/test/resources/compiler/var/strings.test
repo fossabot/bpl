@@ -1,4 +1,4 @@
-func p_str(string s, int i) string {
+func p_str(s string, i int) string {
 	if(i) {
 		print("Hello, ");
 	} else {
@@ -8,7 +8,7 @@ func p_str(string s, int i) string {
 	return s;
 }
 
-func p_str(string s0, string s1) string {
+func p_str(s0 string, s1 string) string {
    p_str(s0, 1);
    print(" and ");
    p_str(s1, 0);

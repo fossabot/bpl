@@ -46,7 +46,7 @@ varDecl   : 'var' id=ID typ=type                                                
 varAssign : lhs=ID '=' rhs=expr                                                  ;
 print     : 'print' '(' arg ')'                                                  ;
 ret       : 'return' expr                                                        ;
-param     : typ=type id=ID                                                       ;
+param     : id=ID typ=type                                                       ;
 paramList : param (',' param)*                                                   ;
 arg       : expr                                                                 ;
 argList   : arg (',' arg)*                                                       ;
