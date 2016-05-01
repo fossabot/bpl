@@ -37,21 +37,22 @@ stmt
 	| ret       ';'
 	| branch
 	| loop
+	| block
 	;
 
-loop      : 'while' '(' cond=expr ')' body=block                                 ;
-branch    : 'if' '(' cond=expr ')' onTrue=block 'else' onFalse=block             ;
-block     : '{' stmts+=stmt* '}'                                                 ;
-funcDecl  : 'func' id=ID '(' params=paramList? ')' typ=type '{' stmts+=stmt* '}' ;
-funcCall  : id=ID '(' args=argList? ')'                                          ;
-varDecl   : 'var' id=ID typ=type                                                 ;
-varAssign : lhs=ID '=' rhs=expr                                                  ;
-print     : 'print' '(' arg ')'                                                  ;
-ret       : 'return' expr                                                        ;
-param     : id=ID typ=type                                                       ;
-paramList : param (',' param)*                                                   ;
-arg       : expr                                                                 ;
-argList   : arg (',' arg)*                                                       ;
+loop      : 'while' '(' cond=expr ')' body=block                       ;
+branch    : 'if' '(' cond=expr ')' onTrue=block 'else' onFalse=block   ;
+block     : '{' stmts+=stmt* '}'                                       ;
+funcDecl  : 'func' id=ID '(' params=paramList? ')' typ=type body=block ;
+funcCall  : id=ID '(' args=argList? ')'                                ;
+varDecl   : 'var' id=ID typ=type                                       ;
+varAssign : lhs=ID '=' rhs=expr                                        ;
+print     : 'print' '(' arg ')'                                        ;
+ret       : 'return' expr                                              ;
+param     : id=ID typ=type                                             ;
+paramList : param (',' param)*                                         ;
+arg       : expr                                                       ;
+argList   : arg (',' arg)*                                             ;
 
 expr
 	: lhs=expr op=('/'|'*')                     rhs=expr #BinOpExpr

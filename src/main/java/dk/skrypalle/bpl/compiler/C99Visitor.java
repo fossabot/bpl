@@ -43,12 +43,12 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 	private final FuncTbl         funcTbl;
 	private final Deque<DataType> tStack;
 
-	private Map<String, Symbol> symTbl;
-	private boolean             returns;
+	//	private Map<String, Symbol> symTbl;
+	private boolean returns;
 
 	public C99Visitor(FuncTbl funcTbl) {
 		this.funcTbl = funcTbl;
-		symTbl = new HashMap<>();
+//		symTbl = new HashMap<>();
 		tStack = new ArrayDeque<>();
 	}
 
@@ -77,7 +77,7 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 			"#include <stdint.h>",
 			"",
 			protos,
-			cld.trim(),
+			cld,
 			""
 		);
 	}
@@ -136,13 +136,7 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 
 		returns = trueRet && falseRet;
 
-		return String.join("\n",
-			"if (" + cond_str + ") {",
-			onTrue,
-			"} else {",
-			onFalse,
-			"}"
-		);
+		return "if (" + cond_str + ") " + onTrue + " else " + onFalse;
 	}
 
 	@Override
@@ -152,20 +146,18 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 		if (cond_t != INT)
 			throw new BPLCErrTypeMismatch(TokenAdapter.from(ctx.cond), cond_t, INT);
 
-		return String.join("\n",
-			"while (" + cond_str + ") {",
-			visit(ctx.body),
-			"}"
-		);
+		return "while (" + cond_str + ") " + visit(ctx.body);
 	}
 
 	@Override
 	public String visitBlock(BlockContext ctx) {
-		Map<String, Symbol> oldSymTbl = symTbl;
-		symTbl = new HashMap<>(symTbl);
+//		Map<String, Symbol> oldSymTbl = symTbl;
+//		symTbl = new HashMap<>(symTbl);
+		curF.symTbl.pushScope();
 		String cld = visitChildren(ctx);
-		symTbl = oldSymTbl;
-		return cld;
+		curF.symTbl.popScope();
+//		symTbl = oldSymTbl;
+		return "{" + cld + "}";
 	}
 
 	//region var
@@ -175,20 +167,20 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 		String id = ttos(ctx.id);
 		String type_str = ttos(ctx.typ);
 		DataType type = DataType.parse(type_str);
-		if (symTbl.containsKey(id))
+		if (curF.symTbl.isDecl(id))
 			throw new BPLCErrSymRedeclared(ctx.id);
 
-		symTbl.put(id, new Symbol(id, type, -1));
+		curF.symTbl.declLocal(id, type);
 		return type.c_type + " " + id;
 	}
 
 	@Override
 	public String visitVarAssign(VarAssignContext ctx) {
 		String id = ttos(ctx.lhs);
-		if (!symTbl.containsKey(id))
+		if (!curF.symTbl.isDecl(id))
 			throw new BPLCErrSymUndeclared(ctx.lhs);
 
-		Symbol sym = symTbl.get(id);
+		Symbol sym = curF.symTbl.get(id);
 		String rhs = visit(ctx.rhs);
 		DataType have = popt();
 		DataType want = sym.type;
@@ -210,15 +202,19 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 	public String visitFuncDecl(FuncDeclContext ctx) {
 		String id = ttos(ctx.id);
 
-		Map<String, Symbol> oldSymTbl = symTbl;
-		symTbl = new HashMap<>(symTbl);
+//		Map<String, Symbol> oldSymTbl = symTbl;
+//		symTbl = new HashMap<>(symTbl);
 		returns = false;
 		params = new ArrayList<>();
 
+		curF = new Func();// FIXME hack:: visitParams needs symTbl, need params to get correct func
+		curF.symTbl.pushScope();// FIXME hack
+
 		String param_str = visit(ctx.params);
 
+		SymTbl st = curF.symTbl; // FIXME hack
 		curF = funcTbl.get(id, params);
-
+		curF.symTbl = st;// FIXME hack
 		params = null;
 
 		String ret_t = curF.type.c_type;
@@ -230,15 +226,13 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 
 		String res = String.join("\n",
 			ret_t + " " + mangle(curF) + "(" + param_str + ")",
-			"{",
-			visit(ctx.stmts, "").trim(),
-			"}",
-			""
+			visit(ctx.body)
 		);
 
 		if (!returns)
 			throw new BPLCErrReturnMissing(ctx.stop);
-		symTbl = oldSymTbl;
+//		symTbl = oldSymTbl;
+		curF.symTbl.popScope();
 
 		if (!tStack.isEmpty())
 			throw new IllegalStateException("typeStack not empty on func decl end");
@@ -318,11 +312,11 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 		String id = ttos(ctx.id);
 		String type_str = ttos(ctx.typ);
 		DataType type = DataType.parse(type_str);
-		if (symTbl.containsKey(id))
+		if (curF.symTbl.isDecl(id))
 			throw new BPLCErrSymRedeclared(ctx.id);
 
 		params.add(type);
-		symTbl.put(id, new Symbol(id, type, -1));
+		curF.symTbl.declParam(id, type);
 		return type.c_type + " " + id;
 	}
 
@@ -403,9 +397,9 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 	@Override
 	public String visitIdExpr(IdExprContext ctx) {
 		String id = ttos(ctx.val);
-		if (!symTbl.containsKey(id))
+		if (!curF.symTbl.isDecl(id))
 			throw new BPLCErrSymUndeclared(ctx.val);
-		Symbol sym = symTbl.get(id);
+		Symbol sym = curF.symTbl.get(id);
 		pusht(sym.type);
 		return id;
 	}

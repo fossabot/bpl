@@ -1,0 +1,17 @@
+func fact(n int) int {
+	var res int;
+	res = 1;
+	while(n) {
+		res = res * n;
+		n = n - 1;
+	}
+	return res;
+}
+
+func main() int {
+	print(fact(20));
+	return 0;
+}
+
+::exp
+21c3677c82b40000

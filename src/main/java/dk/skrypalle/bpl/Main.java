@@ -31,11 +31,19 @@ import dk.skrypalle.bpl.util.*;
 import dk.skrypalle.bpl.vm.*;
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.*;
+import org.apache.commons.lang3.*;
 
 import java.io.*;
 import java.nio.file.*;
 
 public final class Main {
+
+	private static long fib(int n) {
+		if (n <= 1)
+			return n;
+		else
+			return fib(n - 1) + fib(n - 2);
+	}
 
 	private static boolean x(int i) {
 		System.out.print(i);
@@ -43,28 +51,101 @@ public final class Main {
 	}
 
 	private static int main() {
-		System.out.print((x(0) && x(1) || x(1)) ? 1 : 0);
-		System.out.print((x(0) || x(1) && x(1)) ? 1 : 0);
-		System.out.println();
+		int i = 1;
+		System.out.println(i);
+		{
+			int j = 2;
+			System.out.println(i);
+			System.out.println(j);
+			{
+				int k = 3;
+				System.out.println(i);
+				System.out.println(j);
+				System.out.println(k);
+			}
+			int k = 4;
+			System.out.println(i);
+			System.out.println(j);
+			System.out.println(k);
+		}
 		return 0;
 	}
 
 	public static void main(String[] args) throws IOException {
-		Exec.trace = true;
+		Exec.trace = false;
 //		main();
+//		System.exit(1);
 		String bpl = String.join("\n",
-			"func main() int {",
-			"   var s string;",
-			"   s = \"Hello\\nwo\\trld\";",
-			"   print(s);",
+			"func a() int {",
+			"   var i int;",
+			"   i = 5;",
+			"   while(1) {",
+			"       var j int;",
+			"       j=i*2;",
+			"       i=i-1;",
+			"       print(\"i=\");",
+			"       print(i);",
+			"       print(\"\\nj=\");",
+			"       print(j);",
+			"       print(\"\\n\");",
+			"       if(j){}else{return 1;}",
+			"   }",
 			"   return 0;",
 			"}"
 		);
+		bpl += String.join("\n",
+			"func b() int {",
+			"   var i int;",
+			"   i=1;",
+			"   print(i);",
+			"   {",
+			"       var j int;",
+			"       j=2;",
+			"       print(i);",
+			"       print(j);",
+			"       {",
+			"           var k int;",
+			"           k=3;",
+			"           print(i);",
+			"           print(j);",
+			"           print(k);",
+			"       }",
+			"       var k int;",
+			"       k=4;",
+			"       print(i);",
+			"       print(j);",
+			"       print(k);",
+			"   }",
+			"   return 0;",
+			"}"
+		);
+		bpl += String.join("\n",
+			"func add(a int, b int, c int) int {",
+			"   return a+b;",
+			"}",
+			"func main() int {",
+			"   var i int;",
+			"   print(\"a():\\n\");",
+			"   i=a();",
+			"   print(\"\\nexit:\");",
+			"   print(i);",
+			"   print(\"\\n\\nb():\\n\");",
+			"   i=b();",
+			"   print(\"\\nexit:\");",
+			"   print(i);",
+			"   print(\"\\n\\nadd(3,4,6):\\n\");",
+			"   i=add(3,4,6);",
+			"   print(\"\\nexit:\");",
+			"   print(i);",
+			"   return 0;",
+			"}"
+		);
+		bpl = loadTestFile("loop/fibonacci")[1];
 
 		byte[] bplbc = null;
 		try {
 			bplbc = compileBC(bpl);
-			VM vm = new VM(bplbc, true);
+			VM vm = new VM(bplbc, Exec.trace);
 			int vmExit = vm.run();
 			System.out.printf("VM finished with exit code 0x%08x\n", vmExit);
 			System.out.println();
@@ -74,6 +155,8 @@ public final class Main {
 				System.err.printf("Code memory:\n%s\n", Hex.dump(bplbc));
 			t.printStackTrace();
 		}
+
+//		System.exit(1);
 
 		Path tmpDir = null;
 		String c99 = null;
@@ -101,6 +184,18 @@ public final class Main {
 			if (tmpDir != null)
 				IO.delRec(tmpDir);
 		}
+	}
+
+	private static String[] loadTestFile(String name) throws IOException {
+		Path p = Paths.get("./src/test/resources/compiler/" + name + ".test");
+
+		String[] res = new String(Files.readAllBytes(p), IO.UTF8).split("::exp\n");
+		String act = res[0];
+		String exp = res[1].trim();
+		exp = StringEscapeUtils.unescapeJava(exp);
+		exp = exp.replaceAll("\n", System.lineSeparator());
+
+		return new String[]{name, act, exp};
 	}
 
 	public static byte[] compileBC(String bpl) {

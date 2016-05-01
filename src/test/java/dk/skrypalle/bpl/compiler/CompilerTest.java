@@ -87,6 +87,7 @@ public class CompilerTest extends CompilerTestBase {
 			loadTestFile("var/complex"),
 			loadTestFile("var/strings"),
 			loadTestFile("var/escape_sequence"),
+			loadTestFile("var/scopes"),
 
 			loadTestFile("func/call_simple"),
 			loadTestFile("func/call_simple_params"),
@@ -106,6 +107,8 @@ public class CompilerTest extends CompilerTestBase {
 			loadTestFile("operators/and_or_precedence"),
 
 			loadTestFile("loop/while"),
+			loadTestFile("loop/factorial"),
+			loadTestFile("loop/fibonacci"),
 		};
 	}
 

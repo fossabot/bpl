@@ -31,6 +31,8 @@ public final class Func {
 
 	public static final int ENTRY_UNRESOLVED = -1;
 
+	public SymTbl symTbl = new SymTbl();
+
 	public String   id;
 	public DataType type;
 	public List<DataType> params = new ArrayList<>();

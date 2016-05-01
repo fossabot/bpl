@@ -7,9 +7,9 @@ func fib(n int) int {
 }
 
 func main() int {
-	print(fib(30));
+	print(fib(20));
 	return 0;
 }
 
 ::exp
-cb228
+1a6d

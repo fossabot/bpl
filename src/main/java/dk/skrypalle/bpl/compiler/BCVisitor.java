@@ -63,16 +63,16 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 	private final FuncTbl         funcTbl;
 	private final Deque<DataType> tStack;
 
-	private Map<String, Symbol> symTbl;
-	private boolean             returns;
-	private int                 fOff;
+	//	private Map<String, Symbol> symTbl;
+	private boolean returns;
+	private int     fOff;
 
 	private Map<String, StaticStoreEntry> staticStore;
 	private int staticLen = 0;
 
 	public BCVisitor(FuncTbl funcTbl) {
 		this.funcTbl = funcTbl;
-		symTbl = new HashMap<>();
+//		symTbl = new HashMap<>();
 		tStack = new ArrayDeque<>();
 		staticStore = new HashMap<>();
 		fOff = PREABLE_LEN;
@@ -98,6 +98,8 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 					staticLen += e.val.length;
 				calcStaticLen = true;
 			}
+			for (Func f : funcTbl.flatten())
+				f.symTbl.clear();
 		}
 
 		fOff = PREABLE_LEN + staticLen;
@@ -202,10 +204,12 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 
 	@Override
 	public byte[] visitBlock(BlockContext ctx) {
-		Map<String, Symbol> oldSymTbl = symTbl;
-		symTbl = new HashMap<>(symTbl);
+//		Map<String, Symbol> oldSymTbl = symTbl;
+//		symTbl = new HashMap<>(symTbl);
+		curF.symTbl.pushScope();
 		byte[] cld = visitChildren(ctx);
-		symTbl = oldSymTbl;
+		curF.symTbl.popScope();
+//		symTbl = oldSymTbl;
 		return cld;
 	}
 
@@ -216,26 +220,20 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 		String id = ttos(ctx.id);
 		String type_str = ttos(ctx.typ);
 		DataType type = DataType.parse(type_str);
-		if (symTbl.containsKey(id))
+		if (curF.symTbl.isDecl(id))
 			throw new BPLCErrSymRedeclared(ctx.id);
 
-		int off = 0;
-		for (Symbol sym : symTbl.values()) {
-			if (sym.off >= 0)
-				off++;
-		}
-
-		symTbl.put(id, new Symbol(id, type, off));
+		curF.symTbl.declLocal(id, type);
 		return EMPTY;
 	}
 
 	@Override
 	public byte[] visitVarAssign(VarAssignContext ctx) {
 		String id = ttos(ctx.lhs);
-		if (!symTbl.containsKey(id))
+		if (!curF.symTbl.isDecl(id))
 			throw new BPLCErrSymUndeclared(ctx.lhs);
 
-		Symbol sym = symTbl.get(id);
+		Symbol sym = curF.symTbl.get(id);
 		byte[] rhs = visit(ctx.rhs);
 		DataType have = popt();
 		DataType want = sym.type;
@@ -262,36 +260,38 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 //		curF = funcTbl.get(id);
 //		curF.entry = fOff;
 
-		Map<String, Symbol> oldSymTbl = symTbl;
-		symTbl = new HashMap<>(symTbl);
+//		Map<String, Symbol> oldSymTbl = symTbl;
+//		symTbl = new HashMap<>(symTbl);
 		returns = false;
 		params = new ArrayList<>();
 
+		curF = new Func();// FIXME hack:: visitParams needs symTbl, need params to get correct func
+		curF.symTbl.pushScope();// FIXME hack
+
 		byte[] params_b = visit(ctx.params);
 
+		SymTbl st = curF.symTbl; // FIXME hack
 		curF = funcTbl.get(id, params);
+		curF.symTbl = st;// FIXME hack
 		curF.entry = fOff;
 		params = null;
 
-		byte[] stmts_b = visit(ctx.stmts);
+		byte[] stmts_b = visit(ctx.body);
 
 		if (!returns)
 			throw new BPLCErrReturnMissing(ctx.stop);
 
-		Map<String, Symbol> curSymTbl = new HashMap<>();
-		for (Map.Entry<String, Symbol> e : symTbl.entrySet()) {
-			if (oldSymTbl.containsKey(e.getKey()))
-				continue;
-			curSymTbl.put(e.getKey(), e.getValue());
-		}
+//		Map<String, Symbol> curSymTbl = new HashMap<>();
+//		for (Map.Entry<String, Symbol> e : symTbl.entrySet()) {
+//			if (oldSymTbl.containsKey(e.getKey()))
+//				continue;
+//			curSymTbl.put(e.getKey(), e.getValue());
+//		}
 
-		int nLocals = 0;
-		for (Symbol sym : curSymTbl.values()) {
-			if (sym.off >= 0)
-				nLocals++;
-		}
+		int nLocals = curF.symTbl.nLocals();
 
-		symTbl = oldSymTbl;
+//		symTbl = oldSymTbl;
+		curF.symTbl.popScope();
 
 		byte[] res = concat(params_b, stmts_b);
 		if (nLocals > 0)
@@ -382,12 +382,12 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 		String id = ttos(ctx.id);
 		String type_str = ttos(ctx.typ);
 		DataType type = DataType.parse(type_str);
-		if (symTbl.containsKey(id))
+		if (curF.symTbl.isDecl(id))
 			throw new BPLCErrSymRedeclared(ctx.id);
 
 		params.add(type);
 		int off = -3 - (nParams--);
-		symTbl.put(id, new Symbol(id, type, off));
+		curF.symTbl.declParam(id, type);
 		return EMPTY;
 	}
 
@@ -528,10 +528,10 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 	@Override
 	public byte[] visitIdExpr(IdExprContext ctx) {
 		String id = ttos(ctx.val);
-		if (!symTbl.containsKey(id))
+		if (!curF.symTbl.isDecl(id))
 			throw new BPLCErrSymUndeclared(ctx.val);
 
-		Symbol sym = symTbl.get(id);
+		Symbol sym = curF.symTbl.get(id);
 		pusht(sym.type);
 		//fmt:off
 		switch (sym.type) {
