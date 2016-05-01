@@ -184,6 +184,22 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 	}
 
 	@Override
+	public byte[] visitLoop(LoopContext ctx) {
+		byte[] cond = visit(ctx.cond);
+		DataType cond_t = popt();
+		if (cond_t != INT)
+			throw new BPLCErrTypeMismatch(TokenAdapter.from(ctx.cond), cond_t, INT);
+
+		byte[] body = visit(ctx.body);
+		return concat(
+			cond,
+			BREQ, Marshal.bytesS32BE(body.length + 5),
+			body,
+			JMP, Marshal.bytesS32BE(-(body.length + cond.length + 5 + 5))
+		);
+	}
+
+	@Override
 	public byte[] visitBlock(BlockContext ctx) {
 		Map<String, Symbol> oldSymTbl = symTbl;
 		symTbl = new HashMap<>(symTbl);

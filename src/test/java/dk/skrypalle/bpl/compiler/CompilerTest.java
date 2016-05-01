@@ -102,6 +102,8 @@ public class CompilerTest extends CompilerTestBase {
 			loadTestFile("operators/and_skip_right"),
 			loadTestFile("operators/or_skip_right"),
 			loadTestFile("operators/and_or_precedence"),
+
+			loadTestFile("loop/while"),
 		};
 	}
 

@@ -53,18 +53,14 @@ public final class Main {
 		Exec.trace = true;
 //		main();
 		String bpl = String.join("\n",
-			"func add(a int, b int) int {",
-			"   return a+b;",
-			"}",
-			"func add(a int, b string) int {",
-			"   return a;",
-			"}",
 			"func main() int {",
-			"    var s string;",
-			"    s = \"str\";",
-			"    print(add(1,2));",
-			"    print(s);",
-			"    return 0;",
+			"   var i int;",
+			"   i = 5;",
+			"   while(i) {",
+			"       print(i);",
+			"       i = i - 1;",
+			"   }",
+			"   return 0;",
 			"}"
 		);
 

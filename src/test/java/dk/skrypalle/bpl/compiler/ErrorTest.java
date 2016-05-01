@@ -171,8 +171,15 @@ public class ErrorTest extends CompilerTestBase {
 	@Test(dataProvider = "provideCompileSwitch",
 		expectedExceptions = BPLCErrTypeMismatch.class,
 		expectedExceptionsMessageRegExp = "1:45: error: type mismatch at 's' - have STRING want INT")
-	public void testErrTypeMismatchInCondition(Target t) throws Error {
+	public void testErrTypeMismatchBranchCondition(Target t) throws Error {
 		t.compile(this, "func main() int { var s string; s = \"1\"; if(s) { return 0; } else { return 1; } }");
+	} // test eval via thrown exception
+
+	@Test(dataProvider = "provideCompileSwitch",
+		expectedExceptions = BPLCErrTypeMismatch.class,
+		expectedExceptionsMessageRegExp = "1:48: error: type mismatch at 's' - have STRING want INT")
+	public void testErrTypeMismatchLoopCondition(Target t) throws Error {
+		t.compile(this, "func main() int { var s string; s = \"1\"; while(s) { return 0; } }");
 	} // test eval via thrown exception
 
 	@Test(dataProvider = "provideCompileSwitch",

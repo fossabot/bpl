@@ -36,8 +36,10 @@ stmt
 	| print     ';'
 	| ret       ';'
 	| branch
+	| loop
 	;
 
+loop      : 'while' '(' cond=expr ')' body=block                                 ;
 branch    : 'if' '(' cond=expr ')' onTrue=block 'else' onFalse=block             ;
 block     : '{' stmts+=stmt* '}'                                                 ;
 funcDecl  : 'func' id=ID '(' params=paramList? ')' typ=type '{' stmts+=stmt* '}' ;

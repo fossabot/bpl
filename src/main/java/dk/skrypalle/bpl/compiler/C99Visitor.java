@@ -146,6 +146,20 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 	}
 
 	@Override
+	public String visitLoop(LoopContext ctx) {
+		String cond_str = visit(ctx.cond);
+		DataType cond_t = popt();
+		if (cond_t != INT)
+			throw new BPLCErrTypeMismatch(TokenAdapter.from(ctx.cond), cond_t, INT);
+
+		return String.join("\n",
+			"while (" + cond_str + ") {",
+			visit(ctx.body),
+			"}"
+		);
+	}
+
+	@Override
 	public String visitBlock(BlockContext ctx) {
 		Map<String, Symbol> oldSymTbl = symTbl;
 		symTbl = new HashMap<>(symTbl);

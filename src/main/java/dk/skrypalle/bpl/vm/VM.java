@@ -62,6 +62,12 @@ public class VM {
 		while (cpu.hasInstructions()) {
 			cpu.step();
 			flush();
+
+			try {
+				Thread.sleep(00);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
 		}
 
 		if (trace) {
