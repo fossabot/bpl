@@ -45,9 +45,11 @@ public final class Bytecode {
 
 	public static final byte ILOAD  = (byte) 0x30;
 	public static final byte ISTORE = (byte) 0x31;
-	public static final byte CALL   = (byte) 0x32;
-	public static final byte RET    = (byte) 0x33;
-	public static final byte LOCALS = (byte) 0x34;
+	public static final byte SPUSH  = (byte) 0x32;
+	public static final byte SLOAD  = (byte) 0x33;
+	public static final byte CALL   = (byte) 0x34;
+	public static final byte RET    = (byte) 0x35;
+	public static final byte LOCALS = (byte) 0x36;
 
 	public static final byte JMP  = (byte) 0x40;
 	public static final byte BREQ = (byte) 0x41;
@@ -87,12 +89,14 @@ public final class Bytecode {
 
 		opCodes.put(ILOAD,  new Op("iload",  4));
 		opCodes.put(ISTORE, new Op("istore", 4));
+		opCodes.put(SPUSH,  new Op("spush",  8));
+		opCodes.put(SLOAD,  new Op("sload",  4));
 		opCodes.put(CALL,   new Op("call",   8));
 		opCodes.put(RET,    new Op("ret",    0));
 		opCodes.put(LOCALS, new Op("locals", 4));
 
 		opCodes.put(JMP,    new Op("jmp",    4));
-		opCodes.put(BREQ,    new Op("bre",    4));
+		opCodes.put(BREQ,   new Op("breq",   4));
 		opCodes.put(BRNE,   new Op("brne",   4));
 
 		opCodes.put(PRINT,  new Op("print",  0));

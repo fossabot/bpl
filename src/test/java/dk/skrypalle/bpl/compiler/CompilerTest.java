@@ -76,17 +76,21 @@ public class CompilerTest extends CompilerTestBase {
 			{"or false",          wrapMain("print(0 || 0);"),                                   "0"},
 			{"or left true",      wrapMain("print(0 || 1);"),                                   "1"},
 			{"or right true",     wrapMain("print(1 || 0);"),                                   "1"},
+
+			{"string",            wrapMain("print(\"Hello, World!\");"),            "Hello, World!"},
 			//fmt:on
 
 			loadTestFile("var/simple"),
 			loadTestFile("var/simple_calc"),
 			loadTestFile("var/multi"),
 			loadTestFile("var/complex"),
+			loadTestFile("var/strings"),
 
 			loadTestFile("func/call_simple"),
 			loadTestFile("func/call_simple_params"),
 			loadTestFile("func/call_before_and_after_def"),
 			loadTestFile("func/call_before_def"),
+			loadTestFile("func/overload"),
 
 			loadTestFile("branch/if_0"),
 			loadTestFile("branch/if_1"),

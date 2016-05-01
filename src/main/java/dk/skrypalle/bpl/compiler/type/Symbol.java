@@ -25,20 +25,30 @@
 
 package dk.skrypalle.bpl.compiler.type;
 
-import java.util.*;
+public class Symbol {
 
-public final class Func {
+	public final String   id;
+	public final DataType type;
+	public final int      off;
 
-	public static final int ENTRY_UNRESOLVED = -1;
-
-	public String   id;
-	public DataType type;
-	public List<DataType> params = new ArrayList<>();
-	public int            entry  = ENTRY_UNRESOLVED;
+	public Symbol(String id, DataType type, int off) {
+		this.id = id;
+		this.type = type;
+		this.off = off;
+	}
 
 	@Override
 	public String toString() {
-		return String.format("func %s(%d)@0x%x", id, params.size(), entry);
+		return String.format("sym %s(%s)@%d", id, type, off);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) return true;
+		if (!(obj instanceof Symbol)) return false;
+		Symbol other = (Symbol) obj;
+
+		return this.id.equals(other.id);
 	}
 
 }

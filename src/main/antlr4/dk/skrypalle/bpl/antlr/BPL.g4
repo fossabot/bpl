@@ -38,18 +38,18 @@ stmt
 	| branch
 	;
 
-branch    : 'if' '(' cond=expr ')' onTrue=block 'else' onFalse=block          ;
-block     : '{' stmts+=stmt* '}'                                              ;
-funcDecl  : 'func' id=ID '(' params=paramList? ')' 'int' '{' stmts+=stmt* '}' ;
-funcCall  : id=ID '(' args=argList? ')'                                       ;
-varDecl   : 'var' id=ID 'int'                                                 ;
-varAssign : lhs=ID '=' rhs=expr                                               ;
-print     : 'print' '(' arg ')'                                               ;
-ret       : 'return' expr                                                     ;
-param     : 'int' id=ID                                                       ;
-paramList : param (',' param)*                                                ;
-arg       : expr                                                              ;
-argList   : arg (',' arg)*                                                    ;
+branch    : 'if' '(' cond=expr ')' onTrue=block 'else' onFalse=block             ;
+block     : '{' stmts+=stmt* '}'                                                 ;
+funcDecl  : 'func' id=ID '(' params=paramList? ')' typ=type '{' stmts+=stmt* '}' ;
+funcCall  : id=ID '(' args=argList? ')'                                          ;
+varDecl   : 'var' id=ID typ=type                                                 ;
+varAssign : lhs=ID '=' rhs=expr                                                  ;
+print     : 'print' '(' arg ')'                                                  ;
+ret       : 'return' expr                                                        ;
+param     : typ=type id=ID                                                       ;
+paramList : param (',' param)*                                                   ;
+arg       : expr                                                                 ;
+argList   : arg (',' arg)*                                                       ;
 
 expr
 	: lhs=expr op=('/'|'*')                     rhs=expr #BinOpExpr
@@ -59,10 +59,17 @@ expr
 	| lhs=expr op= '||'                         rhs=expr #BoolOpExpr
 	| varAssign                                          #AssignExpr
 	| funcCall                                           #FuncCallExpr
+	| val=STR                                            #StrExpr
 	| val=INT                                            #IntExpr
 	| val=ID                                             #IdExpr
 	;
 
+type
+	: 'int'
+	| 'string'
+	;
+
 INT : [0-9]+            ;
 ID  : [a-zA-Z0-9_]+     ;
+STR : '"' .*? '"'       ;
 WS  : [ \t\r\n] -> skip ;

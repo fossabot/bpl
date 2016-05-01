@@ -25,46 +25,37 @@
 
 package dk.skrypalle.bpl.compiler.type;
 
-import java.math.*;
+public enum DataType {
 
-public enum IntType {
-	U8(8, false), U16(16, false), U32(32, false), U64(64, false),
-	S8(8, true), S16(16, true), S32(32, true), S64(64, true);
+	INT(0x01, Long.class, "int64_t"),
+	STRING(0x02, String.class, "char*");
 
-	public final int     width;
-	public final boolean isSigned;
+	public final int    vm_type;
+	public final Class  jclass;
+	public final String c_type;
 
-	IntType(int width, boolean isSigned) {
-		this.width = width;
-		this.isSigned = isSigned;
+	DataType(int vm_type, Class jclass, String c_type) {
+		this.vm_type = vm_type;
+		this.jclass = jclass;
+		this.c_type = c_type;
 	}
 
-	public IntType next() {
-		for (IntType t : values()) {
-			if (t.isSigned != isSigned)
-				continue;
-			if (t.width == width*2)
+	public static DataType parse(String s) {
+		//fmt:off
+		switch (s) {
+		case "int"   : return INT;
+		case "string": return STRING;
+		default      : throw new IllegalStateException("unreachable");
+		}
+		//fmt:on
+	}
+
+	public static DataType parse(int vm_type) {
+		for (DataType t : values()) {
+			if (t.vm_type == vm_type)
 				return t;
 		}
-		throw new IllegalStateException("cannot widen " + this); // TODO
+		throw new IllegalStateException("unreachable");
 	}
 
-	public static IntType parse(BigInteger val) {
-		int size = val.bitLength();
-		if (size <= 8) {
-			return val.signum() == -1 ? S8 : U8;
-		} else if (size <= 16) {
-			return val.signum() == -1 ? S16 : U16;
-		} else if (size <= 32) {
-			return val.signum() == -1 ? S32 : U32;
-		} else if (size <= 64) {
-			return val.signum() == -1 ? S64 : U64;
-		} else {
-			throw new IllegalStateException("unreachable"); // TODO
-		}
-	}
-
-	public static IntType parse(String val) {
-		return parse(new BigInteger(val));
-	}
 }

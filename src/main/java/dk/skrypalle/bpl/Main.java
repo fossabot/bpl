@@ -34,7 +34,6 @@ import org.antlr.v4.runtime.tree.*;
 
 import java.io.*;
 import java.nio.file.*;
-import java.util.*;
 
 public final class Main {
 
@@ -51,16 +50,23 @@ public final class Main {
 	}
 
 	public static void main(String[] args) throws IOException {
-		main();
+//		main();
 		String bpl = String.join("\n",
-			"func x(int i) int {",
-			"    print(i);",
-			"    return i;",
+			"func p_str(string s) string {",
+			"   print(\"hello, \");",
+			"   print(s);",
+			"   return s;",
 			"}",
-			"",
+			"func p_str(string s0, string s1) string {",
+			"   p_str(s0);",
+			"   print(\" and \");",
+			"   p_str(s1);",
+			"   return \" :)\";",
+			"}",
 			"func main() int {",
-			"    print(x(0) && x(1) || x(1));",
-			"    print(x(0) || x(1) && x(1));",
+			"    var s string;",
+			"    s = p_str(\"darkness\", \"my old friend\");",
+			"    print(s);",
 			"    return 0;",
 			"}"
 		);
@@ -68,7 +74,7 @@ public final class Main {
 		byte[] bplbc = null;
 		try {
 			bplbc = compileBC(bpl);
-			VM vm = new VM(bplbc, 0, true);
+			VM vm = new VM(bplbc, true);
 			int vmExit = vm.run();
 			System.out.printf("VM finished with exit code 0x%08x\n", vmExit);
 			System.out.println();
@@ -109,13 +115,13 @@ public final class Main {
 
 	public static byte[] compileBC(String bpl) {
 		ParseTree t = parse(bpl);
-		Map<String, Func> funcTbl = new FuncResolvePass().visit(t);
+		FuncTbl funcTbl = new FuncResolvePass().visit(t);
 		return new BCVisitor(funcTbl).visit(t);
 	}
 
 	public static String compileC99(String bpl) {
 		ParseTree t = parse(bpl);
-		Map<String, Func> funcTbl = new FuncResolvePass().visit(t);
+		FuncTbl funcTbl = new FuncResolvePass().visit(t);
 		return new C99Visitor(funcTbl).visit(t);
 	}
 

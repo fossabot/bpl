@@ -31,6 +31,8 @@ import java.io.*;
 
 public class VM {
 
+	public static final int HEADER = 0x04;
+
 	private final CPU           cpu;
 	private final StringBuilder outBuf;
 	private final StringBuilder traceBuf;
@@ -41,16 +43,16 @@ public class VM {
 
 	boolean trace;
 
-	public VM(byte[] code, int start, boolean trace) {
-		this(code, start, trace, System.out, System.err, System.out);
+	public VM(byte[] code, boolean trace) {
+		this(code, trace, System.out, System.err, System.out);
 	}
 
-	public VM(byte[] code, int start, boolean trace,
+	public VM(byte[] code, boolean trace,
 	          PrintStream out, PrintStream err, PrintStream dbg) {
 		this.out = out;
 		this.err = err;
 		this.dbg = dbg;
-		this.cpu = new CPU(this, code, start);
+		this.cpu = new CPU(this, code);
 		this.outBuf = new StringBuilder();
 		this.traceBuf = new StringBuilder();
 		this.trace = trace;
@@ -65,8 +67,10 @@ public class VM {
 		if (trace) {
 			dbg.printf("\nCode memory: %d bytes\n", cpu.code.length);
 			dbg.println(Hex.dump(cpu.code));
-			dbg.printf("\nCode disassembly: %d bytes\n", cpu.code.length);
-			dbg.println(disassemble(cpu.code));
+			dbg.printf("\nCode disassembly: %d bytes\n", cpu.ds_len);
+			dbg.println(disassemble(cpu.code, cpu.ds_len).trim());
+			dbg.printf("\nData segment: %d bytes\n", cpu.code.length - cpu.ds_len);
+			dbg.println(Hex.dump(cpu.code, HEADER, cpu.ds_len));
 		}
 
 		return cpu.exitCode();
@@ -88,16 +92,16 @@ public class VM {
 		}
 
 		if (outBuf.length() > 0) {
-			out.print(outBuf.toString().trim());
+			out.print(outBuf.toString());
 			if (trace)
 				out.println();
 			outBuf.delete(0, outBuf.capacity());
 		}
 	}
 
-	private String disassemble(byte[] code) {
+	private String disassemble(byte[] code, int ds_len) {
 		StringBuilder buf = new StringBuilder();
-		int ip = 0;
+		int ip = HEADER + ds_len;
 		while (ip < code.length) {
 			int _ip = ip;
 			byte op = code[ip++];

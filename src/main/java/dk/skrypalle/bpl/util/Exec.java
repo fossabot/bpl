@@ -73,6 +73,7 @@ public final class Exec {
 			"-Wpedantic",
 			"-Wno-format",
 			"-Wno-unused-parameter",
+			"-Wno-unused-function",
 			"--save-temps",
 			"-o" + fName + "." + OS.exeEXT(),
 			fName + ".c"

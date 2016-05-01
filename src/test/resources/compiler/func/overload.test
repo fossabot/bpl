@@ -1,0 +1,21 @@
+func f() int                      { return 0; }
+func f(int i) int                 { return i; }
+func f(int i, int j) int          { return j; }
+func f(string i) string           { return i; }
+func f(string i, string j) string { return j; }
+func f(int i, string j) string    { return j; }
+func f(string i, int j) int       { return j; }
+
+func main() int {
+	print(f());
+	print(f(1));
+	print(f(2, 3));
+	print(f("str0"));
+	print(f("str0", "str1"));
+	print(f(4, "str2"));
+	print(f("str3", 5));
+	return 0;
+}
+
+::exp
+013str0str1str25

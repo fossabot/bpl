@@ -64,7 +64,7 @@ public class CompilerTestBase {
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
 		ByteArrayOutputStream err = new ByteArrayOutputStream();
 		ByteArrayOutputStream dbg = new ByteArrayOutputStream();
-		VM vm = new VM(bc, 0, false,
+		VM vm = new VM(bc, false,
 			new PrintStream(out), new PrintStream(err), new PrintStream(dbg));
 		int exit = vm.run();
 

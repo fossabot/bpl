@@ -35,74 +35,79 @@ import java.util.*;
 import static dk.skrypalle.bpl.antlr.BPLParser.*;
 import static dk.skrypalle.bpl.util.Parse.*;
 
-public class FuncResolvePass extends BPLBaseVisitor<Map<String, Func>> {
+public class FuncResolvePass extends BPLBaseVisitor<FuncTbl> {
 
-	private static final Map<String, Func> EMPTY = new HashMap<>();
+	private static final FuncTbl EMPTY = new FuncTbl();
 
-	private final Map<String, Func> funcTbl;
+	private final FuncTbl funcTbl;
 
-	private Func curF;
+	private List<DataType> params;
 
 	public FuncResolvePass() {
-		funcTbl = new HashMap<>();
+		funcTbl = new FuncTbl();
 	}
 
 	@Override
-	public Map<String, Func> visitCompilationUnit(CompilationUnitContext ctx) {
+	public FuncTbl visitCompilationUnit(CompilationUnitContext ctx) {
 		visitChildren(ctx);
 
-		if (!funcTbl.containsKey("main:V>I"))
+		if (!funcTbl.isDecl("main"))
 			throw new IllegalStateException("no main function found"); // TODO
+		if (!funcTbl.hasOverloads("main"))
+			throw new IllegalStateException("main function cannot be overloaded"); // TODO
 
 		return funcTbl;
 	}
 
 	@Override
-	public Map<String, Func> visitFuncDecl(FuncDeclContext ctx) {
+	public FuncTbl visitFuncDecl(FuncDeclContext ctx) {
 		String id = ttos(ctx.id);
-		int nParams = ctx.params == null ? 0 : ctx.params.param().size();
-		id = id + ":" + paramstos(nParams) + ">I";
+		String type_str = ttos(ctx.typ);
+		DataType type = DataType.parse(type_str);
 
-		if (funcTbl.containsKey(id))
-			throw new BPLCErrFuncRedeclared(ctx.id);
-
-		curF = new Func();
-		curF.id = id;
-		curF.entry = -1;
-
-		funcTbl.put(id, curF);
-
+		params = new ArrayList<>();
 		visit(ctx.params);
 
+		if (funcTbl.isDecl(id, params))
+			throw new BPLCErrFuncRedeclared(ctx.id);
+
+		Func f = new Func();
+		f.id = id;
+		f.type = type;
+		f.params = params;
+
+		funcTbl.decl(f);
+
+		params = null;
 		return funcTbl;
 	}
 
 	@Override
-	public Map<String, Func> visitParamList(ParamListContext ctx) {
-		curF.nParams = ctx.param().size();
-		curF.paramCnt = ctx.param().size();
+	public FuncTbl visitParam(ParamContext ctx) {
+		String type_str = ttos(ctx.typ);
+		params.add(DataType.parse(type_str));
 		return funcTbl;
 	}
 
 	//region aggregate, default, visit
 
 	@Override
-	protected Map<String, Func> aggregateResult(Map<String, Func> agg, Map<String, Func> nxt) {
+	protected FuncTbl aggregateResult(FuncTbl agg, FuncTbl nxt) {
 		if (agg == null) return nxt;
 		if (nxt == null) return agg;
 
-		Map<String, Func> res = new HashMap<>(agg);
-		res.putAll(nxt);
+		FuncTbl res = new FuncTbl(agg);
+		res.merge(nxt);
 		return res;
 	}
 
 	@Override
-	protected Map<String, Func> defaultResult() {
+	protected FuncTbl defaultResult() {
 		return EMPTY;
 	}
 
 	@Override
-	public Map<String, Func> visit(ParseTree t) {
+	public FuncTbl visit(ParseTree t) {
 		return t == null ? defaultResult() : t.accept(this);
 	}
 

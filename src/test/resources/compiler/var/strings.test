@@ -1,0 +1,26 @@
+func p_str(string s, int i) string {
+	if(i) {
+		print("Hello, ");
+	} else {
+		print("hello, ");
+	}
+	print(s);
+	return s;
+}
+
+func p_str(string s0, string s1) string {
+   p_str(s0, 1);
+   print(" and ");
+   p_str(s1, 0);
+   return "!";
+}
+
+func main() int {
+    var s string;
+    s = p_str("world", "everyone else");
+    print(s);
+    return 0;
+}
+
+::exp
+Hello, world and hello, everyone else!
