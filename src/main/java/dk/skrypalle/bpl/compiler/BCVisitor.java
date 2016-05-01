@@ -397,7 +397,7 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 		DataType rhs_t = popt();
 		DataType lhs_t = popt();
 		if (rhs_t != lhs_t)
-			throw new BPLCErrTypeMismatch(TokenAdapter.from(ctx), Array.toList(rhs_t, lhs_t), Array.toList(INT, INT));
+			throw new BPLCErrTypeMismatch(TokenAdapter.from(ctx), Arrays.asList(rhs_t, lhs_t), Arrays.asList(INT, INT));
 		pusht(INT);
 		byte op;
 		//fmt:off
@@ -426,7 +426,7 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 		DataType rhs_t = popt();
 		DataType lhs_t = popt();
 		if (rhs_t != lhs_t)
-			throw new BPLCErrTypeMismatch(TokenAdapter.from(ctx), Array.toList(rhs_t, lhs_t), Array.toList(INT, INT));
+			throw new BPLCErrTypeMismatch(TokenAdapter.from(ctx), Arrays.asList(rhs_t, lhs_t), Arrays.asList(INT, INT));
 		pusht(INT);
 		byte op;
 		int v0;

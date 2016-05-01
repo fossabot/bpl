@@ -25,8 +25,6 @@
 
 package dk.skrypalle.bpl.util;
 
-import java.util.*;
-
 public final class Array {
 
 	public static byte[] concat(Object... bytes) {
@@ -65,12 +63,6 @@ public final class Array {
 		int[] res = new int[l.length];
 		for (int i = 0; i < l.length; i++)
 			res[i] = l[i];
-		return res;
-	}
-
-	public static <T> List<T> toList(T... t) {
-		List<T> res = new ArrayList<>();
-		Collections.addAll(res, t);
 		return res;
 	}
 

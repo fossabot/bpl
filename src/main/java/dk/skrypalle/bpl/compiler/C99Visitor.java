@@ -28,7 +28,6 @@ package dk.skrypalle.bpl.compiler;
 import dk.skrypalle.bpl.antlr.*;
 import dk.skrypalle.bpl.compiler.err.*;
 import dk.skrypalle.bpl.compiler.type.*;
-import dk.skrypalle.bpl.util.*;
 import org.antlr.v4.runtime.tree.*;
 
 import java.math.*;
@@ -334,7 +333,7 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 		DataType rhs_t = popt();
 		DataType lhs_t = popt();
 		if (rhs_t != lhs_t)
-			throw new BPLCErrTypeMismatch(TokenAdapter.from(ctx), Array.toList(rhs_t, lhs_t), Array.toList(INT, INT));
+			throw new BPLCErrTypeMismatch(TokenAdapter.from(ctx), Arrays.asList(rhs_t, lhs_t), Arrays.asList(INT, INT));
 		pusht(INT);
 		return res;
 	}
@@ -345,7 +344,7 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 		DataType rhs_t = popt();
 		DataType lhs_t = popt();
 		if (rhs_t != lhs_t)
-			throw new BPLCErrTypeMismatch(TokenAdapter.from(ctx), Array.toList(rhs_t, lhs_t), Array.toList(INT, INT));
+			throw new BPLCErrTypeMismatch(TokenAdapter.from(ctx), Arrays.asList(rhs_t, lhs_t), Arrays.asList(INT, INT));
 		pusht(INT);
 		return res;
 	}
