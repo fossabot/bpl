@@ -52,6 +52,13 @@
 			<version>${antlr.version}</version>
 		</dependency>
 
+		<!-- Apache Commons Lang3 -->
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-lang3</artifactId>
+			<version>3.4</version>
+		</dependency>
+
 		<!-- TestNG -->
 		<dependency>
 			<groupId>org.testng</groupId>

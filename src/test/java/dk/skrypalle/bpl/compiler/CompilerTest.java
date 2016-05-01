@@ -26,6 +26,7 @@
 package dk.skrypalle.bpl.compiler;
 
 import dk.skrypalle.bpl.util.*;
+import org.apache.commons.lang3.*;
 import org.testng.*;
 import org.testng.annotations.*;
 
@@ -85,6 +86,7 @@ public class CompilerTest extends CompilerTestBase {
 			loadTestFile("var/multi"),
 			loadTestFile("var/complex"),
 			loadTestFile("var/strings"),
+			loadTestFile("var/escape_sequence"),
 
 			loadTestFile("func/call_simple"),
 			loadTestFile("func/call_simple_params"),
@@ -113,9 +115,13 @@ public class CompilerTest extends CompilerTestBase {
 		try (InputStream in = CompilerTest.class.getResourceAsStream("/compiler/" + name + ".test")) {
 			if (in == null)
 				throw new IllegalArgumentException(String.format("test '%s' not found", name));
-			String[] res = IO.readAll(in).split("::exp");
+			String[] res = IO.readAll(in).split("::exp\n");
+			String act = res[0];
+			String exp = res[1].trim();
+			exp = StringEscapeUtils.unescapeJava(exp);
+			exp = exp.replaceAll("\n", System.lineSeparator());
 
-			return new String[]{name, res[0].trim(), res[1].trim()};
+			return new String[]{name, act, exp};
 		}
 	}
 

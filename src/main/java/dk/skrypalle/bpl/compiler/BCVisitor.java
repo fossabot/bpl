@@ -31,6 +31,7 @@ import dk.skrypalle.bpl.compiler.err.*;
 import dk.skrypalle.bpl.compiler.type.*;
 import dk.skrypalle.bpl.util.*;
 import org.antlr.v4.runtime.tree.*;
+import org.apache.commons.lang3.*;
 
 import java.util.*;
 
@@ -489,6 +490,8 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 		pusht(STRING);
 		String val = Parse.ttos(ctx.val);
 		val = val.substring(1, val.length() - 1);
+		val = StringEscapeUtils.unescapeJava(val);
+		val = val.replaceAll("\n", System.lineSeparator());
 		StaticStoreEntry entry = staticStore.get(val);
 
 		if (entry == null) {

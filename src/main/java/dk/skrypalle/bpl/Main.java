@@ -54,12 +54,9 @@ public final class Main {
 //		main();
 		String bpl = String.join("\n",
 			"func main() int {",
-			"   var i int;",
-			"   i = 5;",
-			"   while(i) {",
-			"       print(i);",
-			"       i = i - 1;",
-			"   }",
+			"   var s string;",
+			"   s = \"Hello\\nwo\\trld\";",
+			"   print(s);",
 			"   return 0;",
 			"}"
 		);

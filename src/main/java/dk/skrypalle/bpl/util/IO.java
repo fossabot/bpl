@@ -33,7 +33,7 @@ import java.util.*;
 
 public final class IO {
 
-	public static final Charset UTF8 = Charset.forName("UTF8");
+	public static final Charset UTF8 = StandardCharsets.UTF_8;
 
 	public static void writeAll(Path file, String s) throws IOException {
 		if (Files.isDirectory(file))
