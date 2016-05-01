@@ -25,17 +25,29 @@
 
 package dk.skrypalle.bpl.compiler.err;
 
+import dk.skrypalle.bpl.compiler.type.*;
+import dk.skrypalle.bpl.util.*;
 import org.antlr.v4.runtime.*;
+
+import java.util.*;
 
 public class BPLCErrFuncUndeclared extends BPLCErr {
 
 	private static final long serialVersionUID = -5734024502365850613L;
 
-	public BPLCErrFuncUndeclared(TokenAdapter t) { super(t); }
+	private final List<DataType> params;
 
-	public BPLCErrFuncUndeclared(Token t) { super(t); }
+	public BPLCErrFuncUndeclared(TokenAdapter t, List<DataType> params) {
+		super(t);
+		this.params = params;
+	}
+
+	public BPLCErrFuncUndeclared(Token t, List<DataType> params) {
+		super(t);
+		this.params = params;
+	}
 
 	@Override
-	String msg() { return "function '%s' undeclared"; }
+	String msg() { return "function '%s(" + Parse.join(", ", params) + ")' undeclared"; }
 
 }

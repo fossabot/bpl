@@ -52,21 +52,16 @@ public final class Main {
 	public static void main(String[] args) throws IOException {
 //		main();
 		String bpl = String.join("\n",
-			"func p_str(string s) string {",
-			"   print(\"hello, \");",
-			"   print(s);",
-			"   return s;",
+			"func add(int a, int b) int {",
+			"   return a+b;",
 			"}",
-			"func p_str(string s0, string s1) string {",
-			"   p_str(s0);",
-			"   print(\" and \");",
-			"   p_str(s1);",
-			"   return \" :)\";",
+			"func add(int a, string b) int {",
+			"   return a;",
 			"}",
 			"func main() int {",
 			"    var s string;",
-			"    s = p_str(\"darkness\", \"my old friend\");",
-			"    print(s);",
+			"    s = \"str\";",
+			"    add(1);",
 			"    return 0;",
 			"}"
 		);

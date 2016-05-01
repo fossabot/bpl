@@ -28,6 +28,7 @@ package dk.skrypalle.bpl.compiler;
 import dk.skrypalle.bpl.antlr.*;
 import dk.skrypalle.bpl.compiler.err.*;
 import dk.skrypalle.bpl.compiler.type.*;
+import dk.skrypalle.bpl.util.*;
 import org.antlr.v4.runtime.tree.*;
 
 import java.math.*;
@@ -93,7 +94,11 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 	public String visitRet(RetContext ctx) {
 		returns = true;
 		String val = visitChildren(ctx);
-		DataType type = popt(); // TODO type-check
+		DataType have = popt();
+		DataType want = curF.type;
+		if (have != want)
+			throw new BPLCErrTypeMismatch(TokenAdapter.from(ctx.getParent()), have, want);
+
 		return "return " + val;
 	}
 
@@ -118,7 +123,9 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 		boolean falseRet;
 
 		String cond_str = visit(ctx.cond);
-		DataType cond_t = popt(); // TODO type-check
+		DataType cond_t = popt();
+		if (cond_t != INT)
+			throw new BPLCErrTypeMismatch(TokenAdapter.from(ctx.cond), cond_t, INT);
 
 		returns = false;
 		String onTrue = visit(ctx.onTrue).trim();
@@ -164,21 +171,25 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 
 	@Override
 	public String visitVarAssign(VarAssignContext ctx) {
-		String lhs = ttos(ctx.lhs);
-		if (!symTbl.containsKey(lhs))
+		String id = ttos(ctx.lhs);
+		if (!symTbl.containsKey(id))
 			throw new BPLCErrSymUndeclared(ctx.lhs);
 
-		DataType lhs_t = symTbl.get(lhs).type; // TODO type-check
-		String rhs = visit(ctx.rhs); // TODO type-check
-		DataType rhs_t = popt();
+		Symbol sym = symTbl.get(id);
+		String rhs = visit(ctx.rhs);
+		DataType have = popt();
+		DataType want = sym.type;
+		if (have != want)
+			throw new BPLCErrTypeMismatch(TokenAdapter.from(ctx.getParent()), have, want);
 
-		return lhs + "=" + rhs;
+		return id + "=" + rhs;
 	}
 
 	//endregion
 
 	//region func
 
+	private Func           curF;
 	private int            nArgs;
 	private List<DataType> params;
 
@@ -193,7 +204,7 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 
 		String param_str = visit(ctx.params);
 
-		Func curF = funcTbl.get(id, params);
+		curF = funcTbl.get(id, params);
 
 		params = null;
 
@@ -226,25 +237,48 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 	public String visitFuncCall(FuncCallContext ctx) {
 		String id = ttos(ctx.id);
 
-		// No function with name 'id' declared
-		if (!funcTbl.isDecl(id))
-			throw new BPLCErrFuncUndeclared(ctx.id);
-
-		int actArgs = ctx.args == null ? 0 : ctx.args.arg().size();
-		int[] expArgs = funcTbl.getOverloadedParams(id);
-		if (Arrays.binarySearch(expArgs, actArgs) < 0) {
-			// # of provided args not found in overloads
-			throw new BPLCErrWrongNumArgs(ctx.id, actArgs, expArgs);
-		}
-
 		nArgs = 0;
 		String args_str = visit(ctx.args);
 		List<DataType> arg_types = new ArrayList<>();
 		for (int i = 0; i < nArgs; i++) {
-			DataType t = popt(); // TODO type-check
+			DataType t = popt();
 			arg_types.add(t);
 		}
 		Collections.reverse(arg_types); // reverse stack-order
+
+		// No function with name 'id' declared
+		if (!funcTbl.isDecl(id))
+			throw new BPLCErrFuncUndeclared(ctx.id, arg_types);
+
+		// Check possible params
+		List<List<DataType>> possible = funcTbl.getPossibleParams(id);
+		boolean isSubset = false;
+		for (List<DataType> poss : possible) {
+			boolean isSS = true;
+			int len = arg_types.size() > poss.size() ? poss.size() : arg_types.size();
+			for (int i = 0; i < len; i++) {
+				if (poss.get(i) != arg_types.get(i)) {
+					isSS = false;
+					break;
+				}
+			}
+
+			if (isSS) {
+				isSubset = true;
+				break;
+			}
+		}
+
+		if (isSubset) {
+			int actArgs = ctx.args == null ? 0 : ctx.args.arg().size();
+			int[] expArgs = funcTbl.getOverloadedParams(id);
+			if (Arrays.binarySearch(expArgs, actArgs) < 0) {
+				// # of provided args not found in overloads
+				throw new BPLCErrWrongNumArgs(ctx.id, arg_types, possible);
+			}
+		} else {
+			throw new BPLCErrFuncUndeclared(ctx.id, arg_types);
+		}
 
 		Func f = funcTbl.get(id, arg_types);
 //		if (nArgs != f.params.size()) {
@@ -297,8 +331,10 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 	@Override
 	public String visitBinOpExpr(BinOpExprContext ctx) {
 		String res = visit(ctx.lhs) + ttos(ctx.op) + visit(ctx.rhs);
-		DataType rhs_t = popt(); // TODO type-check
-		DataType lhs_t = popt(); // TODO type-check
+		DataType rhs_t = popt();
+		DataType lhs_t = popt();
+		if (rhs_t != lhs_t)
+			throw new BPLCErrTypeMismatch(TokenAdapter.from(ctx), Array.toList(rhs_t, lhs_t), Array.toList(INT, INT));
 		pusht(INT);
 		return res;
 	}
@@ -306,8 +342,10 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 	@Override
 	public String visitBoolOpExpr(BoolOpExprContext ctx) {
 		String res = "(" + visit(ctx.lhs) + ttos(ctx.op) + visit(ctx.rhs) + ")";
-		DataType rhs_t = popt(); // TODO type-check
-		DataType lhs_t = popt(); // TODO type-check
+		DataType rhs_t = popt();
+		DataType lhs_t = popt();
+		if (rhs_t != lhs_t)
+			throw new BPLCErrTypeMismatch(TokenAdapter.from(ctx), Array.toList(rhs_t, lhs_t), Array.toList(INT, INT));
 		pusht(INT);
 		return res;
 	}

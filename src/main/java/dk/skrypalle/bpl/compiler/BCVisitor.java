@@ -139,14 +139,18 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 	public byte[] visitRet(RetContext ctx) {
 		returns = true;
 		byte[] cld = visitChildren(ctx);
-		DataType type = popt(); // TODO type-check
+		DataType have = popt();
+		DataType want = curF.type;
+		if (have != want)
+			throw new BPLCErrTypeMismatch(TokenAdapter.from(ctx.getParent()), have, want);
+
 		return concat(cld, RET);
 	}
 
 	@Override
 	public byte[] visitPrint(PrintContext ctx) {
 		byte[] cld = visitChildren(ctx);
-		DataType type = popt(); // TODO type-check
+		DataType type = popt(); // TODO type-check ?
 		return concat(cld, PRINT);
 	}
 
@@ -156,7 +160,9 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 		boolean falseRet;
 
 		byte[] cond = visit(ctx.cond);
-		DataType cond_t = popt(); // TODO type-check
+		DataType cond_t = popt();
+		if (cond_t != INT)
+			throw new BPLCErrTypeMismatch(TokenAdapter.from(ctx.cond), cond_t, INT);
 
 		returns = false;
 		byte[] onTrue = visit(ctx.onTrue);
@@ -214,7 +220,10 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 
 		Symbol sym = symTbl.get(id);
 		byte[] rhs = visit(ctx.rhs);
-		DataType rhs_t = popt(); // TODO type-check
+		DataType have = popt();
+		DataType want = sym.type;
+		if (have != want)
+			throw new BPLCErrTypeMismatch(TokenAdapter.from(ctx.getParent()), have, want);
 
 		return concat(rhs, ISTORE, Marshal.bytesS32BE(sym.off));
 	}
@@ -282,25 +291,50 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 //		int nParams = ctx.args == null ? 0 : ctx.args.arg().size();
 //		id = id + ":" + paramstos(nParams) + ">I";
 
-		// No function with name 'id' declared
-		if (!funcTbl.isDecl(id))
-			throw new BPLCErrFuncUndeclared(ctx.id);
-
-		int actArgs = ctx.args == null ? 0 : ctx.args.arg().size();
-		int[] expArgs = funcTbl.getOverloadedParams(id);
-		if (Arrays.binarySearch(expArgs, actArgs) < 0) {
-			// # of provided args not found in overloads
-			throw new BPLCErrWrongNumArgs(ctx.id, actArgs, expArgs);
-		}
-
 		nArgs = 0;
 		byte[] args = visit(ctx.args);
 		List<DataType> arg_types = new ArrayList<>();
 		for (int i = 0; i < nArgs; i++) {
-			DataType t = popt(); // TODO type-check
+			DataType t = popt();
 			arg_types.add(t);
 		}
 		Collections.reverse(arg_types); // reverse stack-order
+
+		// No function with name 'id' declared
+		if (!funcTbl.isDecl(id))
+			throw new BPLCErrFuncUndeclared(ctx.id, arg_types);
+
+		// Check possible params
+		List<List<DataType>> possible = funcTbl.getPossibleParams(id);
+		boolean isSubset = false;
+		for (List<DataType> poss : possible) {
+			boolean isSS = true;
+			int len = arg_types.size() > poss.size() ? poss.size() : arg_types.size();
+			for (int i = 0; i < len; i++) {
+				if (poss.get(i) != arg_types.get(i)) {
+					isSS = false;
+					break;
+				}
+			}
+
+			if (isSS) {
+				isSubset = true;
+				break;
+			}
+		}
+
+		if (isSubset) {
+			int actArgs = ctx.args == null ? 0 : ctx.args.arg().size();
+			int[] expArgs = funcTbl.getOverloadedParams(id);
+			if (Arrays.binarySearch(expArgs, actArgs) < 0) {
+				// # of provided args not found in overloads
+				throw new BPLCErrWrongNumArgs(ctx.id, arg_types, possible);
+			}
+		} else {
+			throw new BPLCErrFuncUndeclared(ctx.id, arg_types);
+		}
+
+//		if (!funcTbl.isDecl(id, arg_types))
 
 		Func f = funcTbl.get(id, arg_types);
 		if (f == null) {
@@ -360,8 +394,10 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 		byte[] lhs = visit(ctx.lhs);
 		byte[] rhs = visit(ctx.rhs);
 		String op_str = ttos(ctx.op);
-		DataType rhs_t = popt(); // TODO type-check
-		DataType lhs_t = popt(); // TODO type-check
+		DataType rhs_t = popt();
+		DataType lhs_t = popt();
+		if (rhs_t != lhs_t)
+			throw new BPLCErrTypeMismatch(TokenAdapter.from(ctx), Array.toList(rhs_t, lhs_t), Array.toList(INT, INT));
 		pusht(INT);
 		byte op;
 		//fmt:off
@@ -387,8 +423,10 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 		byte[] lhs = visit(ctx.lhs);
 		byte[] rhs = visit(ctx.rhs);
 		String op_str = ttos(ctx.op);
-		DataType rhs_t = popt(); // TODO type-check
-		DataType lhs_t = popt(); // TODO type-check
+		DataType rhs_t = popt();
+		DataType lhs_t = popt();
+		if (rhs_t != lhs_t)
+			throw new BPLCErrTypeMismatch(TokenAdapter.from(ctx), Array.toList(rhs_t, lhs_t), Array.toList(INT, INT));
 		pusht(INT);
 		byte op;
 		int v0;

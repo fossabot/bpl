@@ -25,6 +25,7 @@
 
 package dk.skrypalle.bpl.compiler.err;
 
+import dk.skrypalle.bpl.compiler.type.*;
 import org.antlr.v4.runtime.*;
 
 import java.util.*;
@@ -33,57 +34,40 @@ public class BPLCErrWrongNumArgs extends BPLCErr {
 
 	private static final long serialVersionUID = -2363166926432452563L;
 
-	private final int   act;
-	private final int[] exp;
+	private final List<DataType>       act;
+	private final List<List<DataType>> exp;
 
-	public BPLCErrWrongNumArgs(TokenAdapter t, int act, int[] exp) {
+	public BPLCErrWrongNumArgs(TokenAdapter t, List<DataType> act, List<List<DataType>> exp) {
 		super(t);
 		this.act = act;
 		this.exp = exp;
-		Arrays.sort(this.exp);
 	}
 
-	public BPLCErrWrongNumArgs(Token t, int act, int[] exp) {
-		this(TokenAdapter.from(t), act, exp);
-	}
-
-	public BPLCErrWrongNumArgs(TokenAdapter t, int act, int exp) {
-		this(t, act, new int[]{exp});
-	}
-
-	public BPLCErrWrongNumArgs(Token t, int act, int exp) {
+	public BPLCErrWrongNumArgs(Token t, List<DataType> act, List<List<DataType>> exp) {
 		this(TokenAdapter.from(t), act, exp);
 	}
 
 	@Override
 	String msg() {
-		if (this.exp.length == 1) {
-			String qnt = act > exp[0] ? "many" : "few";
-			return "too " + qnt + " arguments to function '%s' - have " + act + " want " + exp[0];
-		}
-
 		int nSmaller = 0;
 		int nGreater = 0;
-		StringBuilder buf = new StringBuilder();
-		buf.append("[");
-		for (int i = 0; i < exp.length; i++) {
-			if (exp[i] > act)
+		for (int i = 0; i < exp.size(); i++) {
+			if (exp.get(i).size() > act.size())
 				nSmaller++;
 			else
 				nGreater++;
-			buf.append(exp[i]);
-			if (i < exp.length - 1)
-				buf.append(", ");
 		}
-		buf.append("]");
 
-		if (nSmaller == exp.length) {
-			return "too few arguments to function '%s' - have " + act + " want " + buf.toString();
-		} else if (nGreater == exp.length) {
-			return "too many arguments to function '%s' - have " + act + " want " + buf.toString();
+		String s;
+		if (nSmaller == exp.size()) {
+			s = "too few arguments";
+		} else if (nGreater == exp.size()) {
+			s = "too many arguments";
 		} else {
-			return "wrong number of arguments to function '%s' - have " + act + " want " + buf.toString();
+			s = "wrong number of arguments";
 		}
+
+		return s + " to function '%s' - have " + act + " want " + exp;
 	}
 
 }

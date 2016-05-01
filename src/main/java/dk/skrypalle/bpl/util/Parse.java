@@ -28,6 +28,8 @@ package dk.skrypalle.bpl.util;
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.*;
 
+import java.util.*;
+
 public final class Parse {
 
 	public static String ttos(Token t) {
@@ -42,12 +44,13 @@ public final class Parse {
 		return t.getText();
 	}
 
-	public static String paramstos(int n) {
-		if (n == 0)
-			return "V";
+	public static String join(String delim, List<?> ary) {
 		StringBuilder buf = new StringBuilder();
-		for (int i = 0; i < n; i++)
-			buf.append("I");
+		for (int i = 0; i < ary.size(); i++) {
+			buf.append(ary.get(i));
+			if (i < ary.size() - 1)
+				buf.append(delim);
+		}
 		return buf.toString();
 	}
 

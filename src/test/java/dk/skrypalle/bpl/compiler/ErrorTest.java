@@ -64,7 +64,7 @@ public class ErrorTest extends CompilerTestBase {
 
 	@Test(dataProvider = "provideCompileSwitch",
 		expectedExceptions = BPLCErrFuncUndeclared.class,
-		expectedExceptionsMessageRegExp = "2:1: error: function 'x' undeclared")
+		expectedExceptionsMessageRegExp = "2:1: error: function 'x\\(\\)' undeclared")
 	public void testErrFuncUndeclared(Target t) throws Exception {
 		t.compile(this, wrapMain("x();"));
 	} // test eval via thrown exception
@@ -78,35 +78,35 @@ public class ErrorTest extends CompilerTestBase {
 
 	@Test(dataProvider = "provideCompileSwitch",
 		expectedExceptions = BPLCErrWrongNumArgs.class,
-		expectedExceptionsMessageRegExp = "1:58: error: too few arguments to function 'x' - have 0 want 1")
+		expectedExceptionsMessageRegExp = "1:58: error: too few arguments to function 'x' - have \\[\\] want \\[\\[INT\\]\\]")
 	public void testErrTooFewArgsOnCall(Target t) throws Exception {
 		t.compile(this, "func x(int i) int { return i; } func main() int { return x(); }");
 	} // test eval via thrown exception
 
 	@Test(dataProvider = "provideCompileSwitch",
 		expectedExceptions = BPLCErrWrongNumArgs.class,
-		expectedExceptionsMessageRegExp = "1:53: error: too many arguments to function 'x' - have 1 want 0")
+		expectedExceptionsMessageRegExp = "1:53: error: too many arguments to function 'x' - have \\[INT\\] want \\[\\[\\]\\]")
 	public void testErrTooManyArgsOnCall(Target t) throws Exception {
 		t.compile(this, "func x() int { return 0; } func main() int { return x(1); }");
 	} // test eval via thrown exception
 
 	@Test(dataProvider = "provideCompileSwitch",
 		expectedExceptions = BPLCErrWrongNumArgs.class,
-		expectedExceptionsMessageRegExp = "1:85: error: too many arguments to function 'x' - have 2 want \\[0, 1\\]")
+		expectedExceptionsMessageRegExp = "1:85: error: too many arguments to function 'x' - have \\[INT, INT\\] want \\[\\[\\], \\[INT\\]\\]")
 	public void testErrTooManyArgsOnOverloadCall(Target t) throws Exception {
 		t.compile(this, "func x() int { return 0; } func x(int a) int { return a; } func main() int { return x(1,2); }");
 	} // test eval via thrown exception
 
 	@Test(dataProvider = "provideCompileSwitch",
 		expectedExceptions = BPLCErrWrongNumArgs.class,
-		expectedExceptionsMessageRegExp = "1:99: error: too few arguments to function 'x' - have 0 want \\[1, 2\\]")
+		expectedExceptionsMessageRegExp = "1:99: error: too few arguments to function 'x' - have \\[\\] want \\[\\[INT\\], \\[INT, INT\\]\\]")
 	public void testErrTooFewArgsOnOverloadCall(Target t) throws Exception {
 		t.compile(this, "func x(int a) int { return a; } func x(int a, int b) int { return a+b; } func main() int { return x(); }");
 	} // test eval via thrown exception
 
 	@Test(dataProvider = "provideCompileSwitch",
 		expectedExceptions = BPLCErrWrongNumArgs.class,
-		expectedExceptionsMessageRegExp = "1:94: error: wrong number of arguments to function 'x' - have 1 want \\[0, 2\\]")
+		expectedExceptionsMessageRegExp = "1:94: error: wrong number of arguments to function 'x' - have \\[INT\\] want \\[\\[\\], \\[INT, INT\\]\\]")
 	public void testErrWrongNumArgsOnOverloadCall(Target t) throws Exception {
 		t.compile(this, "func x() int { return 0; } func x(int a, int b) int { return a+b; } func main() int { return x(1); }");
 	} // test eval via thrown exception
@@ -151,5 +151,44 @@ public class ErrorTest extends CompilerTestBase {
 	} // test eval via thrown exception
 
 	//endregion
+
+	//region types
+
+	@Test(dataProvider = "provideCompileSwitch",
+		expectedExceptions = BPLCErrTypeMismatch.class,
+		expectedExceptionsMessageRegExp = "1:19: error: type mismatch at 'return\"mismatch\";' - have STRING want INT")
+	public void testErrTypeMismatchOnReturn(Target t) throws Exception {
+		t.compile(this, "func main() int { return \"mismatch\"; }");
+	} // test eval via thrown exception
+
+	@Test(dataProvider = "provideCompileSwitch",
+		expectedExceptions = BPLCErrTypeMismatch.class,
+		expectedExceptionsMessageRegExp = "1:33: error: type mismatch at 's=0;' - have INT want STRING")
+	public void testErrTypeMismatchOnAssign(Target t) throws Error {
+		t.compile(this, "func main() int { var s string; s = 0; return 0; }");
+	} // test eval via thrown exception
+
+	@Test(dataProvider = "provideCompileSwitch",
+		expectedExceptions = BPLCErrTypeMismatch.class,
+		expectedExceptionsMessageRegExp = "1:45: error: type mismatch at 's' - have STRING want INT")
+	public void testErrTypeMismatchInCondition(Target t) throws Error {
+		t.compile(this, "func main() int { var s string; s = \"1\"; if(s) { return 0; } else { return 1; } }");
+	} // test eval via thrown exception
+
+	@Test(dataProvider = "provideCompileSwitch",
+		expectedExceptions = BPLCErrTypeMismatch.class,
+		expectedExceptionsMessageRegExp = "1:62: error: type mismatch at 's\\+i' - have \\[INT, STRING\\] want \\[INT, INT\\]")
+	public void testErrTypeMismatchBinOp(Target t) throws Error {
+		t.compile(this, "func main() int { var s string; var i int; s = \"1\"; i = 1; s=s+i; return 0; }");
+	} // test eval via thrown exception
+
+	@Test(dataProvider = "provideCompileSwitch",
+		expectedExceptions = BPLCErrTypeMismatch.class,
+		expectedExceptionsMessageRegExp = "1:62: error: type mismatch at 's&&i' - have \\[INT, STRING\\] want \\[INT, INT\\]")
+	public void testErrTypeMismatchBoolOp(Target t) throws Error {
+		t.compile(this, "func main() int { var s string; var i int; s = \"1\"; i = 1; i=s&&i; return 0; }");
+	} // test eval via thrown exception
+
+	// endregion
 
 }

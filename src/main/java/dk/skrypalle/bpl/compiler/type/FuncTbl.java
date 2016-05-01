@@ -89,6 +89,27 @@ public class FuncTbl {
 		return res;
 	}
 
+	public List<List<DataType>> getPossibleParams(String id) {
+		Map<List<DataType>, Func> overloads = map.get(id);
+		List<List<DataType>> res = new ArrayList<>();
+		res.addAll(overloads.keySet());
+
+		res.sort((l, r) -> {
+			if (l.size() < r.size())
+				return -1;
+			if (l.size() > r.size())
+				return 1;
+
+			if (l.isEmpty())
+				return -1;
+			if (r.isEmpty())
+				return 1;
+
+			return l.get(0).compareTo(r.get(0));
+		});
+		return res;
+	}
+
 	public List<Func> flatten() {
 		List<Func> res = new ArrayList<>();
 		for (Map<List<DataType>, Func> overloads : map.values())
