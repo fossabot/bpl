@@ -6,6 +6,9 @@ language.
 This project is in very early development. The current master branch runs fine
 on my machine and is not supported anywhere else at the moment.
 
+####For the curious
+Check out the code snippets in the [test resources](src/test/compiler)!
+
 ###Why?
 This is just my view on what a programming language should look & feel like and
 what it should be able to do.
