@@ -70,12 +70,12 @@ public final class Exec {
 			"-std=c99",
 			"-Wall",
 			"-Wextra",
-			"-Wpedantic",
+			"-pedantic",
 			"-Wno-format",
 			"-Wno-unused-parameter",
 			"-Wno-unused-function",
 			"--save-temps",
-			"-o" + fName + "." + OS.exeEXT(),
+			"-o" + fName + OS.exeEXT(),
 			fName + ".c"
 		};
 		return exec(cmd, file.getParent());

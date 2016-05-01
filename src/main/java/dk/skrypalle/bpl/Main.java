@@ -50,6 +50,7 @@ public final class Main {
 	}
 
 	public static void main(String[] args) throws IOException {
+		Exec.trace = true;
 //		main();
 		String bpl = String.join("\n",
 			"func add(a int, b int) int {",
@@ -61,7 +62,8 @@ public final class Main {
 			"func main() int {",
 			"    var s string;",
 			"    s = \"str\";",
-			"    add(1,2);",
+			"    print(add(1,2));",
+			"    print(s);",
 			"    return 0;",
 			"}"
 		);
@@ -93,7 +95,7 @@ public final class Main {
 					"GCC compile error (exit status %d)\n%s%s",
 					gcc.exit, gcc.out, gcc.err
 				));
-			ExecRes run = Exec.exec(tmpDir.resolve("out." + OS.exeEXT()));
+			ExecRes run = Exec.exec(tmpDir.resolve("out" + OS.exeEXT()));
 			System.out.println(c99);
 			System.out.println(run);
 			IO.delRec(tmpDir);

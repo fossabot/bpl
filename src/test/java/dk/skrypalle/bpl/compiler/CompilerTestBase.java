@@ -37,12 +37,12 @@ public class CompilerTestBase {
 
 	private Path tmpDir;
 
-	@BeforeTest
+	@BeforeMethod
 	public void setup() throws IOException {
 		tmpDir = IO.makeTmpDir("_bplc_");
 	}
 
-	@AfterTest
+	@AfterMethod
 	public void teardown() throws IOException {
 		IO.delRec(tmpDir);
 	}
@@ -83,7 +83,7 @@ public class CompilerTestBase {
 	}
 
 	protected ExecRes runC99() throws IOException {
-		return Exec.exec(tmpDir.resolve("out." + OS.exeEXT()));
+		return Exec.exec(tmpDir.resolve("out" + OS.exeEXT()));
 	}
 
 	//region inner class VMExecRes

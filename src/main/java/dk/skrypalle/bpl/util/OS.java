@@ -25,9 +25,18 @@
 
 package dk.skrypalle.bpl.util;
 
+import java.util.*;
+
 public final class OS {
 
-	public static String exeEXT() { return "exe"; }
+	private static final String exeEXT;
+
+	static {
+		String os = System.getProperty("os.name", "generic").toLowerCase(Locale.ENGLISH);
+		exeEXT = os.contains("win") ? ".exe" : "";
+	}
+
+	public static String exeEXT() { return exeEXT; }
 
 	private OS() { /**/ }
 
