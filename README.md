@@ -1,4 +1,7 @@
 #BPL Programming Language
+
+[![Build Status](https://travis-ci.org/baeda/bpl.svg?branch=master)](https://travis-ci.org/baeda/bpl)
+
 A hackish attempt to bring forth a simple, yet non-restrictive programming
 language.
 
