@@ -372,7 +372,7 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 		Func f = funcTbl.get(id, arg_types);
 
 		// Don't push the return type if the call was a stand-alone statement
-		if (!(ctx.getParent() instanceof StmtContext) && !(ctx.getParent() instanceof SimpleStmtContext))
+		if (!(ctx.getParent() instanceof StmtContext))// && !(ctx.getParent() instanceof SimpleStmtContext))
 			pusht(f.type);
 
 		return concat(args, CALL, Marshal.bytesS32BE(f.entry), Marshal.bytesS32BE(nArgs));

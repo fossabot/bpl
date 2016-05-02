@@ -312,7 +312,7 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 		Func f = funcTbl.get(id, arg_types);
 
 		// Don't push the return type if the call was a stand-alone statement
-		if (!(ctx.getParent() instanceof StmtContext) && !(ctx.getParent() instanceof SimpleStmtContext))
+		if (!(ctx.getParent() instanceof StmtContext))// && !(ctx.getParent() instanceof SimpleStmtContext))
 			pusht(f.type);
 
 		return mangle(f) + "(" + args_str + ")";
