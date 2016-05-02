@@ -72,7 +72,7 @@ public final class Main {
 	}
 
 	public static void main(String[] args) throws IOException {
-		Exec.trace = false;
+		Exec.trace = true;
 //		main();
 //		System.exit(1);
 		String bpl = String.join("\n",
@@ -141,13 +141,17 @@ public final class Main {
 			"}"
 		);
 		bpl = loadTestFile("loop/fibonacci")[1];
+		bpl = String.join("\n",
+			"func main() int { print(\"Hello, 世界\"); return 0; }");
 
 		byte[] bplbc = null;
 		try {
 			bplbc = compileBC(bpl);
 			VM vm = new VM(bplbc, Exec.trace);
 			int vmExit = vm.run();
-			System.out.printf("VM finished with exit code 0x%08x\n", vmExit);
+			if (!Exec.trace)
+				System.out.println("\n");
+			System.out.printf("BPLVM finished with exit code %d\n", vmExit);
 			System.out.println();
 		} catch (Throwable t) {
 			System.err.printf("Target BPLBC failed: %s: %s\n", t.getClass().getSimpleName(), t.getMessage());
@@ -172,8 +176,11 @@ public final class Main {
 					gcc.exit, gcc.out, gcc.err
 				));
 			ExecRes run = Exec.exec(tmpDir.resolve("out" + OS.exeEXT()));
-			System.out.println(c99);
-			System.out.println(run);
+			if (Exec.trace)
+				System.out.println(c99);
+			System.out.print(run.out);
+			System.out.println("\n");
+			System.out.println("Native finished with exit code " + run.exit);
 			IO.delRec(tmpDir);
 		} catch (Throwable t) {
 			System.err.printf("Target C99 failed: %s: %s\n", t.getClass().getSimpleName(), t.getMessage());
