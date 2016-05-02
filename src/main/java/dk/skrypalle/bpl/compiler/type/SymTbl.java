@@ -30,11 +30,15 @@ import java.util.*;
 public class SymTbl {
 
 	private final Deque<Map<String, Symbol>> stack;
+	private final Map<String, Symbol>        params;
+	private final ArrayDeque<Symbol>         paramStack;
 
 	private int localIdx;
 
 	public SymTbl() {
 		stack = new ArrayDeque<>();
+		params = new HashMap<>();
+		paramStack = new ArrayDeque<>();
 		localIdx = 0;
 	}
 
@@ -47,16 +51,17 @@ public class SymTbl {
 	}
 
 	public void declParam(String id, DataType t) {
-		if (cur().containsKey(id))
+		if (params.containsKey(id))
 			throw new IllegalArgumentException("param sym " + id + "[" + t + "]" + " already declared in this scope");
 
 		// Shift down all previous values (stack)
-		for (Symbol sym : cur().values()) {
+		for (Symbol sym : params.values()) {
 			if (sym.off < 0)
 				sym.off--;
 		}
 		Symbol sym = new Symbol(id, t, -4); // TODO: put "-4" to some calling convention def
-		cur().put(id, sym);
+		params.put(id, sym);
+		paramStack.push(sym);
 	}
 
 	public void declLocal(String id, DataType t) {
@@ -71,11 +76,28 @@ public class SymTbl {
 		for (Map<String, Symbol> m : stack)
 			if (m.containsKey(id))
 				return true;
-		return false;
+
+		return params.containsKey(id);
 	}
 
 	public int nLocals() {
 		return localIdx;
+	}
+
+	public int nParams() {
+		return paramStack.size();
+	}
+
+	public List<Symbol> getParams() {
+		return Arrays.asList(paramStack.toArray(new Symbol[nParams()]));
+	}
+
+	public List<DataType> getParamTypes() {
+		List<DataType> res = new ArrayList<>();
+		for (Symbol sym : paramStack)
+			res.add(sym.type);
+		Collections.reverse(res);
+		return res;
 	}
 
 	public Symbol get(String id) {
@@ -83,16 +105,28 @@ public class SymTbl {
 			if (m.containsKey(id))
 				return m.get(id);
 		}
-		return null;
+		return params.get(id);
 	}
 
-	public void clear() {
+	public void clearLocals() {
 		stack.clear();
+//		params.clear();
+//		paramStack.clear();
 		localIdx = 0;
+//		nParams = 0;
 	}
 
 	private Map<String, Symbol> cur() {
 		return stack.peek();
 	}
 
+	@Override
+	public String toString() {
+		return "SymTbl{" +
+			"params=" + params +
+			", stack=" + stack +
+			", paramStack=" + paramStack +
+			", localIdx=" + localIdx +
+			'}';
+	}
 }

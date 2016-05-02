@@ -40,13 +40,15 @@ public class FuncTbl {
 	}
 
 	public void decl(Func f) {
+		StackTraceElement ste = Thread.currentThread().getStackTrace()[2];
+//		System.out.println(ste.getClassName() +"::"+ste.getMethodName()+" ->DECL " + f);
 		Map<List<DataType>, Func> overloads = map.get(f.id);
 		if (overloads == null) {
 			overloads = new HashMap<>();
-			overloads.put(f.params, f);
+			overloads.put(f.symTbl.getParamTypes(), f);
 			map.put(f.id, overloads);
 		} else {
-			overloads.put(f.params, f);
+			overloads.put(f.symTbl.getParamTypes(), f);
 		}
 	}
 
@@ -68,11 +70,19 @@ public class FuncTbl {
 		return null;
 	}
 
-	public Func get(String id, List<DataType> params) {
+	public Func get0(String id, List<DataType> params) {
 		Map<List<DataType>, Func> overloads = map.get(id);
+//		System.out.println("GET:: " + overloads);
 		if (overloads == null)
 			return null;
 		return overloads.get(params);
+	}
+
+	public Func get(String id, List<DataType> params) {
+		Func f = get0(id, params);
+		StackTraceElement ste = Thread.currentThread().getStackTrace()[2];
+//		System.out.println(ste.getClassName() +"::"+ste.getMethodName()+" ->GET " + id + " params="+params + " res="+f + " map="+map);
+		return f;
 	}
 
 	public int[] getOverloadedParams(String id) {

@@ -25,8 +25,6 @@
 
 package dk.skrypalle.bpl.compiler.type;
 
-import java.util.*;
-
 public final class Func {
 
 	public static final int ENTRY_UNRESOLVED = -1;
@@ -35,12 +33,16 @@ public final class Func {
 
 	public String   id;
 	public DataType type;
-	public List<DataType> params = new ArrayList<>();
-	public int            entry  = ENTRY_UNRESOLVED;
+	//	public List<DataType> params = new ArrayList<>();
+	public int entry = ENTRY_UNRESOLVED;
 
 	@Override
 	public String toString() {
-		return String.format("func %s(%d)@0x%x", id, params.size(), entry);
+		return "Func{" +
+			"id='" + id + '\'' +
+			", type=" + type +
+			", symTbl=" + symTbl +
+			'}';
 	}
 
 }

@@ -30,8 +30,6 @@ import dk.skrypalle.bpl.compiler.err.*;
 import dk.skrypalle.bpl.compiler.type.*;
 import org.antlr.v4.runtime.tree.*;
 
-import java.util.*;
-
 import static dk.skrypalle.bpl.antlr.BPLParser.*;
 import static dk.skrypalle.bpl.util.Parse.*;
 
@@ -41,7 +39,9 @@ public class FuncResolvePass extends BPLBaseVisitor<FuncTbl> {
 
 	private final FuncTbl funcTbl;
 
-	private List<DataType> params;
+	private Func curF;
+
+//	private List<DataType> params;
 
 	public FuncResolvePass() {
 		funcTbl = new FuncTbl();
@@ -65,27 +65,32 @@ public class FuncResolvePass extends BPLBaseVisitor<FuncTbl> {
 		String type_str = ttos(ctx.typ);
 		DataType type = DataType.parse(type_str);
 
-		params = new ArrayList<>();
+		curF = new Func();
+		curF.id = id;
+		curF.type = type;
+
+//		params = new ArrayList<>();
 		visit(ctx.params);
 
-		if (funcTbl.isDecl(id, params))
+		if (funcTbl.isDecl(id, curF.symTbl.getParamTypes()))
 			throw new BPLCErrFuncRedeclared(ctx.id);
 
-		Func f = new Func();
-		f.id = id;
-		f.type = type;
-		f.params = params;
+//		curF.params = params;
 
-		funcTbl.decl(f);
+		funcTbl.decl(curF);
 
-		params = null;
+//		params = null;
 		return funcTbl;
 	}
 
 	@Override
 	public FuncTbl visitParam(ParamContext ctx) {
+		String id = ttos(ctx.id);
 		String type_str = ttos(ctx.typ);
-		params.add(DataType.parse(type_str));
+		if (curF.symTbl.isDecl(id))
+			throw new BPLCErrSymRedeclared(ctx.id);
+
+		curF.symTbl.declParam(id, DataType.parse(type_str));
 		return funcTbl;
 	}
 

@@ -28,7 +28,6 @@ package dk.skrypalle.bpl;
 import dk.skrypalle.bpl.compiler.*;
 import dk.skrypalle.bpl.compiler.type.*;
 import dk.skrypalle.bpl.util.*;
-import dk.skrypalle.bpl.vm.*;
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.*;
 import org.apache.commons.lang3.*;
@@ -71,7 +70,7 @@ public final class Main {
 		return 0;
 	}
 
-	public static void main(String[] args) throws IOException {
+	public static void main(String[] args) throws IOException, InterruptedException {
 		Exec.trace = true;
 //		main();
 //		System.exit(1);
@@ -142,13 +141,37 @@ public final class Main {
 		);
 		bpl = loadTestFile("loop/fibonacci")[1];
 		bpl = String.join("\n",
-			"func main() int { print(\"Hello, 世界\"); return 0; }");
+			"func p_str(s string, i int) string {",
+			"   if(i) {",
+			"       print(\"Hello, \");",
+			"   } else {",
+			"       print(\"hello, \");",
+			"   }",
+			"   print(s);",
+			"   return s;",
+			"}",
+			"",
+			"func p_str(s0 string, s1 string) string {",
+			"   p_str(s0, 1);",
+			"   print(\" and \");",
+			"   p_str(s1, 0);",
+			"   return \"!\";",
+			"}",
+			"",
+			"func main() int {",
+			"    var s string;",
+			"    s = p_str(\"世界\", \"everyone else\");",
+			"    print(s);",
+			"    return 0;",
+			"}\n"
+		);
 
 		byte[] bplbc = null;
 		try {
-			bplbc = compileBC(bpl);
-			VM vm = new VM(bplbc, Exec.trace);
-			int vmExit = vm.run();
+			int vmExit = -1;
+//			bplbc = compileBC(bpl);
+//			VM vm = new VM(bplbc, Exec.trace);
+//			vmExit = vm.run();
 			if (!Exec.trace)
 				System.out.println("\n");
 			System.out.printf("BPLVM finished with exit code %d\n", vmExit);
@@ -183,6 +206,7 @@ public final class Main {
 			System.out.println("Native finished with exit code " + run.exit);
 			IO.delRec(tmpDir);
 		} catch (Throwable t) {
+			Thread.sleep(100);
 			System.err.printf("Target C99 failed: %s: %s\n", t.getClass().getSimpleName(), t.getMessage());
 			if (c99 != null)
 				System.err.printf("Code memory:\n%s\n", c99);

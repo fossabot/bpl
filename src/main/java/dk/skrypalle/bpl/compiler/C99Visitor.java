@@ -62,12 +62,13 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 				continue;
 
 			protos.append("static ").append(f.type.c_type).append(" ").append(mangle(f)).append("(");
-			for (int i = 0; i < f.params.size(); i++) {
-				protos.append(f.params.get(i).c_type);
-				if (i < f.params.size() - 1)
+			List<DataType> paramTypes = f.symTbl.getParamTypes();
+			for (int i = 0; i < paramTypes.size(); i++) {
+				protos.append(paramTypes.get(i).c_type);
+				if (i < paramTypes.size() - 1)
 					protos.append(",");
 			}
-			if (f.params.isEmpty())
+			if (paramTypes.isEmpty())
 				protos.append("void");
 			protos.append(");\n");
 		}
@@ -194,45 +195,62 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 
 	//region func
 
-	private Func           curF;
-	private int            nArgs;
-	private List<DataType> params;
+	private Func curF;
+//	private int  nArgs;
+//	private List<DataType> params;
 
 	@Override
 	public String visitFuncDecl(FuncDeclContext ctx) {
-		String id = ttos(ctx.id);
-
-//		Map<String, Symbol> oldSymTbl = symTbl;
-//		symTbl = new HashMap<>(symTbl);
-		returns = false;
-		params = new ArrayList<>();
-
-		curF = new Func();// FIXME hack:: visitParams needs symTbl, need params to get correct func
-		curF.symTbl.pushScope();// FIXME hack
-
-		String param_str = visit(ctx.params);
-
-		SymTbl st = curF.symTbl; // FIXME hack
-		curF = funcTbl.get(id, params);
-		curF.symTbl = st;// FIXME hack
-		params = null;
-
-		String ret_t = curF.type.c_type;
-		if ("main".equals(id))
-			ret_t = "int";
-
 		if (!tStack.isEmpty())
 			throw new IllegalStateException("typeStack not empty on func decl start");
 
+		String id = ttos(ctx.id);
+		List<DataType> params = new ArrayList<>();
+		if (ctx.params != null) {
+			for (ParamContext pctx : ctx.params.param())
+				params.add(DataType.parse(ttos(pctx.typ)));
+		}
+		returns = false;
+
+//		System.out.println(id + " :: params: " + params);
+		curF = funcTbl.get(id, params);
+//		System.out.println("GREP ME " + curF);
+
+//		Map<String, Symbol> oldSymTbl = symTbl;
+//		symTbl = new HashMap<>(symTbl);
+//		params = new ArrayList<>();
+
+//		curF = new Func();// FIXME hack:: visitParams needs symTbl, need params to get correct func
+//		curF.symTbl.pushScope();// FIXME hack
+
+//		List<DataType> prms = new ArrayList<>();
+//		if (ctx.params != null) {
+//			for (ParamContext pctx : ctx.params.param()) {
+//				prms.add(DataType.parse(ttos(pctx.typ)));
+//			}
+//		}
+
+//		SymTbl st = curF.symTbl; // FIXME hack
+//		curF = funcTbl.get(id, prms);
+//		curF.symTbl = st;// FIXME hack
+//		params = null;
+
+//		curF.symTbl.pushScope();
+//		String param_str = visit(ctx.params);
+
+		String ret_t = curF.type.c_type; // FIXME temporary to please GCC
+		if ("main".equals(id))
+			ret_t = "int";
+
 		String res = String.join("\n",
-			ret_t + " " + mangle(curF) + "(" + param_str + ")",
+			ret_t + " " + mangle(curF) + "(" + visit(ctx.params) + ")",
 			visit(ctx.body)
 		);
 
 		if (!returns)
 			throw new BPLCErrReturnMissing(ctx.stop);
 //		symTbl = oldSymTbl;
-		curF.symTbl.popScope();
+//		curF.symTbl.popScope();
 
 		if (!tStack.isEmpty())
 			throw new IllegalStateException("typeStack not empty on func decl end");
@@ -244,8 +262,12 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 	public String visitFuncCall(FuncCallContext ctx) {
 		String id = ttos(ctx.id);
 
-		nArgs = 0;
+		int nArgs = 0;
+		if (ctx.args != null)
+			nArgs = ctx.args.arg().size();
+
 		String args_str = visit(ctx.args);
+
 		List<DataType> arg_types = new ArrayList<>();
 		for (int i = 0; i < nArgs; i++) {
 			DataType t = popt();
@@ -288,13 +310,9 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 		}
 
 		Func f = funcTbl.get(id, arg_types);
-//		if (nArgs != f.params.size()) {
-//			throw new RuntimeException("UNREACHABLE???");
-////			throw new BPLCErrWrongNumArgs(ctx.id, nArgs, f.params.size());
-//		}
 
 		// Don't push the return type if the call was a stand-alone statement
-		if (!(ctx.getParent() instanceof StmtContext))
+		if (!(ctx.getParent() instanceof StmtContext) && !(ctx.getParent() instanceof SimpleStmtContext))
 			pusht(f.type);
 
 		return mangle(f) + "(" + args_str + ")";
@@ -312,11 +330,11 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 		String id = ttos(ctx.id);
 		String type_str = ttos(ctx.typ);
 		DataType type = DataType.parse(type_str);
-		if (curF.symTbl.isDecl(id))
-			throw new BPLCErrSymRedeclared(ctx.id);
+//		if (curF.symTbl.isDecl(id))
+//			throw new BPLCErrSymRedeclared(ctx.id);
 
-		params.add(type);
-		curF.symTbl.declParam(id, type);
+//		params.add(type);
+//		curF.symTbl.declParam(id, type);
 		return type.c_type + " " + id;
 	}
 
@@ -327,7 +345,7 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 
 	@Override
 	public String visitArg(ArgContext ctx) {
-		nArgs++;
+//		nArgs++;
 		return visit(ctx.expr());
 	}
 
@@ -443,7 +461,7 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 			return f.id;
 
 		StringBuilder buf = new StringBuilder();
-		for (DataType t : f.params)
+		for (DataType t : f.symTbl.getParamTypes())
 			buf.append("_").append(t);
 
 		return "__$bplc_" + f.id + buf.toString() + "_" + f.type;
