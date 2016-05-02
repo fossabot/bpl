@@ -29,6 +29,13 @@ import java.util.*;
 
 public final class Bytecode {
 
+	// Bytecode preamble length
+	// data_seg_len(4) + data_seg(?) + CALL(8), HALT(1) +1
+	public static final int PREABLE_LEN = 0x0e;
+
+	// Parameter offset from fp after call
+	public static final int PARAM_START = -4;
+
 	public static final byte NOP   = (byte) 0x00;
 	public static final byte POP   = (byte) 0x01;
 	public static final byte IPUSH = (byte) 0x02;

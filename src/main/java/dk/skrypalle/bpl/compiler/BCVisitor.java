@@ -43,48 +43,22 @@ import static dk.skrypalle.bpl.vm.Bytecode.*;
 
 public class BCVisitor extends BPLBaseVisitor<byte[]> {
 
-	private static class StaticStoreEntry {
-		private int    off = 0;
-		private byte[] val = null;
-
-		@Override
-		public String toString() {
-			return "StaticStoreEntry{" +
-				"off=" + off +
-				", val=" + Arrays.toString(val) +
-				", val='" + new String(val, 4, val.length - 4) +
-				"'}";
-		}
-	}
-
-	private static final byte[] EMPTY       = {};
-	private static final int    PREABLE_LEN = 0x0e; // data_seg_len(4) + data_seg(?) + CALL(8), HALT(1) +1
+	private static final byte[] EMPTY = {};
 
 	private final FuncTbl         funcTbl;
 	private final Deque<DataType> tStack;
 
-	//	private Map<String, Symbol> symTbl;
-	private boolean returns;
-	private int     fOff;
-
 	private Map<String, StaticStoreEntry> staticStore;
-	private int staticLen = 0;
+	private Func                          curF;
+	private int                           staticLen;
+	private int                           fOff;
 
 	public BCVisitor(FuncTbl funcTbl) {
 		this.funcTbl = funcTbl;
-//		symTbl = new HashMap<>();
-		tStack = new ArrayDeque<>();
-		staticStore = new HashMap<>();
-		fOff = PREABLE_LEN;
-	}
-
-	private int nUnresolved() {
-		int res = 0;
-		for (Func f : funcTbl.flatten()) {
-			if (f.entry == Func.ENTRY_UNRESOLVED)
-				res++;
-		}
-		return res;
+		this.tStack = new ArrayDeque<>();
+		this.staticStore = new HashMap<>();
+		this.staticLen = 0;
+		this.fOff = PREABLE_LEN;
 	}
 
 	@Override
@@ -106,41 +80,36 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 		byte[] cld = visitChildren(ctx);
 
 		byte[] static_b = {};
+		// Sort data segment
 		TreeMap<Integer, byte[]> tmp = new TreeMap<>();
-		for (StaticStoreEntry e : staticStore.values()) {
-//			System.out.println(e.toString());
+		for (StaticStoreEntry e : staticStore.values())
 			tmp.put(e.off, e.val);
-		}
-		for (Map.Entry<Integer, byte[]> e : tmp.entrySet()) {
-//			System.out.println("CONCAT::");
-//			System.out.println(Hex.dump(e.getValue()));
+		for (Map.Entry<Integer, byte[]> e : tmp.entrySet())
 			static_b = concat(static_b, e.getValue());
-		}
 
 		Func main = funcTbl.getFirst("main");
 
-//		System.out.println(Hex.dump(static_b));
-//		System.exit(1);
-
 		return concat(
-			Marshal.bytesS32BE(staticLen), // data segment len
-			static_b,                      // data segment
+			Marshal.bytesS32BE(staticLen),                               // data segment length
+			static_b,                                                    // data segment
 			CALL, Marshal.bytesS32BE(main.entry), Marshal.bytesS32BE(0), // call main void
 			HALT,
 			cld
 		);
 	}
 
+	//region stmt
+
 	@Override
 	public byte[] visitStmt(StmtContext ctx) {
-		if (returns)
+		if (curF.returns)
 			throw new BPLCErrStatementUnreachable(ctx.start);
 		return visitChildren(ctx);
 	}
 
 	@Override
 	public byte[] visitRet(RetContext ctx) {
-		returns = true;
+		curF.returns = true;
 		byte[] cld = visitChildren(ctx);
 		DataType have = popt();
 		DataType want = curF.type;
@@ -167,15 +136,15 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 		if (cond_t != INT)
 			throw new BPLCErrTypeMismatch(TokenAdapter.from(ctx.cond), cond_t, INT);
 
-		returns = false;
+		curF.returns = false;
 		byte[] onTrue = visit(ctx.onTrue);
-		trueRet = returns;
+		trueRet = curF.returns;
 
-		returns = false;
+		curF.returns = false;
 		byte[] onFalse = visit(ctx.onFalse);
-		falseRet = returns;
+		falseRet = curF.returns;
 
-		returns = trueRet && falseRet;
+		curF.returns = trueRet && falseRet;
 
 		return concat(
 			cond,
@@ -204,14 +173,13 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 
 	@Override
 	public byte[] visitBlock(BlockContext ctx) {
-//		Map<String, Symbol> oldSymTbl = symTbl;
-//		symTbl = new HashMap<>(symTbl);
 		curF.symTbl.pushScope();
 		byte[] cld = visitChildren(ctx);
 		curF.symTbl.popScope();
-//		symTbl = oldSymTbl;
 		return cld;
 	}
+
+	//endregion
 
 	//region var
 
@@ -247,11 +215,6 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 
 	//region func
 
-	private Func curF;
-//	private int  nArgs;
-//	private int            nParams;
-//	private List<DataType> params;
-
 	@Override
 	public byte[] visitFuncDecl(FuncDeclContext ctx) {
 		if (!tStack.isEmpty())
@@ -263,48 +226,18 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 			for (ParamContext pctx : ctx.params.param())
 				params.add(DataType.parse(ttos(pctx.typ)));
 		}
-		returns = false;
 
-//		System.out.println(id + " :: params: " + params);
 		curF = funcTbl.get(id, params);
 		curF.entry = fOff;
-//		System.out.println("GREP ME " + curF);
-
-//		nParams = ctx.params == null ? 0 : ctx.params.param().size();
-//		id = id + ":" + paramstos(nParams) + ">I";
-//		curF = funcTbl.get(id);
-//		curF.entry = fOff;
-
-//		Map<String, Symbol> oldSymTbl = symTbl;
-//		symTbl = new HashMap<>(symTbl);
-//		returns = false;
-//		params = new ArrayList<>();
-
-//		curF = new Func();// FIXME hack:: visitParams needs symTbl, need params to get correct func
-//		curF.symTbl.pushScope();// FIXME hack
-
-//		SymTbl st = curF.symTbl; // FIXME hack
-//		curF = funcTbl.get(id, params);
-//		curF.symTbl = st;// FIXME hack
-//		params = null;
-
-//		Map<String, Symbol> curSymTbl = new HashMap<>();
-//		for (Map.Entry<String, Symbol> e : symTbl.entrySet()) {
-//			if (oldSymTbl.containsKey(e.getKey()))
-//				continue;
-//			curSymTbl.put(e.getKey(), e.getValue());
-//		}
-
-//		symTbl = oldSymTbl;
-//		curF.symTbl.popScope();
+		curF.returns = false;
 
 		byte[] params_b = visit(ctx.params);
-		byte[] stmts_b = visit(ctx.body);
+		byte[] body_b = visit(ctx.body);
 
-		if (!returns)
+		if (!curF.returns)
 			throw new BPLCErrReturnMissing(ctx.stop);
 
-		byte[] res = concat(params_b, stmts_b);
+		byte[] res = concat(params_b, body_b);
 
 		int nLocals = curF.symTbl.nLocals();
 		if (nLocals > 0)
@@ -380,22 +313,11 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 
 	@Override
 	public byte[] visitParamList(ParamListContext ctx) {
-//		curF.nParams = ctx.param().size();
-//		curF.paramCnt = curF.nParams;
 		return visitChildren(ctx);
 	}
 
 	@Override
 	public byte[] visitParam(ParamContext ctx) {
-//		String id = ttos(ctx.id);
-//		String type_str = ttos(ctx.typ);
-//		DataType type = DataType.parse(type_str);
-//		if (curF.symTbl.isDecl(id))
-//			throw new BPLCErrSymRedeclared(ctx.id);
-
-//		params.add(type);
-//		int off = -3 - (nParams--);
-//		curF.symTbl.declParam(id, type);
 		return EMPTY;
 	}
 
@@ -406,7 +328,6 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 
 	@Override
 	public byte[] visitArg(ArgContext ctx) {
-//		nArgs++;
 		return visit(ctx.expr());
 	}
 
@@ -495,7 +416,6 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 
 	@Override
 	public byte[] visitStrExpr(StrExprContext ctx) {
-		pusht(STRING);
 		String val = Parse.ttos(ctx.val);
 		val = val.substring(1, val.length() - 1);
 		val = StringEscapeUtils.unescapeJava(val);
@@ -510,26 +430,18 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 				entry.off += e.val.length;
 			}
 			staticStore.put(val, entry);
-//			System.out.println("NEW ENTRY:: " + entry);
-//			System.out.println("==============");
-//			System.out.println("val_bytes \n"+Hex.dump(val.getBytes(IO.UTF8)));
-//			System.out.println("data_length\n"+Hex.dump(Marshal.bytesS32BE(data.length)));
-//			System.out.println("data \n"+Hex.dump(data));
-//			System.out.println("entry_val\n"+Hex.dump(entry.val));
-		} else {
-//			System.out.println("USING ENTRY:: " + entry);
 		}
 
 		byte[] off = Marshal.bytesS32BE(4 + entry.off);
-//		byte[] len = Marshal.bytesS32BE(entry.val.length);
+		pusht(STRING);
 		return concat(SPUSH, Marshal.bytesS32BE(STRING.vm_type), off);
 	}
 
 	@Override
 	public byte[] visitIntExpr(IntExprContext ctx) {
-		pusht(INT);
 		String val = Parse.ttos(ctx.val);
 		byte[] res = Marshal.bytesS64BE(Long.parseUnsignedLong(val, 10));
+		pusht(INT);
 		return concat(IPUSH, res);
 	}
 
@@ -538,7 +450,6 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 		String id = ttos(ctx.val);
 		if (!curF.symTbl.isDecl(id))
 			throw new BPLCErrSymUndeclared(ctx.val);
-
 		Symbol sym = curF.symTbl.get(id);
 		pusht(sym.type);
 		//fmt:off
@@ -581,9 +492,7 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 	//endregion
 
 	private void pusht(DataType t) {
-		StackTraceElement ste = Thread.currentThread().getStackTrace()[2];
 		tStack.push(t);
-//		System.out.printf("%30s :: PUSH %-6s :: %s\n", ste.getMethodName(), t, tStack);
 	}
 
 	private DataType popt() {
@@ -593,9 +502,36 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 				"%30s :: POP EMPTY STACK\n", ste.getMethodName()
 			));
 		}
-		DataType t = tStack.pop();
-//		System.out.printf("%30s :: POP  %-6s :: %s\n", ste.getMethodName(), t, tStack);
-		return t;
+		return tStack.pop();
 	}
+
+	private int nUnresolved() {
+		int res = 0;
+		for (Func f : funcTbl.flatten()) {
+			if (f.entry == Func.ENTRY_UNRESOLVED)
+				res++;
+		}
+		return res;
+	}
+
+	//region StaticStoreEntry
+
+	private static class StaticStoreEntry {
+
+		private int    off = 0;
+		private byte[] val = null;
+
+		@Override
+		public String toString() {
+			return "StaticStoreEntry{" +
+				"off=" + off +
+				", val=" + Arrays.toString(val) +
+				", val='" + new String(val, 4, val.length - 4) +
+				"'}";
+		}
+
+	}
+
+	//endregion
 
 }

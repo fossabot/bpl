@@ -43,13 +43,11 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 	private final FuncTbl         funcTbl;
 	private final Deque<DataType> tStack;
 
-	//	private Map<String, Symbol> symTbl;
-	private boolean returns;
+	private Func curF;
 
 	public C99Visitor(FuncTbl funcTbl) {
 		this.funcTbl = funcTbl;
-//		symTbl = new HashMap<>();
-		tStack = new ArrayDeque<>();
+		this.tStack = new ArrayDeque<>();
 	}
 
 	@Override
@@ -83,16 +81,18 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 		);
 	}
 
+	//region stmt
+
 	@Override
 	public String visitStmt(StmtContext ctx) {
-		if (returns)
+		if (curF.returns)
 			throw new BPLCErrStatementUnreachable(ctx.start);
 		return visitChildren(ctx) + ";\n";
 	}
 
 	@Override
 	public String visitRet(RetContext ctx) {
-		returns = true;
+		curF.returns = true;
 		String val = visitChildren(ctx);
 		DataType have = popt();
 		DataType want = curF.type;
@@ -127,15 +127,15 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 		if (cond_t != INT)
 			throw new BPLCErrTypeMismatch(TokenAdapter.from(ctx.cond), cond_t, INT);
 
-		returns = false;
+		curF.returns = false;
 		String onTrue = visit(ctx.onTrue).trim();
-		trueRet = returns;
+		trueRet = curF.returns;
 
-		returns = false;
+		curF.returns = false;
 		String onFalse = visit(ctx.onFalse).trim();
-		falseRet = returns;
+		falseRet = curF.returns;
 
-		returns = trueRet && falseRet;
+		curF.returns = trueRet && falseRet;
 
 		return "if (" + cond_str + ") " + onTrue + " else " + onFalse;
 	}
@@ -152,14 +152,13 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 
 	@Override
 	public String visitBlock(BlockContext ctx) {
-//		Map<String, Symbol> oldSymTbl = symTbl;
-//		symTbl = new HashMap<>(symTbl);
 		curF.symTbl.pushScope();
 		String cld = visitChildren(ctx);
 		curF.symTbl.popScope();
-//		symTbl = oldSymTbl;
 		return "{" + cld + "}";
 	}
+
+	//endregion
 
 	//region var
 
@@ -195,10 +194,6 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 
 	//region func
 
-	private Func curF;
-//	private int  nArgs;
-//	private List<DataType> params;
-
 	@Override
 	public String visitFuncDecl(FuncDeclContext ctx) {
 		if (!tStack.isEmpty())
@@ -210,47 +205,21 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 			for (ParamContext pctx : ctx.params.param())
 				params.add(DataType.parse(ttos(pctx.typ)));
 		}
-		returns = false;
 
-//		System.out.println(id + " :: params: " + params);
 		curF = funcTbl.get(id, params);
-//		System.out.println("GREP ME " + curF);
+		curF.entry = -1; // unused by C99 target
+		curF.returns = false;
 
-//		Map<String, Symbol> oldSymTbl = symTbl;
-//		symTbl = new HashMap<>(symTbl);
-//		params = new ArrayList<>();
+		String params_s = visit(ctx.params);
+		String body_s = visit(ctx.body);
 
-//		curF = new Func();// FIXME hack:: visitParams needs symTbl, need params to get correct func
-//		curF.symTbl.pushScope();// FIXME hack
-
-//		List<DataType> prms = new ArrayList<>();
-//		if (ctx.params != null) {
-//			for (ParamContext pctx : ctx.params.param()) {
-//				prms.add(DataType.parse(ttos(pctx.typ)));
-//			}
-//		}
-
-//		SymTbl st = curF.symTbl; // FIXME hack
-//		curF = funcTbl.get(id, prms);
-//		curF.symTbl = st;// FIXME hack
-//		params = null;
-
-//		curF.symTbl.pushScope();
-//		String param_str = visit(ctx.params);
+		if (!curF.returns)
+			throw new BPLCErrReturnMissing(ctx.stop);
 
 		String ret_t = curF.type.c_type; // FIXME temporary to please GCC
 		if ("main".equals(id))
 			ret_t = "int";
-
-		String res = String.join("\n",
-			ret_t + " " + mangle(curF) + "(" + visit(ctx.params) + ")",
-			visit(ctx.body)
-		);
-
-		if (!returns)
-			throw new BPLCErrReturnMissing(ctx.stop);
-//		symTbl = oldSymTbl;
-//		curF.symTbl.popScope();
+		String res = ret_t + " " + mangle(curF) + "(" + params_s + ")" + body_s;
 
 		if (!tStack.isEmpty())
 			throw new IllegalStateException("typeStack not empty on func decl end");
@@ -320,8 +289,6 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 
 	@Override
 	public String visitParamList(ParamListContext ctx) {
-//		curF.nParams = ctx.param().size();
-//		curF.paramCnt = curF.nParams;
 		return visit(ctx.param(), ", ");
 	}
 
@@ -330,11 +297,6 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 		String id = ttos(ctx.id);
 		String type_str = ttos(ctx.typ);
 		DataType type = DataType.parse(type_str);
-//		if (curF.symTbl.isDecl(id))
-//			throw new BPLCErrSymRedeclared(ctx.id);
-
-//		params.add(type);
-//		curF.symTbl.declParam(id, type);
 		return type.c_type + " " + id;
 	}
 
@@ -345,7 +307,6 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 
 	@Override
 	public String visitArg(ArgContext ctx) {
-//		nArgs++;
 		return visit(ctx.expr());
 	}
 
@@ -355,24 +316,28 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 
 	@Override
 	public String visitBinOpExpr(BinOpExprContext ctx) {
-		String res = visit(ctx.lhs) + ttos(ctx.op) + visit(ctx.rhs);
+		String lhs = visit(ctx.lhs);
+		String rhs = visit(ctx.rhs);
+		String op_str = ttos(ctx.op);
 		DataType rhs_t = popt();
 		DataType lhs_t = popt();
 		if (rhs_t != lhs_t)
 			throw new BPLCErrTypeMismatch(TokenAdapter.from(ctx), Arrays.asList(rhs_t, lhs_t), Arrays.asList(INT, INT));
 		pusht(INT);
-		return res;
+		return lhs + op_str + rhs;
 	}
 
 	@Override
 	public String visitBoolOpExpr(BoolOpExprContext ctx) {
-		String res = "(" + visit(ctx.lhs) + ttos(ctx.op) + visit(ctx.rhs) + ")";
+		String lhs = visit(ctx.lhs);
+		String rhs = visit(ctx.rhs);
+		String op_str = ttos(ctx.op);
 		DataType rhs_t = popt();
 		DataType lhs_t = popt();
 		if (rhs_t != lhs_t)
 			throw new BPLCErrTypeMismatch(TokenAdapter.from(ctx), Arrays.asList(rhs_t, lhs_t), Arrays.asList(INT, INT));
 		pusht(INT);
-		return res;
+		return "(" + lhs + op_str + rhs + ")";
 	}
 
 	@Override
@@ -387,28 +352,27 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 
 	@Override
 	public String visitStrExpr(StrExprContext ctx) {
-		String res = ttos(ctx.val);
+		String val = ttos(ctx.val);
 		pusht(STRING);
-		return res;
+		return val;
 	}
 
 	@Override
 	public String visitIntExpr(IntExprContext ctx) {
 		BigInteger i = new BigInteger(ttos(ctx.val));
 		String val = i.toString();
-		pusht(INT);
 
 		if (i.signum() > 0)
 			val += "U";
 
-		if (i.bitLength() <= 16)
-			return val;
+		if (i.bitLength() > 16) {
+			if (i.bitLength() <= 32)
+				val += "L";
+			else if (i.bitLength() <= 64)
+				val += "LL";
+		}
 
-		if (i.bitLength() <= 32)
-			val += "L";
-		else if (i.bitLength() <= 64)
-			val += "LL";
-
+		pusht(INT);
 		return val;
 	}
 
@@ -468,9 +432,7 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 	}
 
 	private void pusht(DataType t) {
-		StackTraceElement ste = Thread.currentThread().getStackTrace()[2];
 		tStack.push(t);
-//		System.out.printf("%30s :: PUSH %-6s :: %s\n", ste.getMethodName(), t, tStack);
 	}
 
 	private DataType popt() {
@@ -480,9 +442,7 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 				"%30s :: POP EMPTY STACK\n", ste.getMethodName()
 			));
 		}
-		DataType t = tStack.pop();
-//		System.out.printf("%30s :: POP  %-6s :: %s\n", ste.getMethodName(), t, tStack);
-		return t;
+		return tStack.pop();
 	}
 
 }

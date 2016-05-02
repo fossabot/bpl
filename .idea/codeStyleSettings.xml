@@ -23,6 +23,7 @@
         <option name="FORMATTER_ON_TAG" value="fmt:on" />
         <option name="FORMATTER_OFF_TAG" value="fmt:off" />
         <XML>
+          <option name="XML_TEXT_WRAP" value="0" />
           <option name="XML_LEGACY_SETTINGS_IMPORTED" value="true" />
         </XML>
         <codeStyleSettings language="JAVA">

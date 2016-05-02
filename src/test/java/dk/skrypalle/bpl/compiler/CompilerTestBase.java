@@ -28,24 +28,11 @@ package dk.skrypalle.bpl.compiler;
 import dk.skrypalle.bpl.*;
 import dk.skrypalle.bpl.util.*;
 import dk.skrypalle.bpl.vm.*;
-import org.testng.annotations.*;
 
 import java.io.*;
 import java.nio.file.*;
 
 public class CompilerTestBase {
-
-	private Path tmpDir;
-
-	@BeforeMethod
-	public void setup() throws IOException {
-		tmpDir = IO.makeTmpDir("_bplc_");
-	}
-
-	@AfterMethod
-	public void teardown() throws IOException {
-		IO.delRec(tmpDir);
-	}
 
 	protected String wrapMain(String stmts) {
 		return String.join("\n",
@@ -56,7 +43,7 @@ public class CompilerTestBase {
 		);
 	}
 
-	protected byte[] compileBC(String bpl) {
+	protected byte[] compileBC(String bpl, Path tmpDir) {
 		return Main.compileBC(bpl);
 	}
 
@@ -71,7 +58,7 @@ public class CompilerTestBase {
 		return new VMExecRes(exit, out.toString(), err.toString(), dbg.toString());
 	}
 
-	protected ExecRes compileC99(String bpl) {
+	protected ExecRes compileC99(String bpl, Path tmpDir) {
 		try {
 			String c99 = Main.compileC99(bpl);
 			Path c99out = tmpDir.resolve("out.c");
@@ -82,11 +69,26 @@ public class CompilerTestBase {
 		}
 	}
 
-	protected ExecRes runC99() throws IOException {
+	protected ExecRes runC99(Path tmpDir) throws IOException {
 		return Exec.exec(tmpDir.resolve("out" + OS.exeEXT()));
 	}
 
-	//region inner class VMExecRes
+	protected void execWithTmpDir(RR r) throws Throwable {
+		Path tmpDir = IO.makeTmpDir("_bplc_");
+		try {
+			r.run(tmpDir);
+			IO.delRec(tmpDir);
+		} catch (Throwable t) {
+			IO.delRec(tmpDir);
+			throw t;
+		}
+	}
+
+	//region inner types
+
+	interface RR {
+		void run(Path tmpDir) throws Throwable;
+	}
 
 	static class VMExecRes {
 		final int    exit;
@@ -94,7 +96,7 @@ public class CompilerTestBase {
 		final String err;
 		final String dbg;
 
-		public VMExecRes(int exit, String out, String err, String dbg) {
+		private VMExecRes(int exit, String out, String err, String dbg) {
 			this.exit = exit;
 			this.out = out;
 			this.err = err;

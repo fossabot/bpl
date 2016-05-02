@@ -36,7 +36,7 @@ public class CompilerTest extends CompilerTestBase {
 
 	//region data provider
 
-	@DataProvider
+	@DataProvider(parallel = true)
 	public Object[][] provideData() throws IOException {
 		return new Object[][]{
 			//fmt:off
@@ -132,7 +132,7 @@ public class CompilerTest extends CompilerTestBase {
 
 	@Test(dataProvider = "provideData")
 	public void testTargetBC(String desc, String bpl, String exp) {
-		byte[] bc = compileBC(bpl);
+		byte[] bc = compileBC(bpl, null);
 		VMExecRes res = runBC(bc);
 
 		Assert.assertEquals(res.exit, 0, "BPLVM exit status (" + desc + ")");
@@ -142,18 +142,20 @@ public class CompilerTest extends CompilerTestBase {
 	}
 
 	@Test(dataProvider = "provideData")
-	public void testTargetC99(String desc, String bpl, String exp) throws IOException {
-		ExecRes gcc = compileC99(bpl);
-		if (!gcc.isEmpty())
-			System.err.println(gcc);
-		Assert.assertEquals(gcc.exit, 0, "gcc exit status (" + desc + ")");
-		Assert.assertEquals(gcc.out, "", "gcc out stream (" + desc + ")");
-		Assert.assertEquals(gcc.err, "", "gcc err stream (" + desc + ")");
+	public void testTargetC99(String desc, String bpl, String exp) throws Throwable {
+		execWithTmpDir(tmpDir -> {
+			ExecRes gcc = compileC99(bpl, tmpDir);
+			if (!gcc.isEmpty())
+				System.err.println(gcc);
+			Assert.assertEquals(gcc.exit, 0, "gcc exit status (" + desc + ")");
+			Assert.assertEquals(gcc.out, "", "gcc out stream (" + desc + ")");
+			Assert.assertEquals(gcc.err, "", "gcc err stream (" + desc + ")");
 
-		ExecRes run = runC99();
-		Assert.assertEquals(run.exit, 0, "run exit status (" + desc + ")");
-		Assert.assertEquals(run.out, exp, "run out stream (" + desc + ")");
-		Assert.assertEquals(run.err, "", "run err stream (" + desc + ")");
+			ExecRes run = runC99(tmpDir);
+			Assert.assertEquals(run.exit, 0, "run exit status (" + desc + ")");
+			Assert.assertEquals(run.out, exp, "run out stream (" + desc + ")");
+			Assert.assertEquals(run.err, "", "run err stream (" + desc + ")");
+		});
 	}
 
 	//endregion

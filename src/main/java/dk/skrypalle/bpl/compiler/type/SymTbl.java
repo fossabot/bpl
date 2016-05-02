@@ -25,6 +25,8 @@
 
 package dk.skrypalle.bpl.compiler.type;
 
+import dk.skrypalle.bpl.vm.*;
+
 import java.util.*;
 
 public class SymTbl {
@@ -35,7 +37,7 @@ public class SymTbl {
 
 	private int localIdx;
 
-	public SymTbl() {
+	SymTbl() {
 		stack = new ArrayDeque<>();
 		params = new HashMap<>();
 		paramStack = new ArrayDeque<>();
@@ -59,7 +61,7 @@ public class SymTbl {
 			if (sym.off < 0)
 				sym.off--;
 		}
-		Symbol sym = new Symbol(id, t, -4); // TODO: put "-4" to some calling convention def
+		Symbol sym = new Symbol(id, t, Bytecode.PARAM_START);
 		params.put(id, sym);
 		paramStack.push(sym);
 	}
@@ -84,14 +86,6 @@ public class SymTbl {
 		return localIdx;
 	}
 
-	public int nParams() {
-		return paramStack.size();
-	}
-
-	public List<Symbol> getParams() {
-		return Arrays.asList(paramStack.toArray(new Symbol[nParams()]));
-	}
-
 	public List<DataType> getParamTypes() {
 		List<DataType> res = new ArrayList<>();
 		for (Symbol sym : paramStack)
@@ -110,15 +104,14 @@ public class SymTbl {
 
 	public void clearLocals() {
 		stack.clear();
-//		params.clear();
-//		paramStack.clear();
 		localIdx = 0;
-//		nParams = 0;
 	}
 
 	private Map<String, Symbol> cur() {
 		return stack.peek();
 	}
+
+	//region Object class overrides
 
 	@Override
 	public String toString() {
@@ -129,4 +122,7 @@ public class SymTbl {
 			", localIdx=" + localIdx +
 			'}';
 	}
+
+	//endregion
+
 }
