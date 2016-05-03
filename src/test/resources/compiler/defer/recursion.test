@@ -1,0 +1,58 @@
+func fact(n int) int {
+	print("malloc\t\t\t\t#", n, "\n");
+	defer print("free\t\t\t\t#", n, "\n");
+	print("init mem\t\t\t#", n, "\n");
+
+	if(n) {
+		print("lock mutex\t\t\t#", n, "\n");
+		defer print("unlock mutex\t\t#", n, "\n");
+		if(n-1) {
+			print("branch a: use mem\t#", n, "\n");
+			return n*fact(n-1);
+		} else {
+			print("branch b: use mem\t#", n, "\n");
+			return 1;
+		}
+	} else {
+		print("branch c: use mem\t#", n, "\n");
+		return 1;
+	}
+}
+
+func main() int {
+	defer print("fact(4) = ", fact(4));
+	defer print("fact(0) = ", fact(0), "\n");
+	return 0;
+}
+
+::exp
+malloc				#4
+init mem			#4
+lock mutex			#4
+branch a: use mem	#4
+unlock mutex		#4
+free				#4
+malloc				#3
+init mem			#3
+lock mutex			#3
+branch a: use mem	#3
+unlock mutex		#3
+free				#3
+malloc				#2
+init mem			#2
+lock mutex			#2
+branch a: use mem	#2
+unlock mutex		#2
+free				#2
+malloc				#1
+init mem			#1
+lock mutex			#1
+branch b: use mem	#1
+unlock mutex		#1
+free				#1
+malloc				#0
+init mem			#0
+branch c: use mem	#0
+free				#0
+fact(0) = 1
+fact(4) = 18

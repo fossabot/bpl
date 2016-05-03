@@ -106,7 +106,7 @@ public final class Bytecode {
 		opCodes.put(BREQ,   new Op("breq",   4));
 		opCodes.put(BRNE,   new Op("brne",   4));
 
-		opCodes.put(PRINT,  new Op("print",  0));
+		opCodes.put(PRINT,  new Op("print",  4));
 		opCodes.put(HALT,   new Op("halt",   0));
 		//fmt:on
 	}

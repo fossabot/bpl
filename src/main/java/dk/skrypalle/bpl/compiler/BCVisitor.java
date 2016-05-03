@@ -45,20 +45,24 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 
 	private static final byte[] EMPTY = {};
 
-	private final FuncTbl         funcTbl;
-	private final Deque<DataType> tStack;
+	private final FuncTbl              funcTbl;
+	private final Deque<DataType>      tStack;
+	private final Deque<Deque<byte[]>> defers;
 
 	private Map<String, StaticStoreEntry> staticStore;
 	private Func                          curF;
 	private int                           staticLen;
 	private int                           fOff;
+	private boolean                       isDeferred;
 
 	public BCVisitor(FuncTbl funcTbl) {
 		this.funcTbl = funcTbl;
 		this.tStack = new ArrayDeque<>();
+		this.defers = new ArrayDeque<>();
 		this.staticStore = new HashMap<>();
 		this.staticLen = 0;
 		this.fOff = PREABLE_LEN;
+		this.isDeferred = false;
 	}
 
 	@Override
@@ -74,6 +78,7 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 			}
 			for (Func f : funcTbl.flatten())
 				f.symTbl.clearLocals();
+			defers.clear();
 		}
 
 		fOff = PREABLE_LEN + staticLen;
@@ -101,10 +106,42 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 	//region stmt
 
 	@Override
+	public byte[] visitDeferableStmt(DeferableStmtContext ctx) {
+		if (curF.returns)
+			throw new BPLCErrStatementUnreachable(ctx.start);
+		return visitChildren(ctx);
+	}
+
+	@Override
 	public byte[] visitStmt(StmtContext ctx) {
 		if (curF.returns)
 			throw new BPLCErrStatementUnreachable(ctx.start);
 		return visitChildren(ctx);
+	}
+
+	@Override
+	public byte[] visitDefer(DeferContext ctx) {
+		isDeferred = true;
+		byte[] args = {};
+
+		List<ArgContext> argContexts = null;
+		if (ctx.rhs.funcCall() != null && ctx.rhs.funcCall().args != null)
+			argContexts = ctx.rhs.funcCall().args.arg();
+		else if (ctx.rhs.print() != null && ctx.rhs.print().args != null)
+			argContexts = ctx.rhs.print().args.arg();
+
+		if (argContexts != null) {
+			for (ArgContext actx : argContexts) {
+				isDeferred = false;
+				args = concat(args, visit(actx));
+				isDeferred = true;
+			}
+		}
+
+		byte[] s = visitChildren(ctx);
+		isDeferred = false;
+		defers.peek().push(s);
+		return args;
 	}
 
 	@Override
@@ -116,14 +153,26 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 		if (have != want)
 			throw new BPLCErrTypeMismatch(TokenAdapter.from(ctx.getParent()), have, want);
 
-		return concat(cld, RET);
+		byte[] ll = {};
+		for (Deque<byte[]> scope : defers) {
+			for (byte[] defer : scope)
+				ll = concat(ll, defer);
+		}
+
+		return concat(ll, cld, RET);
 	}
 
 	@Override
 	public byte[] visitPrint(PrintContext ctx) {
-		byte[] cld = visitChildren(ctx);
-		DataType type = popt(); // TODO type-check ?
-		return concat(cld, PRINT);
+		byte[] cld = isDeferred ? new byte[]{} : visitChildren(ctx);
+
+		Deque<DataType> types = new ArrayDeque<>();
+		if (ctx.args != null) {
+			for (int i = 0; i < ctx.args.arg().size(); i++)
+				types.add(popt());
+		}
+
+		return concat(cld, PRINT, Marshal.bytesS32BE(types.size()));
 	}
 
 	@Override
@@ -173,9 +222,19 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 
 	@Override
 	public byte[] visitBlock(BlockContext ctx) {
+		defers.push(new ArrayDeque<>());
 		curF.symTbl.pushScope();
+
 		byte[] cld = visitChildren(ctx);
+
+		if (!curF.returns) {
+			for (byte[] defer : defers.peek())
+				cld = concat(cld, defer);
+		}
+
 		curF.symTbl.popScope();
+		defers.pop();
+
 		return cld;
 	}
 
@@ -259,7 +318,7 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 		if (ctx.args != null)
 			nArgs = ctx.args.arg().size();
 
-		byte[] args = visit(ctx.args);
+		byte[] args = isDeferred ? new byte[]{} : visit(ctx.args);
 
 		List<DataType> arg_types = new ArrayList<>();
 		for (int i = 0; i < nArgs; i++) {
@@ -305,7 +364,7 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 		Func f = funcTbl.get(id, arg_types);
 
 		// Don't push the return type if the call was a stand-alone statement
-		if (!(ctx.getParent() instanceof StmtContext))// && !(ctx.getParent() instanceof SimpleStmtContext))
+		if (!(ctx.getParent() instanceof StmtContext) && !(ctx.getParent() instanceof DeferableStmtContext))
 			pusht(f.type);
 
 		return concat(args, CALL, Marshal.bytesS32BE(f.entry), Marshal.bytesS32BE(nArgs));

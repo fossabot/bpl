@@ -29,6 +29,8 @@ import dk.skrypalle.bpl.compiler.type.*;
 import dk.skrypalle.bpl.util.*;
 import dk.skrypalle.bpl.vm.err.*;
 
+import java.util.*;
+
 import static dk.skrypalle.bpl.compiler.type.DataType.*;
 import static dk.skrypalle.bpl.vm.Bytecode.*;
 
@@ -252,28 +254,35 @@ class CPU {
 				ip += off;
 			break;
 		case PRINT:
-			arg = pop();
-			switch (arg.type) {
-			case INT:
-				vm.out(String.format("%x", arg.val));
-				break;
-			case STRING:
-				addr = (int) arg.val;
-//				System.out.printf("POP ARG: %s\n", arg);
-//				addr = Marshal.msiBE(arg.val);
-//				off = Marshal.lsiBE(arg.val); // not needed
-//				System.out.printf("addr=%08x, off=%08x\n", addr,off);
-//				System.out.println(Hex.dump(code,addr,off));
-				int len = Marshal.s32BE(code, addr);
-				addr += 4;
-				String s = new String(code, addr, len, IO.UTF8);
-//				System.out.printf("The string: @%d len=%d\n===\n%s\n", addr, len,s);
-//				System.out.println(Hex.dump(code,addr,len)+"\n===");
-				vm.out(s);
-				break;
-			default:
-				vm.out(String.format("Don't know, how to print [%s] addr=0x%08x", arg.type, arg.val));
-				break;
+			off = fetchS32();
+			Deque<StackEntry> args = new ArrayDeque<>();
+			for (int i = 0; i < off; i++) {
+				args.push(pop());
+			}
+			for (int i = 0; i < off; i++) {
+				arg = args.pop();
+				switch (arg.type) {
+				case INT:
+					vm.out(String.format("%x", arg.val));
+					break;
+				case STRING:
+					addr = (int) arg.val;
+//				    System.out.printf("POP ARG: %s\n", arg);
+//				    addr = Marshal.msiBE(arg.val);
+//				    off = Marshal.lsiBE(arg.val); // not needed
+//				    System.out.printf("addr=%08x, off=%08x\n", addr,off);
+//				    System.out.println(Hex.dump(code,addr,off));
+					int len = Marshal.s32BE(code, addr);
+					addr += 4;
+					String s = new String(code, addr, len, IO.UTF8);
+//				    System.out.printf("The string: @%d len=%d\n===\n%s\n", addr, len,s);
+//				    System.out.println(Hex.dump(code,addr,len)+"\n===");
+					vm.out(s);
+					break;
+				default:
+					vm.out(String.format("Don't know, how to print [%s] addr=0x%08x", arg.type, arg.val));
+					break;
+				}
 			}
 			break;
 		case HALT:

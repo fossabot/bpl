@@ -40,14 +40,23 @@ import static dk.skrypalle.bpl.util.Parse.*;
 
 public class C99Visitor extends BPLBaseVisitor<String> {
 
-	private final FuncTbl         funcTbl;
-	private final Deque<DataType> tStack;
+	private final FuncTbl              funcTbl;
+	private final Deque<DataType>      tStack;
+	private final Deque<Deque<String>> defers;
+
+	private boolean isDeferred;
+	private String  deferredArgs;
+	private int     deferCnt;
 
 	private Func curF;
 
 	public C99Visitor(FuncTbl funcTbl) {
 		this.funcTbl = funcTbl;
 		this.tStack = new ArrayDeque<>();
+		this.defers = new ArrayDeque<>();
+		isDeferred = false;
+		deferredArgs = "";
+		deferCnt = 0;
 	}
 
 	@Override
@@ -84,10 +93,65 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 	//region stmt
 
 	@Override
+	public String visitDeferableStmt(DeferableStmtContext ctx) {
+		if (curF.returns)
+			throw new BPLCErrStatementUnreachable(ctx.start);
+
+		if (ctx.getParent() instanceof StmtContext)
+			return visitChildren(ctx);
+
+		return visitChildren(ctx) + ";/* " + ttos(ctx) + " */\n";
+	}
+
+	@Override
 	public String visitStmt(StmtContext ctx) {
 		if (curF.returns)
 			throw new BPLCErrStatementUnreachable(ctx.start);
-		return visitChildren(ctx) + ";\n";
+
+		return visitChildren(ctx) + "; /* " + ttos(ctx) + " */\n";
+	}
+
+	@Override
+	public String visitDefer(DeferContext ctx) {
+		isDeferred = true;
+
+		StringBuilder decl_buf = new StringBuilder();
+		StringBuilder args_buf = new StringBuilder();
+
+		List<ArgContext> argContexts = null;
+		Deque<DataType> types = new ArrayDeque<>();
+		int i = 0;
+
+		if (ctx.rhs.funcCall() != null && ctx.rhs.funcCall().args != null)
+			argContexts = ctx.rhs.funcCall().args.arg();
+		else if (ctx.rhs.print() != null && ctx.rhs.print().args != null)
+			argContexts = ctx.rhs.print().args.arg();
+
+		if (argContexts != null) {
+			for (ArgContext actx : argContexts) {
+				isDeferred = false;
+				String rhs = visit(actx);
+				isDeferred = true;
+				DataType rhs_t = popt();
+				types.push(rhs_t);
+
+				String lhs_id = "__$deferred_param_" + deferCnt;
+				decl_buf.append(rhs_t.c_type).append(" ").append(lhs_id).append("=").append(rhs).append(";");
+				args_buf.append(lhs_id);
+
+				if (i++ < argContexts.size() - 1)
+					args_buf.append(",");
+				deferCnt++;
+			}
+			while (!types.isEmpty())
+				pusht(types.pop());
+			deferredArgs = args_buf.toString();
+		}
+
+		String s = visitChildren(ctx);
+		isDeferred = false;
+		defers.peek().push(s);
+		return decl_buf.toString() + " /* " + ttos(ctx) + " */\n";
 	}
 
 	@Override
@@ -99,22 +163,36 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 		if (have != want)
 			throw new BPLCErrTypeMismatch(TokenAdapter.from(ctx.getParent()), have, want);
 
-		return "return " + val;
+		StringBuilder buf = new StringBuilder();
+		for (Deque<String> scope : defers) {
+			for (String defer : scope)
+				buf.append(defer);
+		}
+
+		return buf + "return " + val;
 	}
 
 	@Override
 	public String visitPrint(PrintContext ctx) {
-		String val = visitChildren(ctx);
-		DataType type = popt();
-		String fmt;
-		//fmt:off
-		switch (type) {
-		case INT   : fmt = "%llx"; break;
-		case STRING: fmt = "%s";   break;
-		default    : throw new IllegalStateException("unreachable");
+		String args_str = isDeferred ? deferredArgs : visit(ctx.args);
+
+		Deque<DataType> types = new ArrayDeque<>();
+		if (ctx.args != null) {
+			for (int i = 0; i < ctx.args.arg().size(); i++)
+				types.add(popt());
 		}
-		//fmt:on
-		return "printf(\"" + fmt + "\", " + val + ")";
+
+		StringBuilder fmt_buf = new StringBuilder();
+		while (!types.isEmpty()) {
+			//fmt:off
+			switch (types.pop()) {
+			case INT   : fmt_buf.append("%llx"); break;
+			case STRING: fmt_buf.append("%s");   break;
+			default    : throw new IllegalStateException("unreachable");
+			}
+			//fmt:on
+		}
+		return "printf(\"" + fmt_buf + "\", " + args_str + ")";
 	}
 
 	@Override
@@ -152,10 +230,21 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 
 	@Override
 	public String visitBlock(BlockContext ctx) {
+		defers.push(new ArrayDeque<>());
 		curF.symTbl.pushScope();
+
+		StringBuilder buf = new StringBuilder();
 		String cld = visitChildren(ctx);
+
+		if (!curF.returns) {
+			for (String defer : defers.peek())
+				buf.append(defer);
+		}
+
 		curF.symTbl.popScope();
-		return "{" + cld + "}";
+		defers.pop();
+
+		return "{\n" + buf + cld + "}";
 	}
 
 	//endregion
@@ -196,6 +285,7 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 
 	@Override
 	public String visitFuncDecl(FuncDeclContext ctx) {
+		deferCnt = 0;
 		if (!tStack.isEmpty())
 			throw new IllegalStateException("typeStack not empty on func decl start");
 
@@ -235,8 +325,7 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 		if (ctx.args != null)
 			nArgs = ctx.args.arg().size();
 
-		String args_str = visit(ctx.args);
-
+		String args_str = isDeferred ? deferredArgs : visit(ctx.args);
 		List<DataType> arg_types = new ArrayList<>();
 		for (int i = 0; i < nArgs; i++) {
 			DataType t = popt();
@@ -281,7 +370,7 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 		Func f = funcTbl.get(id, arg_types);
 
 		// Don't push the return type if the call was a stand-alone statement
-		if (!(ctx.getParent() instanceof StmtContext))// && !(ctx.getParent() instanceof SimpleStmtContext))
+		if (!(ctx.getParent() instanceof StmtContext) && !(ctx.getParent() instanceof DeferableStmtContext))
 			pusht(f.type);
 
 		return mangle(f) + "(" + args_str + ")";
@@ -362,18 +451,8 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 		BigInteger i = new BigInteger(ttos(ctx.val));
 		String val = i.toString();
 
-		if (i.signum() > 0)
-			val += "U";
-
-		if (i.bitLength() > 16) {
-			if (i.bitLength() <= 32)
-				val += "L";
-			else if (i.bitLength() <= 64)
-				val += "LL";
-		}
-
 		pusht(INT);
-		return val;
+		return val + "LL";
 	}
 
 	@Override

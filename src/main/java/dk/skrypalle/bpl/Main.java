@@ -28,150 +28,27 @@ package dk.skrypalle.bpl;
 import dk.skrypalle.bpl.compiler.*;
 import dk.skrypalle.bpl.compiler.type.*;
 import dk.skrypalle.bpl.util.*;
+import dk.skrypalle.bpl.vm.*;
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.*;
-import org.apache.commons.lang3.*;
 
 import java.io.*;
 import java.nio.file.*;
 
 public final class Main {
 
-	private static long fib(int n) {
-		if (n <= 1)
-			return n;
-		else
-			return fib(n - 1) + fib(n - 2);
-	}
-
-	private static boolean x(int i) {
-		System.out.print(i);
-		return i != 0;
-	}
-
-	private static int main() {
-		int i = 1;
-		System.out.println(i);
-		{
-			int j = 2;
-			System.out.println(i);
-			System.out.println(j);
-			{
-				int k = 3;
-				System.out.println(i);
-				System.out.println(j);
-				System.out.println(k);
-			}
-			int k = 4;
-			System.out.println(i);
-			System.out.println(j);
-			System.out.println(k);
-		}
-		return 0;
-	}
-
 	public static void main(String[] args) throws IOException, InterruptedException {
 		Exec.trace = true;
 //		main();
 //		System.exit(1);
-		String bpl = String.join("\n",
-			"func a() int {",
-			"   var i int;",
-			"   i = 5;",
-			"   while(1) {",
-			"       var j int;",
-			"       j=i*2;",
-			"       i=i-1;",
-			"       print(\"i=\");",
-			"       print(i);",
-			"       print(\"\\nj=\");",
-			"       print(j);",
-			"       print(\"\\n\");",
-			"       if(j){}else{return 1;}",
-			"   }",
-			"   return 0;",
-			"}"
-		);
-		bpl += String.join("\n",
-			"func b() int {",
-			"   var i int;",
-			"   i=1;",
-			"   print(i);",
-			"   {",
-			"       var j int;",
-			"       j=2;",
-			"       print(i);",
-			"       print(j);",
-			"       {",
-			"           var k int;",
-			"           k=3;",
-			"           print(i);",
-			"           print(j);",
-			"           print(k);",
-			"       }",
-			"       var k int;",
-			"       k=4;",
-			"       print(i);",
-			"       print(j);",
-			"       print(k);",
-			"   }",
-			"   return 0;",
-			"}"
-		);
-		bpl += String.join("\n",
-			"func add(a int, b int, c int) int {",
-			"   return a+b;",
-			"}",
-			"func main() int {",
-			"   var i int;",
-			"   print(\"a():\\n\");",
-			"   i=a();",
-			"   print(\"\\nexit:\");",
-			"   print(i);",
-			"   print(\"\\n\\nb():\\n\");",
-			"   i=b();",
-			"   print(\"\\nexit:\");",
-			"   print(i);",
-			"   print(\"\\n\\nadd(3,4,6):\\n\");",
-			"   i=add(3,4,6);",
-			"   print(\"\\nexit:\");",
-			"   print(i);",
-			"   return 0;",
-			"}"
-		);
-		bpl = loadTestFile("loop/fibonacci")[1];
-		bpl = String.join("\n",
-			"func p_str(s string, i int) string {",
-			"   if(i) {",
-			"       print(\"Hello, \");",
-			"   } else {",
-			"       print(\"hello, \");",
-			"   }",
-			"   print(s);",
-			"   return s;",
-			"}",
-			"",
-			"func p_str(s0 string, s1 string) string {",
-			"   p_str(s0, 1);",
-			"   print(\" and \");",
-			"   p_str(s1, 0);",
-			"   return \"!\";",
-			"}",
-			"",
-			"func main() int {",
-			"    var s string;",
-			"    s = p_str(\"世界\", \"everyone else\");",
-			"    print(s);",
-			"    return 0;",
-			"}\n"
-		);
+		String bpl = loadTestFile("defer/recursion");
 
 		byte[] bplbc = null;
 		try {
 			int vmExit = -1;
-//			bplbc = compileBC(bpl);
-//			VM vm = new VM(bplbc, Exec.trace);
-//			vmExit = vm.run();
+			bplbc = compileBC(bpl);
+			VM vm = new VM(bplbc, Exec.trace);
+			vmExit = vm.run();
 			if (!Exec.trace)
 				System.out.println("\n");
 			System.out.printf("BPLVM finished with exit code %d\n", vmExit);
@@ -217,16 +94,10 @@ public final class Main {
 		}
 	}
 
-	private static String[] loadTestFile(String name) throws IOException {
+	private static String loadTestFile(String name) throws IOException {
 		Path p = Paths.get("./src/test/resources/compiler/" + name + ".test");
-
 		String[] res = new String(Files.readAllBytes(p), IO.UTF8).split("::exp\n");
-		String act = res[0];
-		String exp = res[1].trim();
-		exp = StringEscapeUtils.unescapeJava(exp);
-		exp = exp.replaceAll("\n", System.lineSeparator());
-
-		return new String[]{name, act, exp};
+		return res[0];
 	}
 
 	public static byte[] compileBC(String bpl) {

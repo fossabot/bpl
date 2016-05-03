@@ -30,24 +30,29 @@ compilationUnit
 	;
 
 stmt
-	: varDecl   ';'
+	: deferableStmt
+	| varDecl   ';'
 	| varAssign ';'
-	| funcCall  ';'
-	| print     ';'
 	| ret       ';'
 	| branch
 	| loop
 	| block
 	;
 
+deferableStmt
+	: funcCall  ';'
+	| print     ';'
+	;
+
+defer     : 'defer' rhs=deferableStmt                                  ;
 loop      : 'while' '(' cond=expr ')' body=block                       ;
 branch    : 'if' '(' cond=expr ')' onTrue=block 'else' onFalse=block   ;
-block     : '{' stmts+=stmt* '}'                                       ;
+block     : '{' (stmt|defer)* '}'                                      ;
 funcDecl  : 'func' id=ID '(' params=paramList? ')' typ=type body=block ;
 funcCall  : id=ID '(' args=argList? ')'                                ;
 varDecl   : 'var' id=ID typ=type                                       ;
 varAssign : lhs=ID '=' rhs=expr                                        ;
-print     : 'print' '(' arg ')'                                        ;
+print     : 'print' '(' args=argList? ')'                              ;
 ret       : 'return' expr                                              ;
 param     : id=ID typ=type                                             ;
 paramList : param (',' param)*                                         ;
