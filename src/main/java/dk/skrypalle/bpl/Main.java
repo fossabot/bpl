@@ -39,9 +39,12 @@ public final class Main {
 
 	public static void main(String[] args) throws IOException, InterruptedException {
 		Exec.trace = true;
-//		main();
-//		System.exit(1);
-		String bpl = loadTestFile("defer/recursion");
+		String bpl;
+		if (args.length > 0) {
+			bpl = IO.readAll(Paths.get(args[0]));
+		} else {
+			bpl = loadTestFile("defer/recursion");
+		}
 
 		byte[] bplbc = null;
 		try {
@@ -57,7 +60,8 @@ public final class Main {
 			System.err.printf("Target BPLBC failed: %s: %s\n", t.getClass().getSimpleName(), t.getMessage());
 			if (bplbc != null)
 				System.err.printf("Code memory:\n%s\n", Hex.dump(bplbc));
-			t.printStackTrace();
+			if (args.length == 0)
+				t.printStackTrace();
 		}
 
 //		System.exit(1);
@@ -87,7 +91,8 @@ public final class Main {
 			System.err.printf("Target C99 failed: %s: %s\n", t.getClass().getSimpleName(), t.getMessage());
 			if (c99 != null)
 				System.err.printf("Code memory:\n%s\n", c99);
-			t.printStackTrace();
+			if (args.length == 0)
+				t.printStackTrace();
 
 			if (tmpDir != null)
 				IO.delRec(tmpDir);
