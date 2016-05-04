@@ -16,7 +16,7 @@ func p_str(s0 string, s1 string) string {
 }
 
 func main() int {
-    var s string;
+    s : string;
     s = p_str("世界", "everyone else");
     print(s);
     return 0;

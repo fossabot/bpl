@@ -50,7 +50,7 @@ branch    : 'if' '(' cond=expr ')' onTrue=block 'else' onFalse=block   ;
 block     : '{' (stmt|defer)* '}'                                      ;
 funcDecl  : 'func' id=ID '(' params=paramList? ')' typ=type body=block ;
 funcCall  : id=ID '(' args=argList? ')'                                ;
-varDecl   : 'var' id=ID typ=type                                       ;
+varDecl   : id=ID ':' typ=type                                         ;
 varAssign : lhs=ID '=' rhs=expr                                        ;
 print     : 'print' '(' args=argList? ')'                              ;
 ret       : 'return' expr                                              ;

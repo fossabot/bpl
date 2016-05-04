@@ -1,7 +1,7 @@
 func main() int {
-	var a int;
-	var b int;
-	var c int;
+	a : int;
+	b : int;
+	c : int;
 	a = 2;
 	b = 5;
 	c = b*2;

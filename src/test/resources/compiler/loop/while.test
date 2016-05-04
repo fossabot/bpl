@@ -1,5 +1,5 @@
 func main() int {
-	var i int;
+	i : int;
 	i = 15;
 	while(i) {
 		print(i);

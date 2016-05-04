@@ -149,9 +149,9 @@ public class ErrorTest extends CompilerTestBase {
 
 	@Test(dataProvider = "provideCompileSwitch",
 		expectedExceptions = BPLCErrSymRedeclared.class,
-		expectedExceptionsMessageRegExp = "2:16: error: symbol 'x' redeclared")
+		expectedExceptionsMessageRegExp = "2:10: error: symbol 'x' redeclared")
 	public void testErrVarRedeclared(Target t) throws Throwable {
-		execWithTmpDir(tmpDir -> t.compile(this, wrapMain("var x int; var x int;"), tmpDir));
+		execWithTmpDir(tmpDir -> t.compile(this, wrapMain("x : int; x : int;"), tmpDir));
 	} // test eval via thrown exception
 
 	//endregion
@@ -167,37 +167,37 @@ public class ErrorTest extends CompilerTestBase {
 
 	@Test(dataProvider = "provideCompileSwitch",
 		expectedExceptions = BPLCErrTypeMismatch.class,
-		expectedExceptionsMessageRegExp = "1:33: error: type mismatch at 's=0;' - have INT want STRING")
+		expectedExceptionsMessageRegExp = "1:31: error: type mismatch at 's=0;' - have INT want STRING")
 	public void testErrTypeMismatchOnAssign(Target t) throws Throwable {
-		execWithTmpDir(tmpDir -> t.compile(this, "func main() int { var s string; s = 0; return 0; }", tmpDir));
+		execWithTmpDir(tmpDir -> t.compile(this, "func main() int { s : string; s = 0; return 0; }", tmpDir));
 	} // test eval via thrown exception
 
 	@Test(dataProvider = "provideCompileSwitch",
 		expectedExceptions = BPLCErrTypeMismatch.class,
-		expectedExceptionsMessageRegExp = "1:45: error: type mismatch at 's' - have STRING want INT")
+		expectedExceptionsMessageRegExp = "1:43: error: type mismatch at 's' - have STRING want INT")
 	public void testErrTypeMismatchBranchCondition(Target t) throws Throwable {
-		execWithTmpDir(tmpDir -> t.compile(this, "func main() int { var s string; s = \"1\"; if(s) { return 0; } else { return 1; } }", tmpDir));
+		execWithTmpDir(tmpDir -> t.compile(this, "func main() int { s : string; s = \"1\"; if(s) { return 0; } else { return 1; } }", tmpDir));
 	} // test eval via thrown exception
 
 	@Test(dataProvider = "provideCompileSwitch",
 		expectedExceptions = BPLCErrTypeMismatch.class,
-		expectedExceptionsMessageRegExp = "1:48: error: type mismatch at 's' - have STRING want INT")
+		expectedExceptionsMessageRegExp = "1:46: error: type mismatch at 's' - have STRING want INT")
 	public void testErrTypeMismatchLoopCondition(Target t) throws Throwable {
-		execWithTmpDir(tmpDir -> t.compile(this, "func main() int { var s string; s = \"1\"; while(s) { return 0; } }", tmpDir));
+		execWithTmpDir(tmpDir -> t.compile(this, "func main() int { s : string; s = \"1\"; while(s) { return 0; } }", tmpDir));
 	} // test eval via thrown exception
 
 	@Test(dataProvider = "provideCompileSwitch",
 		expectedExceptions = BPLCErrTypeMismatch.class,
-		expectedExceptionsMessageRegExp = "1:62: error: type mismatch at 's\\+i' - have \\[INT, STRING\\] want \\[INT, INT\\]")
+		expectedExceptionsMessageRegExp = "1:58: error: type mismatch at 's\\+i' - have \\[INT, STRING\\] want \\[INT, INT\\]")
 	public void testErrTypeMismatchBinOp(Target t) throws Throwable {
-		execWithTmpDir(tmpDir -> t.compile(this, "func main() int { var s string; var i int; s = \"1\"; i = 1; s=s+i; return 0; }", tmpDir));
+		execWithTmpDir(tmpDir -> t.compile(this, "func main() int { s : string; i : int; s = \"1\"; i = 1; s=s+i; return 0; }", tmpDir));
 	} // test eval via thrown exception
 
 	@Test(dataProvider = "provideCompileSwitch",
 		expectedExceptions = BPLCErrTypeMismatch.class,
-		expectedExceptionsMessageRegExp = "1:62: error: type mismatch at 's&&i' - have \\[INT, STRING\\] want \\[INT, INT\\]")
+		expectedExceptionsMessageRegExp = "1:58: error: type mismatch at 's&&i' - have \\[INT, STRING\\] want \\[INT, INT\\]")
 	public void testErrTypeMismatchBoolOp(Target t) throws Throwable {
-		execWithTmpDir(tmpDir -> t.compile(this, "func main() int { var s string; var i int; s = \"1\"; i = 1; i=s&&i; return 0; }", tmpDir));
+		execWithTmpDir(tmpDir -> t.compile(this, "func main() int { s : string; i : int; s = \"1\"; i = 1; i=s&&i; return 0; }", tmpDir));
 	} // test eval via thrown exception
 
 	// endregion

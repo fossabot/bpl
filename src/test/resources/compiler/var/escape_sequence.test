@@ -1,5 +1,5 @@
 func main() int {
-    var s string;
+    s : string;
     s = "Have a\nnewline and a\ttab!";
     print(s);
     return 0;

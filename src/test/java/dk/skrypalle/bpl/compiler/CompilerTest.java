@@ -121,8 +121,9 @@ public class CompilerTest extends CompilerTestBase {
 	private String[] loadTestFile(String name) throws IOException {
 		try (InputStream in = CompilerTest.class.getResourceAsStream("/compiler/" + name + ".test")) {
 			if (in == null)
-				throw new IllegalArgumentException(String.format("test '%s' not found", name));
-			String[] res = IO.readAll(in).split("::exp\n");
+				throw new IllegalArgumentException(String.format("test /compiler/%s.test not found", name));
+			String f = IO.readAll(in);
+			String[] res = f.split("::exp");
 			String act = res[0];
 			String exp = res[1].trim();
 			exp = StringEscapeUtils.unescapeJava(exp);

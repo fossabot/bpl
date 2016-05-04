@@ -1,5 +1,5 @@
 func main() int {
-	var foo int;
+	foo : int;
 	foo = 42;
 	print(foo + 2);
 	return 0;
