@@ -84,12 +84,19 @@ public class CompilerTest extends CompilerTestBase {
 
 			loadTestFile("var/simple"),
 			loadTestFile("var/simple_calc"),
+			loadTestFile("var/simple_decl_assign"),
+			loadTestFile("var/simple_inferred"),
 			loadTestFile("var/multi"),
+			loadTestFile("var/multi_decl_assign"),
+			loadTestFile("var/multi_inferred"),
 			loadTestFile("var/complex"),
+			loadTestFile("var/complex_decl_assign"),
+			loadTestFile("var/complex_inferred"),
 			loadTestFile("var/strings"),
 			loadTestFile("var/escape_sequence"),
 			loadTestFile("var/scopes"),
-			loadTestFile("var/simple_decl_assign"),
+			loadTestFile("var/scopes_decl_assign"),
+			loadTestFile("var/scopes_inferred"),
 
 			loadTestFile("func/call_simple"),
 			loadTestFile("func/call_simple_params"),
@@ -111,6 +118,7 @@ public class CompilerTest extends CompilerTestBase {
 			loadTestFile("loop/while"),
 			loadTestFile("loop/factorial"),
 			loadTestFile("loop/fibonacci"),
+			loadTestFile("loop/fibonacci_v2"),
 
 			loadTestFile("defer/simple"),
 			loadTestFile("defer/recursion"),

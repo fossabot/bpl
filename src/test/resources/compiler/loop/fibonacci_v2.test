@@ -1,0 +1,21 @@
+func fib(n int) int {
+	i := 0;
+	x := 0;
+	y := 1;
+	z := 1;
+	while (i < n) {
+		x = y;
+		y = z;
+		z = x + y;
+		i = i + 1;
+	}
+	return x;
+}
+
+func main() int {
+	print(fib(82));
+	return 0;
+}
+
+::exp
+d9cd4ab6a2d747

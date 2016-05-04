@@ -288,6 +288,19 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 		return concat(rhs, ISTORE, Marshal.bytesS32BE(sym.off));
 	}
 
+	@Override
+	public byte[] visitVarDeclAssignTI(VarDeclAssignTIContext ctx) {
+		String id = ttos(ctx.lhs);
+		if (curF.symTbl.isDecl(id))
+			throw new BPLCErrSymRedeclared(ctx.lhs);
+
+		byte[] rhs = visit(ctx.rhs);
+		DataType type = popt();
+		Symbol sym = curF.symTbl.declLocal(id, type);
+
+		return concat(rhs, ISTORE, Marshal.bytesS32BE(sym.off));
+	}
+
 	//endregion
 
 	//region func

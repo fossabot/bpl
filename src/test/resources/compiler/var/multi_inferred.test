@@ -1,0 +1,9 @@
+func main() int {
+	a := 2;
+	b := 5;
+	print(a + b);
+	return 0;
+}
+
+::exp
+7

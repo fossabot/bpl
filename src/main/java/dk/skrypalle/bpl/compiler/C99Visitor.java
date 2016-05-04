@@ -297,6 +297,19 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 		return type.c_type + " " + id + " = " + rhs;
 	}
 
+	@Override
+	public String visitVarDeclAssignTI(VarDeclAssignTIContext ctx) {
+		String id = ttos(ctx.lhs);
+		if (curF.symTbl.isDecl(id))
+			throw new BPLCErrSymRedeclared(ctx.lhs);
+
+		String rhs = visit(ctx.rhs);
+		DataType type = popt();
+		curF.symTbl.declLocal(id, type);
+
+		return type.c_type + " " + id + " = " + rhs;
+	}
+
 	//endregion
 
 	//region func

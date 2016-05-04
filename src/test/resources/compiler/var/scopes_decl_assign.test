@@ -1,0 +1,23 @@
+func main() int {
+	i : int = 1;
+	print(i);
+	{
+		j : int = 2;
+		print(i);
+		print(j);
+		{
+			k : int = 3;
+			print(i);
+			print(j);
+			print(k);
+		}
+		k : int = 4;
+		print(i);
+		print(j);
+		print(k);
+	}
+	return 0;
+}
+
+::exp
+112123124
