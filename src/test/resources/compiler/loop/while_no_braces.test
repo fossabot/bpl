@@ -1,0 +1,10 @@
+func main() int {
+	i := 15;
+	while(i)
+		i = i - 1;
+	print(i);
+	return 0;
+}
+
+::exp
+0

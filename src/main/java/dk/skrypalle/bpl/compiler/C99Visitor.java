@@ -93,14 +93,25 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 	//region stmt
 
 	@Override
+	public String visitSingularStmt(SingularStmtContext ctx) {
+		if (curF.returns)
+			throw new BPLCErrStatementUnreachable(ctx.start);
+
+		String cld = visitChildren(ctx);
+		if (cld.trim().endsWith(";") || cld.trim().endsWith("}"))
+			return cld;
+		return cld + ";\n";
+	}
+
+	@Override
 	public String visitDeferableStmt(DeferableStmtContext ctx) {
 		if (curF.returns)
 			throw new BPLCErrStatementUnreachable(ctx.start);
 
-		if (ctx.getParent() instanceof StmtContext)
-			return visitChildren(ctx);
-
-		return visitChildren(ctx) + ";/* " + ttos(ctx) + " */\n";
+		String cld = visitChildren(ctx);
+		if (cld.trim().endsWith(";") || cld.trim().endsWith("}"))
+			return cld;
+		return cld + ";\n";
 	}
 
 	@Override
@@ -108,7 +119,10 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 		if (curF.returns)
 			throw new BPLCErrStatementUnreachable(ctx.start);
 
-		return visitChildren(ctx) + "; /* " + ttos(ctx) + " */\n";
+		String cld = visitChildren(ctx);
+		if (cld.trim().endsWith(";") || cld.trim().endsWith("}"))
+			return cld;
+		return cld + ";\n";
 	}
 
 	@Override

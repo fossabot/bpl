@@ -106,9 +106,12 @@ public class CompilerTest extends CompilerTestBase {
 
 			loadTestFile("branch/if_0"),
 			loadTestFile("branch/if_1"),
+			loadTestFile("branch/if_0_no_braces"),
+			loadTestFile("branch/if_1_no_braces"),
 
 			loadTestFile("recursion/factorial"),
 			loadTestFile("recursion/factorial_v2"),
+			loadTestFile("recursion/factorial_v3"),
 			loadTestFile("recursion/fibonacci"),
 
 			loadTestFile("operators/and_skip_right"),
@@ -116,6 +119,7 @@ public class CompilerTest extends CompilerTestBase {
 			loadTestFile("operators/and_or_precedence"),
 
 			loadTestFile("loop/while"),
+			loadTestFile("loop/while_no_braces"),
 			loadTestFile("loop/factorial"),
 			loadTestFile("loop/fibonacci"),
 			loadTestFile("loop/fibonacci_v2"),

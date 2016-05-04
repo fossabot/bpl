@@ -106,6 +106,13 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 	//region stmt
 
 	@Override
+	public byte[] visitSingularStmt(SingularStmtContext ctx) {
+		if (curF.returns)
+			throw new BPLCErrStatementUnreachable(ctx.start);
+		return visitChildren(ctx);
+	}
+
+	@Override
 	public byte[] visitDeferableStmt(DeferableStmtContext ctx) {
 		if (curF.returns)
 			throw new BPLCErrStatementUnreachable(ctx.start);
