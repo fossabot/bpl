@@ -41,8 +41,6 @@ public class FuncResolvePass extends BPLBaseVisitor<FuncTbl> {
 
 	private Func curF;
 
-//	private List<DataType> params;
-
 	public FuncResolvePass() {
 		funcTbl = new FuncTbl();
 	}
@@ -69,17 +67,13 @@ public class FuncResolvePass extends BPLBaseVisitor<FuncTbl> {
 		curF.id = id;
 		curF.type = type;
 
-//		params = new ArrayList<>();
 		visit(ctx.params);
 
 		if (funcTbl.isDecl(id, curF.symTbl.getParamTypes()))
 			throw new BPLCErrFuncRedeclared(ctx.id);
 
-//		curF.params = params;
-
 		funcTbl.decl(curF);
 
-//		params = null;
 		return funcTbl;
 	}
 
