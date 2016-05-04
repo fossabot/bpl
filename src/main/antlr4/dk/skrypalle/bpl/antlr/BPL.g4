@@ -50,22 +50,22 @@ deferableStmt
 	| print     ';'
 	;
 
-defer           : 'defer' rhs=deferableStmt                                              ;
-loop            : 'while' '(' cond=expr ')' body=singularStmt                            ;
-branch          : 'if' '(' cond=expr ')' onTrue=singularStmt 'else' onFalse=singularStmt ;
-block           : '{' (stmt|defer)* '}'                                                  ;
-funcDecl        : 'func' id=ID '(' params=paramList? ')' typ=type body=block             ;
-funcCall        : id=ID '(' args=argList? ')'                                            ;
-varDecl         : id=ID ':' typ=type                                                     ;
-varAssign       : lhs=ID '=' rhs=expr                                                    ;
-varDeclAssign   : lhs=ID ':' typ=type '=' rhs=expr                                       ;
-varDeclAssignTI : lhs=ID ':=' rhs=expr                                                   ;
-print           : 'print' '(' args=argList? ')'                                          ;
-ret             : 'return' expr                                                          ;
-param           : id=ID typ=type                                                         ;
-paramList       : param (',' param)*                                                     ;
-arg             : expr                                                                   ;
-argList         : arg (',' arg)*                                                         ;
+defer           : 'defer' rhs=deferableStmt                                                 ;
+loop            : 'while' '(' cond=expr ')' body=singularStmt                               ;
+branch          : 'if' '(' cond=expr ')' onTrue=singularStmt ('else' onFalse=singularStmt)? ;
+block           : '{' (stmt|defer)* '}'                                                     ;
+funcDecl        : 'func' id=ID '(' params=paramList? ')' typ=type body=block                ;
+funcCall        : id=ID '(' args=argList? ')'                                               ;
+varDecl         : id=ID ':' typ=type                                                        ;
+varAssign       : lhs=ID '=' rhs=expr                                                       ;
+varDeclAssign   : lhs=ID ':' typ=type '=' rhs=expr                                          ;
+varDeclAssignTI : lhs=ID ':=' rhs=expr                                                      ;
+print           : 'print' '(' args=argList? ')'                                             ;
+ret             : 'return' expr                                                             ;
+param           : id=ID typ=type                                                            ;
+paramList       : param (',' param)*                                                        ;
+arg             : expr                                                                      ;
+argList         : arg (',' arg)*                                                            ;
 
 expr
 	: lhs=expr op=('/'|'*')                     rhs=expr #BinOpExpr

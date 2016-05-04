@@ -212,7 +212,7 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 	@Override
 	public String visitBranch(BranchContext ctx) {
 		boolean trueRet;
-		boolean falseRet;
+		boolean falseRet = false;
 
 		String cond_str = visit(ctx.cond);
 		DataType cond_t = popt();
@@ -223,13 +223,16 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 		String onTrue = visit(ctx.onTrue).trim();
 		trueRet = curF.returns;
 
-		curF.returns = false;
-		String onFalse = visit(ctx.onFalse).trim();
-		falseRet = curF.returns;
+		String onFalse = "";
+		if (ctx.onFalse != null) {
+			curF.returns = false;
+			onFalse = " else " + visit(ctx.onFalse).trim();
+			falseRet = curF.returns;
+		}
 
 		curF.returns = trueRet && falseRet;
 
-		return "if (" + cond_str + ") " + onTrue + " else " + onFalse;
+		return "if (" + cond_str + ") " + onTrue + onFalse;
 	}
 
 	@Override

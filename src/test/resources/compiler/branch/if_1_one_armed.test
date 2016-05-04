@@ -1,0 +1,9 @@
+func main() int {
+	if(1)
+		print(81);
+	print(42);
+	return 0;
+}
+
+::exp
+512a

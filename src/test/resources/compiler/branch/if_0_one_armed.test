@@ -1,0 +1,9 @@
+func main() int {
+	if(0)
+		return 0;
+	print(42);
+	return 0;
+}
+
+::exp
+2a

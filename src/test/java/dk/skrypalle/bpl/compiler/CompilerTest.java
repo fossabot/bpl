@@ -108,6 +108,8 @@ public class CompilerTest extends CompilerTestBase {
 			loadTestFile("branch/if_1"),
 			loadTestFile("branch/if_0_no_braces"),
 			loadTestFile("branch/if_1_no_braces"),
+			loadTestFile("branch/if_0_one_armed"),
+			loadTestFile("branch/if_1_one_armed"),
 
 			loadTestFile("recursion/factorial"),
 			loadTestFile("recursion/factorial_v2"),
