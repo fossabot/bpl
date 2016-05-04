@@ -66,12 +66,13 @@ public class SymTbl {
 		paramStack.push(sym);
 	}
 
-	public void declLocal(String id, DataType t) {
+	public Symbol declLocal(String id, DataType t) {
 		if (cur().containsKey(id))
 			throw new IllegalArgumentException("local sym " + id + "[" + t + "]" + " already declared in this scope");
 
 		Symbol sym = new Symbol(id, t, localIdx++);
 		cur().put(id, sym);
+		return sym;
 	}
 
 	public boolean isDecl(String id) {

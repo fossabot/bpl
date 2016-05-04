@@ -89,6 +89,7 @@ public class CompilerTest extends CompilerTestBase {
 			loadTestFile("var/strings"),
 			loadTestFile("var/escape_sequence"),
 			loadTestFile("var/scopes"),
+			loadTestFile("var/simple_decl_assign"),
 
 			loadTestFile("func/call_simple"),
 			loadTestFile("func/call_simple_params"),

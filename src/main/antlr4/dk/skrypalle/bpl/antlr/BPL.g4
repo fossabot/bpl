@@ -31,9 +31,10 @@ compilationUnit
 
 stmt
 	: deferableStmt
-	| varDecl   ';'
-	| varAssign ';'
-	| ret       ';'
+	| varDecl       ';'
+	| varAssign     ';'
+	| varDeclAssign ';'
+	| ret           ';'
 	| branch
 	| loop
 	| block
@@ -44,20 +45,21 @@ deferableStmt
 	| print     ';'
 	;
 
-defer     : 'defer' rhs=deferableStmt                                  ;
-loop      : 'while' '(' cond=expr ')' body=block                       ;
-branch    : 'if' '(' cond=expr ')' onTrue=block 'else' onFalse=block   ;
-block     : '{' (stmt|defer)* '}'                                      ;
-funcDecl  : 'func' id=ID '(' params=paramList? ')' typ=type body=block ;
-funcCall  : id=ID '(' args=argList? ')'                                ;
-varDecl   : id=ID ':' typ=type                                         ;
-varAssign : lhs=ID '=' rhs=expr                                        ;
-print     : 'print' '(' args=argList? ')'                              ;
-ret       : 'return' expr                                              ;
-param     : id=ID typ=type                                             ;
-paramList : param (',' param)*                                         ;
-arg       : expr                                                       ;
-argList   : arg (',' arg)*                                             ;
+defer         : 'defer' rhs=deferableStmt                                  ;
+loop          : 'while' '(' cond=expr ')' body=block                       ;
+branch        : 'if' '(' cond=expr ')' onTrue=block 'else' onFalse=block   ;
+block         : '{' (stmt|defer)* '}'                                      ;
+funcDecl      : 'func' id=ID '(' params=paramList? ')' typ=type body=block ;
+funcCall      : id=ID '(' args=argList? ')'                                ;
+varDecl       : id=ID ':' typ=type                                         ;
+varAssign     : lhs=ID '=' rhs=expr                                        ;
+varDeclAssign : lhs=ID ':' typ=type '=' rhs=expr                           ;
+print         : 'print' '(' args=argList? ')'                              ;
+ret           : 'return' expr                                              ;
+param         : id=ID typ=type                                             ;
+paramList     : param (',' param)*                                         ;
+arg           : expr                                                       ;
+argList       : arg (',' arg)*                                             ;
 
 expr
 	: lhs=expr op=('/'|'*')                     rhs=expr #BinOpExpr

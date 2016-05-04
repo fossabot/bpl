@@ -270,6 +270,24 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 		return concat(rhs, ISTORE, Marshal.bytesS32BE(sym.off));
 	}
 
+	@Override
+	public byte[] visitVarDeclAssign(VarDeclAssignContext ctx) {
+		String id = ttos(ctx.lhs);
+		String type_str = ttos(ctx.typ);
+		DataType type = DataType.parse(type_str);
+		if (curF.symTbl.isDecl(id))
+			throw new BPLCErrSymRedeclared(ctx.lhs);
+
+		Symbol sym = curF.symTbl.declLocal(id, type);
+		byte[] rhs = visit(ctx.rhs);
+		DataType have = popt();
+		DataType want = sym.type;
+		if (have != want)
+			throw new BPLCErrTypeMismatch(TokenAdapter.from(ctx.getParent()), have, want);
+
+		return concat(rhs, ISTORE, Marshal.bytesS32BE(sym.off));
+	}
+
 	//endregion
 
 	//region func

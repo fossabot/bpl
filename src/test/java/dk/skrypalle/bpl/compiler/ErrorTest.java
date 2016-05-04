@@ -174,6 +174,13 @@ public class ErrorTest extends CompilerTestBase {
 
 	@Test(dataProvider = "provideCompileSwitch",
 		expectedExceptions = BPLCErrTypeMismatch.class,
+		expectedExceptionsMessageRegExp = "1:19: error: type mismatch at 's:string=0;' - have INT want STRING")
+	public void testErrTypeMismatchOnDeclAssign(Target t) throws Throwable {
+		execWithTmpDir(tmpDir -> t.compile(this, "func main() int { s : string = 0; return 0; }", tmpDir));
+	} // test eval via thrown exception
+
+	@Test(dataProvider = "provideCompileSwitch",
+		expectedExceptions = BPLCErrTypeMismatch.class,
 		expectedExceptionsMessageRegExp = "1:43: error: type mismatch at 's' - have STRING want INT")
 	public void testErrTypeMismatchBranchCondition(Target t) throws Throwable {
 		execWithTmpDir(tmpDir -> t.compile(this, "func main() int { s : string; s = \"1\"; if(s) { return 0; } else { return 1; } }", tmpDir));
