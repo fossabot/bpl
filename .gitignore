@@ -23,7 +23,7 @@ target/
 *.i
 *.o
 *.s
-*.~
+*.c~
 
 # BPL
 *.bplbc
