@@ -35,8 +35,6 @@ import org.apache.commons.lang3.*;
 
 import java.util.*;
 
-import static dk.skrypalle.bpl.compiler.type.DataType.INT;
-import static dk.skrypalle.bpl.compiler.type.DataType.*;
 import static dk.skrypalle.bpl.util.Array.*;
 import static dk.skrypalle.bpl.util.Parse.*;
 import static dk.skrypalle.bpl.vm.Bytecode.*;
@@ -46,7 +44,7 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 	private static final byte[] EMPTY = {};
 
 	private final FuncTbl              funcTbl;
-	private final Deque<DataType>      tStack;
+	private final Deque<Type>          tStack;
 	private final Deque<Deque<byte[]>> defers;
 
 	private Map<String, StaticStoreEntry> staticStore;
@@ -155,8 +153,8 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 	public byte[] visitRet(RetContext ctx) {
 		curF.returns = true;
 		byte[] cld = visitChildren(ctx);
-		DataType have = popt();
-		DataType want = curF.type;
+		Type have = popt();
+		Type want = curF.type;
 		if (have != want)
 			throw new BPLCErrTypeMismatch(TokenAdapter.from(ctx.getParent()), have, want);
 
@@ -190,9 +188,9 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 		boolean falseRet;
 
 		byte[] cond = visit(ctx.cond);
-		DataType cond_t = popt();
-		if (cond_t != INT)
-			throw new BPLCErrTypeMismatch(TokenAdapter.from(ctx.cond), cond_t, INT);
+		Type cond_t = popt();
+		if (cond_t != Types.lookup("int"))
+			throw new BPLCErrTypeMismatch(TokenAdapter.from(ctx.cond), cond_t, Types.lookup("int"));
 
 		curF.returns = false;
 		byte[] onTrue = visit(ctx.onTrue);
@@ -216,9 +214,9 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 	@Override
 	public byte[] visitLoop(LoopContext ctx) {
 		byte[] cond = visit(ctx.cond);
-		DataType cond_t = popt();
-		if (cond_t != INT)
-			throw new BPLCErrTypeMismatch(TokenAdapter.from(ctx.cond), cond_t, INT);
+		Type cond_t = popt();
+		if (cond_t != Types.lookup("int"))
+			throw new BPLCErrTypeMismatch(TokenAdapter.from(ctx.cond), cond_t, Types.lookup("int"));
 
 		byte[] body = visit(ctx.body);
 		return concat(
@@ -255,7 +253,7 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 	public byte[] visitVarDecl(VarDeclContext ctx) {
 		String id = ttos(ctx.id);
 		String type_str = ttos(ctx.typ);
-		DataType type = DataType.parse(type_str);
+		Type type = Types.lookup(type_str);
 		if (curF.symTbl.isDecl(id))
 			throw new BPLCErrSymRedeclared(ctx.id);
 
@@ -271,8 +269,8 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 
 		Symbol sym = curF.symTbl.get(id);
 		byte[] rhs = visit(ctx.rhs);
-		DataType have = popt();
-		DataType want = sym.type;
+		Type have = popt();
+		Type want = sym.type;
 		if (have != want)
 			throw new BPLCErrTypeMismatch(TokenAdapter.from(ctx.getParent()), have, want);
 
@@ -283,14 +281,14 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 	public byte[] visitVarDeclAssign(VarDeclAssignContext ctx) {
 		String id = ttos(ctx.lhs);
 		String type_str = ttos(ctx.typ);
-		DataType type = DataType.parse(type_str);
+		Type type = Types.lookup((type_str));
 		if (curF.symTbl.isDecl(id))
 			throw new BPLCErrSymRedeclared(ctx.lhs);
 
 		Symbol sym = curF.symTbl.declLocal(id, type);
 		byte[] rhs = visit(ctx.rhs);
-		DataType have = popt();
-		DataType want = sym.type;
+		Type have = popt();
+		Type want = sym.type;
 		if (have != want)
 			throw new BPLCErrTypeMismatch(TokenAdapter.from(ctx.getParent()), have, want);
 
@@ -304,7 +302,7 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 			throw new BPLCErrSymRedeclared(ctx.lhs);
 
 		byte[] rhs = visit(ctx.rhs);
-		DataType type = popt();
+		Type type = popt();
 		Symbol sym = curF.symTbl.declLocal(id, type);
 
 		return concat(rhs, ISTORE, Marshal.bytesS32BE(sym.off));
@@ -320,10 +318,10 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 			throw new IllegalStateException("typeStack not empty on func decl start");
 
 		String id = ttos(ctx.id);
-		List<DataType> params = new ArrayList<>();
+		List<Type> params = new ArrayList<>();
 		if (ctx.params != null) {
 			for (ParamContext pctx : ctx.params.param())
-				params.add(DataType.parse(ttos(pctx.typ)));
+				params.add(Types.lookup((ttos(pctx.typ))));
 		}
 
 		curF = funcTbl.get(id, params);
@@ -360,9 +358,9 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 
 		byte[] args = isDeferred ? new byte[]{} : visit(ctx.args);
 
-		List<DataType> arg_types = new ArrayList<>();
+		List<Type> arg_types = new ArrayList<>();
 		for (int i = 0; i < nArgs; i++) {
-			DataType t = popt();
+			Type t = popt();
 			arg_types.add(t);
 		}
 		Collections.reverse(arg_types); // reverse stack-order
@@ -372,9 +370,9 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 			throw new BPLCErrFuncUndeclared(ctx.id, arg_types);
 
 		// Check possible params
-		List<List<DataType>> possible = funcTbl.getPossibleParams(id);
+		List<List<Type>> possible = funcTbl.getPossibleParams(id);
 		boolean isSubset = false;
-		for (List<DataType> poss : possible) {
+		for (List<Type> poss : possible) {
 			boolean isSS = true;
 			int len = arg_types.size() > poss.size() ? poss.size() : arg_types.size();
 			for (int i = 0; i < len; i++) {
@@ -439,11 +437,11 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 		byte[] lhs = visit(ctx.lhs);
 		byte[] rhs = visit(ctx.rhs);
 		String op_str = ttos(ctx.op);
-		DataType rhs_t = popt();
-		DataType lhs_t = popt();
+		Type rhs_t = popt();
+		Type lhs_t = popt();
 		if (rhs_t != lhs_t)
-			throw new BPLCErrTypeMismatch(TokenAdapter.from(ctx), Arrays.asList(rhs_t, lhs_t), Arrays.asList(INT, INT));
-		pusht(INT);
+			throw new BPLCErrTypeMismatch(TokenAdapter.from(ctx), Arrays.asList(rhs_t, lhs_t), Arrays.asList(Types.lookup("int"), Types.lookup("int")));
+		pusht(Types.lookup("int"));
 		byte op;
 		//fmt:off
 		switch (op_str) {
@@ -468,11 +466,11 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 		byte[] lhs = visit(ctx.lhs);
 		byte[] rhs = visit(ctx.rhs);
 		String op_str = ttos(ctx.op);
-		DataType rhs_t = popt();
-		DataType lhs_t = popt();
+		Type rhs_t = popt();
+		Type lhs_t = popt();
 		if (rhs_t != lhs_t)
-			throw new BPLCErrTypeMismatch(TokenAdapter.from(ctx), Arrays.asList(rhs_t, lhs_t), Arrays.asList(INT, INT));
-		pusht(INT);
+			throw new BPLCErrTypeMismatch(TokenAdapter.from(ctx), Arrays.asList(rhs_t, lhs_t), Arrays.asList(Types.lookup("int"), Types.lookup("int")));
+		pusht(Types.lookup("int"));
 		byte op;
 		int v0;
 		int v1;
@@ -532,15 +530,15 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 		}
 
 		byte[] off = Marshal.bytesS32BE(4 + entry.off);
-		pusht(STRING);
-		return concat(SPUSH, Marshal.bytesS32BE(STRING.vm_type), off);
+		pusht(Types.lookup("string"));
+		return concat(SPUSH, Marshal.bytesS32BE(Types.lookup("string").vm_type), off);
 	}
 
 	@Override
 	public byte[] visitIntExpr(IntExprContext ctx) {
 		String val = Parse.ttos(ctx.val);
 		byte[] res = Marshal.bytesS64BE(Long.parseUnsignedLong(val, 10));
-		pusht(INT);
+		pusht(Types.lookup("int"));
 		return concat(IPUSH, res);
 	}
 
@@ -552,10 +550,10 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 		Symbol sym = curF.symTbl.get(id);
 		pusht(sym.type);
 		//fmt:off
-		switch (sym.type) {
-		case INT   : return concat(ILOAD, Marshal.bytesS32BE(sym.off));
-		case STRING: return concat(SLOAD, Marshal.bytesS32BE(sym.off));
-		default    : throw new IllegalStateException("unreachable");
+		switch (sym.type.name) { // TODO
+		case "int"   : return concat(ILOAD, Marshal.bytesS32BE(sym.off));
+		case "string": return concat(SLOAD, Marshal.bytesS32BE(sym.off));
+		default      : throw new IllegalStateException("unreachable");
 		}
 		//fmt:on
 	}
@@ -590,11 +588,11 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 
 	//endregion
 
-	private void pusht(DataType t) {
+	private void pusht(Type t) {
 		tStack.push(t);
 	}
 
-	private DataType popt() {
+	private Type popt() {
 		StackTraceElement ste = Thread.currentThread().getStackTrace()[2];
 		if (tStack.isEmpty()) {
 			throw new IllegalStateException(String.format(

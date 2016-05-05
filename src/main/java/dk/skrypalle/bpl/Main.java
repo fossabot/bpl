@@ -39,13 +39,13 @@ public final class Main {
 
 	public static void main(String[] args) throws IOException, InterruptedException {
 		Exec.trace = true;
-		int runWhich = 0x01;
+		int runWhich = 0x03;
 
 		String bpl;
 		if (args.length > 0) {
 			bpl = IO.readAll(Paths.get(args[0]));
 		} else {
-			bpl = loadTestFile("defer/recursion");
+			bpl = loadTestFile("var/strings");
 		}
 
 		if ((runWhich & 0x01) != 0) {
@@ -74,6 +74,7 @@ public final class Main {
 			try {
 				tmpDir = IO.makeTmpDir("_bplc_");
 				c99 = compileC99(bpl);
+				System.out.println(c99);
 				Path c99out = tmpDir.resolve("out.c");
 				IO.writeAll(c99out, c99);
 				ExecRes gcc = Exec.gcc(c99out);

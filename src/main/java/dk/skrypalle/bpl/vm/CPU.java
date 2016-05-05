@@ -31,7 +31,6 @@ import dk.skrypalle.bpl.vm.err.*;
 
 import java.util.*;
 
-import static dk.skrypalle.bpl.compiler.type.DataType.*;
 import static dk.skrypalle.bpl.vm.Bytecode.*;
 
 class CPU {
@@ -77,7 +76,7 @@ class CPU {
 			break;
 		case IPUSH:
 			val = fetchS64();
-			push(val, INT);
+			push(val, Types.lookup("int"));
 			break;
 		case IADD:
 			rhs = pop();
@@ -85,7 +84,7 @@ class CPU {
 			if (lhs.type != rhs.type)
 				throw new IllegalArgumentException(String.format("IADD:: want [INT,INT], have [%s,%s]", lhs.type, rhs.type));
 			res = lhs.val + rhs.val;
-			push(res, INT);
+			push(res, Types.lookup("int"));
 			break;
 		case ISUB:
 			rhs = pop();
@@ -93,7 +92,7 @@ class CPU {
 			if (lhs.type != rhs.type)
 				throw new IllegalArgumentException(String.format("ISUB:: want [INT,INT], have [%s,%s]", lhs.type, rhs.type));
 			res = lhs.val - rhs.val;
-			push(res, INT);
+			push(res, Types.lookup("int"));
 			break;
 		case IMUL:
 			rhs = pop();
@@ -101,7 +100,7 @@ class CPU {
 			if (lhs.type != rhs.type)
 				throw new IllegalArgumentException(String.format("IMUL:: want [INT,INT], have [%s,%s]", lhs.type, rhs.type));
 			res = lhs.val*rhs.val;
-			push(res, INT);
+			push(res, Types.lookup("int"));
 			break;
 		case IDIV:
 			rhs = pop();
@@ -109,7 +108,7 @@ class CPU {
 			if (lhs.type != rhs.type)
 				throw new IllegalArgumentException(String.format("IDIV:: want [INT,INT], have [%s,%s]", lhs.type, rhs.type));
 			res = lhs.val/rhs.val;
-			push(res, INT);
+			push(res, Types.lookup("int"));
 			break;
 		case ILT:
 			rhs = pop();
@@ -117,7 +116,7 @@ class CPU {
 			if (lhs.type != rhs.type)
 				throw new IllegalArgumentException(String.format("ILT:: want [INT,INT], have [%s,%s]", lhs.type, rhs.type));
 			res = lhs.val < rhs.val ? 1 : 0;
-			push(res, INT);
+			push(res, Types.lookup("int"));
 			break;
 		case IGT:
 			rhs = pop();
@@ -125,7 +124,7 @@ class CPU {
 			if (lhs.type != rhs.type)
 				throw new IllegalArgumentException(String.format("IGT:: want [INT,INT], have [%s,%s]", lhs.type, rhs.type));
 			res = lhs.val > rhs.val ? 1 : 0;
-			push(res, INT);
+			push(res, Types.lookup("int"));
 			break;
 		case ILTE:
 			rhs = pop();
@@ -133,7 +132,7 @@ class CPU {
 			if (lhs.type != rhs.type)
 				throw new IllegalArgumentException(String.format("ILTE:: want [INT,INT], have [%s,%s]", lhs.type, rhs.type));
 			res = lhs.val <= rhs.val ? 1 : 0;
-			push(res, INT);
+			push(res, Types.lookup("int"));
 			break;
 		case IGTE:
 			rhs = pop();
@@ -141,7 +140,7 @@ class CPU {
 			if (lhs.type != rhs.type)
 				throw new IllegalArgumentException(String.format("IGTE:: want [INT,INT], have [%s,%s]", lhs.type, rhs.type));
 			res = lhs.val >= rhs.val ? 1 : 0;
-			push(res, INT);
+			push(res, Types.lookup("int"));
 			break;
 		case IEQ:
 			rhs = pop();
@@ -149,7 +148,7 @@ class CPU {
 			if (lhs.type != rhs.type)
 				throw new IllegalArgumentException(String.format("IEQ:: want [INT,INT], have [%s,%s]", lhs.type, rhs.type));
 			res = lhs.val == rhs.val ? 1 : 0;
-			push(res, INT);
+			push(res, Types.lookup("int"));
 			break;
 		case INEQ:
 			rhs = pop();
@@ -157,7 +156,7 @@ class CPU {
 			if (lhs.type != rhs.type)
 				throw new IllegalArgumentException(String.format("INEQ:: want [INT,INT], have [%s,%s]", lhs.type, rhs.type));
 			res = lhs.val != rhs.val ? 1 : 0;
-			push(res, INT);
+			push(res, Types.lookup("int"));
 			break;
 		case ISTORE: // can be generic STORE?
 			off = fetchS32();
@@ -175,13 +174,13 @@ class CPU {
 			int t = fetchS32();
 			addr = fetchS32();
 //			off = fetchS32();
-//			System.out.printf("SPUSH:: [%s] @ %d + %d -> %d\n", DataType.parse(t), addr, off, addr + off);
+//			System.out.printf("SPUSH:: [%s] @ %d + %d -> %d\n", Type.parse(t), addr, off, addr + off);
 //			System.out.println(Hex.dump(code, addr, off));
 //			System.out.printf("PUSH encoded=%016x\n", Marshal.s64BE(addr, off));
-			push(addr, DataType.parse(t));
+			push(addr, Types.lookup(t));
 //			addr = fetchS32();
 //			vm_type = fetchS32();
-//			DataType type = DataType.parse(vm_type);
+//			Type type = Type.parse(vm_type);
 //			HeapEntry data = heap.get(addr);
 //			System.out.printf("SPUSH: addr=%08x, type=%s(%d), data(type=%s):\n%s", addr, type, vm_type, data.type, Hex.dump(data.val));
 			break;
@@ -191,14 +190,14 @@ class CPU {
 			addr = fp + off + 1;
 			rhs = sget(addr);
 			push(rhs.val, rhs.type);
-//			System.out.printf("SLOAD:: [%s] @ (%d)%d :: %s\n", DataType.parse(t), off, addr, rhs);
+//			System.out.printf("SLOAD:: [%s] @ (%d)%d :: %s\n", Type.parse(t), off, addr, rhs);
 			break;
 		case CALL:
 			addr = fetchS32();
 			nArgs = fetchS32();
-			push(nArgs, INT);
-			push(fp, INT);
-			push(ip, INT);
+			push(nArgs, Types.lookup("int"));
+			push(fp, Types.lookup("int"));
+			push(ip, Types.lookup("int"));
 			fp = sp;
 			ip = addr;
 			if (ip < 0 || ip >= code.length)
@@ -210,11 +209,11 @@ class CPU {
 			StackEntry _ip = pop();
 			StackEntry _fp = pop();
 			StackEntry _nArgs = pop();
-			if (_ip.type != INT)
+			if (_ip.type != Types.lookup("int"))
 				throw new IllegalArgumentException(String.format("RET:: want ip[INT], have ip[%s]", _ip.type));
-			if (_fp.type != INT)
+			if (_fp.type != Types.lookup("int"))
 				throw new IllegalArgumentException(String.format("RET:: want fp[INT], have fp[%s]", _fp.type));
-			if (_nArgs.type != INT)
+			if (_nArgs.type != Types.lookup("int"))
 				throw new IllegalArgumentException(String.format("RET:: want nArgs[INT], have nArgs[%s]", _nArgs.type));
 			ip = (int) _ip.val;
 			fp = (int) _fp.val;
@@ -229,7 +228,7 @@ class CPU {
 			int l = fetchS32();
 			// simulate garbage in local storage
 			for (int i = 0; i < l; i++)
-				push((long) (Math.random()*23452345.0), INT);
+				push((long) (Math.random()*23452345.0), Types.lookup("int"));
 			break;
 		case JMP:
 			off = fetchS32();
@@ -240,7 +239,7 @@ class CPU {
 		case BRNE:
 			off = fetchS32();
 			cmp = pop();
-			if (cmp.type != INT)
+			if (cmp.type != Types.lookup("int"))
 				throw new IllegalArgumentException(String.format("BRNE:: want [INT], have [%s]", cmp.type));
 			if (cmp.val != 0)
 				ip += off;
@@ -248,7 +247,7 @@ class CPU {
 		case BREQ:
 			off = fetchS32();
 			cmp = pop();
-			if (cmp.type != INT)
+			if (cmp.type != Types.lookup("int"))
 				throw new IllegalArgumentException(String.format("BREQ:: want [INT], have [%s]", cmp.type));
 			if (cmp.val == 0)
 				ip += off;
@@ -261,11 +260,11 @@ class CPU {
 			}
 			for (int i = 0; i < off; i++) {
 				arg = args.pop();
-				switch (arg.type) {
-				case INT:
+				switch (arg.type.name) { // TODO
+				case "int":
 					vm.out(String.format("%x", arg.val));
 					break;
-				case STRING:
+				case "string":
 					addr = (int) arg.val;
 //				    System.out.printf("POP ARG: %s\n", arg);
 //				    addr = Marshal.msiBE(arg.val);
@@ -325,7 +324,7 @@ class CPU {
 
 	//region mem stack
 
-	private void push(long val, DataType type) {
+	private void push(long val, Type type) {
 		sp++;
 //		System.out.println("PUSH TO " + sp);
 		if (sp == stack.length)
@@ -346,7 +345,7 @@ class CPU {
 		return stack[addr];
 	}
 
-	private void sput(int addr, long val, DataType type) {
+	private void sput(int addr, long val, Type type) {
 		if (addr < 0)
 			throw new BPLVMStackUnderflowError();
 		stack[addr].val = val;
@@ -406,8 +405,8 @@ class CPU {
 	//endregion
 
 	private static class StackEntry {
-		private long     val;
-		private DataType type;
+		private long val;
+		private Type type;
 
 		@Override
 		public boolean equals(Object obj) {

@@ -25,37 +25,26 @@
 
 package dk.skrypalle.bpl.compiler.type;
 
-public enum DataType {
+public class Type implements Comparable<Type> {
 
-	INT(0x01, Long.class, "int64_t"),
-	STRING(0x02, String.class, "char*");
-
+	public final String name;
 	public final int    vm_type;
-	public final Class  jclass;
 	public final String c_type;
 
-	DataType(int vm_type, Class jclass, String c_type) {
+	public Type(String name, int vm_type, String c_type) {
+		this.name = name;
 		this.vm_type = vm_type;
-		this.jclass = jclass;
 		this.c_type = c_type;
 	}
 
-	public static DataType parse(String s) {
-		//fmt:off
-		switch (s) {
-		case "int"   : return INT;
-		case "string": return STRING;
-		default      : throw new IllegalStateException("unreachable");
-		}
-		//fmt:on
+	@Override
+	public String toString() {
+		return name;
 	}
 
-	public static DataType parse(int vm_type) {
-		for (DataType t : values()) {
-			if (t.vm_type == vm_type)
-				return t;
-		}
-		throw new IllegalStateException("unreachable");
+	@Override
+	public int compareTo(Type other) {
+		return this.name.compareTo(other.name);
 	}
 
 }

@@ -1,33 +1,21 @@
-#include <stdio.h>
-#include <stdint.h>
+static char* __$bplc_p_str_string_string_string(char*,char*);
+static char* __$bplc_p_str_string_int_string(char*,int64_t);
 
-static int64_t __$bplc_fact_INT_INT(int64_t);
-
-int64_t __$bplc_fact_INT_INT(int64_t n){
-printf("%s%llx%s", "malloc\t\t\t\t#", n, "\n");
-char* __$deferred_param_0="free\t\t\t\t#";int64_t __$deferred_param_1=n;char* __$deferred_param_2="\n"; /* deferprint("free\t\t\t\t#",n,"\n"); */
-printf("%s%llx%s", "init mem\t\t\t#", n, "\n");
-if (n) {
-printf("%s%llx%s", "lock mutex\t\t\t#", n, "\n");
-char* __$deferred_param_3="unlock mutex\t\t#";int64_t __$deferred_param_4=n;char* __$deferred_param_5="\n"; /* deferprint("unlock mutex\t\t#",n,"\n"); */
-if (n-1LL) {
-printf("%s%llx%s", "branch a: use mem\t#", n, "\n");
-printf("%s%llx%s", __$deferred_param_3,__$deferred_param_4,__$deferred_param_5);
-printf("%s%llx%s", __$deferred_param_0,__$deferred_param_1,__$deferred_param_2);
-return n*__$bplc_fact_INT_INT(n-1LL);
+char* __$bplc_p_str_string_int_string(char* s, int64_t i){
+if (i) {
+printf("%s", "Hello, ");
 } else {
-printf("%s%llx%s", "branch b: use mem\t#", n, "\n");
-printf("%s%llx%s", __$deferred_param_3,__$deferred_param_4,__$deferred_param_5);
-printf("%s%llx%s", __$deferred_param_0,__$deferred_param_1,__$deferred_param_2);
-return 1LL;
-}} else {
-printf("%s%llx%s", "branch c: use mem\t#", n, "\n");
-printf("%s%llx%s", __$deferred_param_0,__$deferred_param_1,__$deferred_param_2);
-return 1LL;
-}}int main(){
-char* __$deferred_param_0="fact(4) = ";int64_t __$deferred_param_1=__$bplc_fact_INT_INT(4LL); /* deferprint("fact(4) = ",fact(4)); */
-char* __$deferred_param_2="fact(0) = ";int64_t __$deferred_param_3=__$bplc_fact_INT_INT(0LL);char* __$deferred_param_4="\n"; /* deferprint("fact(0) = ",fact(0),"\n"); */
-printf("%s%llx%s", __$deferred_param_2,__$deferred_param_3,__$deferred_param_4);
-printf("%llx%s", __$deferred_param_0,__$deferred_param_1);
+printf("%s", "hello, ");
+}printf("%s", s);
+return s;
+}char* __$bplc_p_str_string_string_string(char* s0, char* s1){
+__$bplc_p_str_string_int_string(s0, 1LL);
+printf("%s", " and ");
+__$bplc_p_str_string_int_string(s1, 0LL);
+return "!";
+}int main(){
+char* s;
+s=__$bplc_p_str_string_string_string("世界", "everyone else");
+printf("%s", s);
 return 0LL;
 }

@@ -82,35 +82,35 @@ public class ErrorTest extends CompilerTestBase {
 
 	@Test(dataProvider = "provideCompileSwitch",
 		expectedExceptions = BPLCErrWrongNumArgs.class,
-		expectedExceptionsMessageRegExp = "1:58: error: too few arguments to function 'x' - have \\[\\] want \\[\\[INT\\]\\]")
+		expectedExceptionsMessageRegExp = "1:58: error: too few arguments to function 'x' - have \\[\\] want \\[\\[int\\]\\]")
 	public void testErrTooFewArgsOnCall(Target t) throws Throwable {
 		execWithTmpDir(tmpDir -> t.compile(this, "func x(i int) int { return i; } func main() int { return x(); }", tmpDir));
 	} // test eval via thrown exception
 
 	@Test(dataProvider = "provideCompileSwitch",
 		expectedExceptions = BPLCErrWrongNumArgs.class,
-		expectedExceptionsMessageRegExp = "1:53: error: too many arguments to function 'x' - have \\[INT\\] want \\[\\[\\]\\]")
+		expectedExceptionsMessageRegExp = "1:53: error: too many arguments to function 'x' - have \\[int\\] want \\[\\[\\]\\]")
 	public void testErrTooManyArgsOnCall(Target t) throws Throwable {
 		execWithTmpDir(tmpDir -> t.compile(this, "func x() int { return 0; } func main() int { return x(1); }", tmpDir));
 	} // test eval via thrown exception
 
 	@Test(dataProvider = "provideCompileSwitch",
 		expectedExceptions = BPLCErrWrongNumArgs.class,
-		expectedExceptionsMessageRegExp = "1:85: error: too many arguments to function 'x' - have \\[INT, INT\\] want \\[\\[\\], \\[INT\\]\\]")
+		expectedExceptionsMessageRegExp = "1:85: error: too many arguments to function 'x' - have \\[int, int\\] want \\[\\[\\], \\[int\\]\\]")
 	public void testErrTooManyArgsOnOverloadCall(Target t) throws Throwable {
 		execWithTmpDir(tmpDir -> t.compile(this, "func x() int { return 0; } func x(a int) int { return a; } func main() int { return x(1,2); }", tmpDir));
 	} // test eval via thrown exception
 
 	@Test(dataProvider = "provideCompileSwitch",
 		expectedExceptions = BPLCErrWrongNumArgs.class,
-		expectedExceptionsMessageRegExp = "1:99: error: too few arguments to function 'x' - have \\[\\] want \\[\\[INT\\], \\[INT, INT\\]\\]")
+		expectedExceptionsMessageRegExp = "1:99: error: too few arguments to function 'x' - have \\[\\] want \\[\\[int\\], \\[int, int\\]\\]")
 	public void testErrTooFewArgsOnOverloadCall(Target t) throws Throwable {
 		execWithTmpDir(tmpDir -> t.compile(this, "func x(a int) int { return a; } func x(a int, b int) int { return a+b; } func main() int { return x(); }", tmpDir));
 	} // test eval via thrown exception
 
 	@Test(dataProvider = "provideCompileSwitch",
 		expectedExceptions = BPLCErrWrongNumArgs.class,
-		expectedExceptionsMessageRegExp = "1:94: error: wrong number of arguments to function 'x' - have \\[INT\\] want \\[\\[\\], \\[INT, INT\\]\\]")
+		expectedExceptionsMessageRegExp = "1:94: error: wrong number of arguments to function 'x' - have \\[int\\] want \\[\\[\\], \\[int, int\\]\\]")
 	public void testErrWrongNumArgsOnOverloadCall(Target t) throws Throwable {
 		execWithTmpDir(tmpDir -> t.compile(this, "func x() int { return 0; } func x(a int, b int) int { return a+b; } func main() int { return x(1); }", tmpDir));
 	} // test eval via thrown exception
@@ -160,49 +160,49 @@ public class ErrorTest extends CompilerTestBase {
 
 	@Test(dataProvider = "provideCompileSwitch",
 		expectedExceptions = BPLCErrTypeMismatch.class,
-		expectedExceptionsMessageRegExp = "1:19: error: type mismatch at 'return\"mismatch\";' - have STRING want INT")
+		expectedExceptionsMessageRegExp = "1:19: error: type mismatch at 'return\"mismatch\";' - have string want int")
 	public void testErrTypeMismatchOnReturn(Target t) throws Throwable {
 		execWithTmpDir(tmpDir -> t.compile(this, "func main() int { return \"mismatch\"; }", tmpDir));
 	} // test eval via thrown exception
 
 	@Test(dataProvider = "provideCompileSwitch",
 		expectedExceptions = BPLCErrTypeMismatch.class,
-		expectedExceptionsMessageRegExp = "1:31: error: type mismatch at 's=0;' - have INT want STRING")
+		expectedExceptionsMessageRegExp = "1:31: error: type mismatch at 's=0;' - have int want string")
 	public void testErrTypeMismatchOnAssign(Target t) throws Throwable {
 		execWithTmpDir(tmpDir -> t.compile(this, "func main() int { s : string; s = 0; return 0; }", tmpDir));
 	} // test eval via thrown exception
 
 	@Test(dataProvider = "provideCompileSwitch",
 		expectedExceptions = BPLCErrTypeMismatch.class,
-		expectedExceptionsMessageRegExp = "1:19: error: type mismatch at 's:string=0;' - have INT want STRING")
+		expectedExceptionsMessageRegExp = "1:19: error: type mismatch at 's:string=0;' - have int want string")
 	public void testErrTypeMismatchOnDeclAssign(Target t) throws Throwable {
 		execWithTmpDir(tmpDir -> t.compile(this, "func main() int { s : string = 0; return 0; }", tmpDir));
 	} // test eval via thrown exception
 
 	@Test(dataProvider = "provideCompileSwitch",
 		expectedExceptions = BPLCErrTypeMismatch.class,
-		expectedExceptionsMessageRegExp = "1:43: error: type mismatch at 's' - have STRING want INT")
+		expectedExceptionsMessageRegExp = "1:43: error: type mismatch at 's' - have string want int")
 	public void testErrTypeMismatchBranchCondition(Target t) throws Throwable {
 		execWithTmpDir(tmpDir -> t.compile(this, "func main() int { s : string; s = \"1\"; if(s) { return 0; } else { return 1; } }", tmpDir));
 	} // test eval via thrown exception
 
 	@Test(dataProvider = "provideCompileSwitch",
 		expectedExceptions = BPLCErrTypeMismatch.class,
-		expectedExceptionsMessageRegExp = "1:46: error: type mismatch at 's' - have STRING want INT")
+		expectedExceptionsMessageRegExp = "1:46: error: type mismatch at 's' - have string want int")
 	public void testErrTypeMismatchLoopCondition(Target t) throws Throwable {
 		execWithTmpDir(tmpDir -> t.compile(this, "func main() int { s : string; s = \"1\"; while(s) { return 0; } }", tmpDir));
 	} // test eval via thrown exception
 
 	@Test(dataProvider = "provideCompileSwitch",
 		expectedExceptions = BPLCErrTypeMismatch.class,
-		expectedExceptionsMessageRegExp = "1:58: error: type mismatch at 's\\+i' - have \\[INT, STRING\\] want \\[INT, INT\\]")
+		expectedExceptionsMessageRegExp = "1:58: error: type mismatch at 's\\+i' - have \\[int, string\\] want \\[int, int\\]")
 	public void testErrTypeMismatchBinOp(Target t) throws Throwable {
 		execWithTmpDir(tmpDir -> t.compile(this, "func main() int { s : string; i : int; s = \"1\"; i = 1; s=s+i; return 0; }", tmpDir));
 	} // test eval via thrown exception
 
 	@Test(dataProvider = "provideCompileSwitch",
 		expectedExceptions = BPLCErrTypeMismatch.class,
-		expectedExceptionsMessageRegExp = "1:58: error: type mismatch at 's&&i' - have \\[INT, STRING\\] want \\[INT, INT\\]")
+		expectedExceptionsMessageRegExp = "1:58: error: type mismatch at 's&&i' - have \\[int, string\\] want \\[int, int\\]")
 	public void testErrTypeMismatchBoolOp(Target t) throws Throwable {
 		execWithTmpDir(tmpDir -> t.compile(this, "func main() int { s : string; i : int; s = \"1\"; i = 1; i=s&&i; return 0; }", tmpDir));
 	} // test eval via thrown exception

@@ -34,16 +34,16 @@ public class BPLCErrWrongNumArgs extends BPLCErr {
 
 	private static final long serialVersionUID = -2363166926432452563L;
 
-	private final List<DataType>       act;
-	private final List<List<DataType>> exp;
+	private final List<Type>       act;
+	private final List<List<Type>> exp;
 
-	public BPLCErrWrongNumArgs(TokenAdapter t, List<DataType> act, List<List<DataType>> exp) {
+	public BPLCErrWrongNumArgs(TokenAdapter t, List<Type> act, List<List<Type>> exp) {
 		super(t);
 		this.act = act;
 		this.exp = exp;
 	}
 
-	public BPLCErrWrongNumArgs(Token t, List<DataType> act, List<List<DataType>> exp) {
+	public BPLCErrWrongNumArgs(Token t, List<Type> act, List<List<Type>> exp) {
 		this(TokenAdapter.from(t), act, exp);
 	}
 

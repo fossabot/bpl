@@ -31,9 +31,9 @@ public final class Func {
 
 	public SymTbl symTbl = new SymTbl();
 
-	public String   id;
-	public DataType type;
-	public boolean  returns;
+	public String  id;
+	public Type    type;
+	public boolean returns;
 	//	public List<DataType> params = new ArrayList<>();
 	public int entry = ENTRY_UNRESOLVED;
 

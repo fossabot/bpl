@@ -23,48 +23,37 @@
  *
  */
 
-package dk.skrypalle.bpl.compiler.err;
-
-import dk.skrypalle.bpl.compiler.type.*;
-import dk.skrypalle.bpl.util.*;
-import org.antlr.v4.runtime.*;
+package dk.skrypalle.bpl.compiler.type;
 
 import java.util.*;
 
-public class BPLCErrTypeMismatch extends BPLCErr {
+public final class Types {
 
-	private static final long serialVersionUID = 474385486925413626L;
+	private static final Map<String, Type>  fwd;
+	private static final Map<Integer, Type> rev;
 
-	private final List<Type> have;
-	private final List<Type> want;
-
-	public BPLCErrTypeMismatch(TokenAdapter t, Type have, Type want) {
-		this(t, Collections.singletonList(have), Collections.singletonList(want));
+	static {
+		fwd = new HashMap<>();
+		rev = new HashMap<>();
+		newPrimitive("int", "int64_t");
+		newPrimitive("string", "char*");
 	}
 
-	public BPLCErrTypeMismatch(Token t, Type have, Type want) {
-		this(t, Collections.singletonList(have), Collections.singletonList(want));
+	public static Type lookup(String name) {
+		return fwd.get(name);
 	}
 
-	public BPLCErrTypeMismatch(TokenAdapter t, List<Type> have, List<Type> want) {
-		super(t);
-		this.have = have;
-		this.want = want;
+	public static Type lookup(int vm_type) {
+		return rev.get(vm_type);
 	}
 
-	public BPLCErrTypeMismatch(Token t, List<Type> have, List<Type> want) {
-		super(t);
-		this.have = have;
-		this.want = want;
+	private static Type newPrimitive(String name, String c_name) {
+		Type t = new Type(name, fwd.size(), c_name);
+		fwd.put(name, t);
+		rev.put(t.vm_type, t);
+		return t;
 	}
 
-	@Override
-	String msg() {
-		String h, w;
-		h = have.size() == 1 ? have.get(0).toString() : "[" + Parse.join(", ", have) + "]";
-		w = want.size() == 1 ? want.get(0).toString() : "[" + Parse.join(", ", want) + "]";
-
-		return String.format("type mismatch at '%s' - have %s want %s", "%s", h, w);
-	}
+	private Types() { /**/ }
 
 }

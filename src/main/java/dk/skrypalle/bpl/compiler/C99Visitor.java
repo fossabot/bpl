@@ -34,14 +34,12 @@ import java.math.*;
 import java.util.*;
 
 import static dk.skrypalle.bpl.antlr.BPLParser.*;
-import static dk.skrypalle.bpl.compiler.type.DataType.INT;
-import static dk.skrypalle.bpl.compiler.type.DataType.*;
 import static dk.skrypalle.bpl.util.Parse.*;
 
 public class C99Visitor extends BPLBaseVisitor<String> {
 
 	private final FuncTbl              funcTbl;
-	private final Deque<DataType>      tStack;
+	private final Deque<Type>          tStack;
 	private final Deque<Deque<String>> defers;
 
 	private boolean isDeferred;
@@ -69,7 +67,7 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 				continue;
 
 			protos.append("static ").append(f.type.c_type).append(" ").append(mangle(f)).append("(");
-			List<DataType> paramTypes = f.symTbl.getParamTypes();
+			List<Type> paramTypes = f.symTbl.getParamTypes();
 			for (int i = 0; i < paramTypes.size(); i++) {
 				protos.append(paramTypes.get(i).c_type);
 				if (i < paramTypes.size() - 1)
@@ -133,7 +131,7 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 		StringBuilder args_buf = new StringBuilder();
 
 		List<ArgContext> argContexts = null;
-		Deque<DataType> types = new ArrayDeque<>();
+		Deque<Type> types = new ArrayDeque<>();
 		int i = 0;
 
 		if (ctx.rhs.funcCall() != null && ctx.rhs.funcCall().args != null)
@@ -146,7 +144,7 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 				isDeferred = false;
 				String rhs = visit(actx);
 				isDeferred = true;
-				DataType rhs_t = popt();
+				Type rhs_t = popt();
 				types.add(rhs_t);
 
 				String lhs_id = "__$deferred_param_" + deferCnt;
@@ -172,8 +170,8 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 	public String visitRet(RetContext ctx) {
 		curF.returns = true;
 		String val = visitChildren(ctx);
-		DataType have = popt();
-		DataType want = curF.type;
+		Type have = popt();
+		Type want = curF.type;
 		if (have != want)
 			throw new BPLCErrTypeMismatch(TokenAdapter.from(ctx.getParent()), have, want);
 
@@ -190,7 +188,7 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 	public String visitPrint(PrintContext ctx) {
 		String args_str = isDeferred ? deferredArgs : visit(ctx.args);
 
-		Deque<DataType> types = new ArrayDeque<>();
+		Deque<Type> types = new ArrayDeque<>();
 		if (ctx.args != null) {
 			for (int i = 0; i < ctx.args.arg().size(); i++)
 				types.push(popt());
@@ -199,10 +197,10 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 		StringBuilder fmt_buf = new StringBuilder();
 		while (!types.isEmpty()) {
 			//fmt:off
-			switch (types.pop()) {
-			case INT   : fmt_buf.append("%llx"); break;
-			case STRING: fmt_buf.append("%s");   break;
-			default    : throw new IllegalStateException("unreachable");
+			switch (types.pop().name) { // TODO
+			case "int"   : fmt_buf.append("%llx"); break;
+			case "string": fmt_buf.append("%s");   break;
+			default      : throw new IllegalStateException("unreachable");
 			}
 			//fmt:on
 		}
@@ -215,9 +213,9 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 		boolean falseRet = false;
 
 		String cond_str = visit(ctx.cond);
-		DataType cond_t = popt();
-		if (cond_t != INT)
-			throw new BPLCErrTypeMismatch(TokenAdapter.from(ctx.cond), cond_t, INT);
+		Type cond_t = popt();
+		if (cond_t != Types.lookup("int"))
+			throw new BPLCErrTypeMismatch(TokenAdapter.from(ctx.cond), cond_t, Types.lookup("int"));
 
 		curF.returns = false;
 		String onTrue = visit(ctx.onTrue).trim();
@@ -238,9 +236,9 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 	@Override
 	public String visitLoop(LoopContext ctx) {
 		String cond_str = visit(ctx.cond);
-		DataType cond_t = popt();
-		if (cond_t != INT)
-			throw new BPLCErrTypeMismatch(TokenAdapter.from(ctx.cond), cond_t, INT);
+		Type cond_t = popt();
+		if (cond_t != Types.lookup("int"))
+			throw new BPLCErrTypeMismatch(TokenAdapter.from(ctx.cond), cond_t, Types.lookup("int"));
 
 		return "while (" + cond_str + ") " + visit(ctx.body);
 	}
@@ -272,7 +270,7 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 	public String visitVarDecl(VarDeclContext ctx) {
 		String id = ttos(ctx.id);
 		String type_str = ttos(ctx.typ);
-		DataType type = DataType.parse(type_str);
+		Type type = Types.lookup(type_str);
 		if (curF.symTbl.isDecl(id))
 			throw new BPLCErrSymRedeclared(ctx.id);
 
@@ -288,8 +286,8 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 
 		Symbol sym = curF.symTbl.get(id);
 		String rhs = visit(ctx.rhs);
-		DataType have = popt();
-		DataType want = sym.type;
+		Type have = popt();
+		Type want = sym.type;
 		if (have != want)
 			throw new BPLCErrTypeMismatch(TokenAdapter.from(ctx.getParent()), have, want);
 
@@ -300,14 +298,14 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 	public String visitVarDeclAssign(VarDeclAssignContext ctx) {
 		String id = ttos(ctx.lhs);
 		String type_str = ttos(ctx.typ);
-		DataType type = DataType.parse(type_str);
+		Type type = Types.lookup(type_str);
 		if (curF.symTbl.isDecl(id))
 			throw new BPLCErrSymRedeclared(ctx.lhs);
 
 		Symbol sym = curF.symTbl.declLocal(id, type);
 		String rhs = visit(ctx.rhs);
-		DataType have = popt();
-		DataType want = sym.type;
+		Type have = popt();
+		Type want = sym.type;
 		if (have != want)
 			throw new BPLCErrTypeMismatch(TokenAdapter.from(ctx.getParent()), have, want);
 
@@ -321,7 +319,7 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 			throw new BPLCErrSymRedeclared(ctx.lhs);
 
 		String rhs = visit(ctx.rhs);
-		DataType type = popt();
+		Type type = popt();
 		curF.symTbl.declLocal(id, type);
 
 		return type.c_type + " " + id + " = " + rhs;
@@ -338,10 +336,10 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 			throw new IllegalStateException("typeStack not empty on func decl start");
 
 		String id = ttos(ctx.id);
-		List<DataType> params = new ArrayList<>();
+		List<Type> params = new ArrayList<>();
 		if (ctx.params != null) {
 			for (ParamContext pctx : ctx.params.param())
-				params.add(DataType.parse(ttos(pctx.typ)));
+				params.add(Types.lookup(ttos(pctx.typ)));
 		}
 
 		curF = funcTbl.get(id, params);
@@ -374,9 +372,9 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 			nArgs = ctx.args.arg().size();
 
 		String args_str = isDeferred ? deferredArgs : visit(ctx.args);
-		List<DataType> arg_types = new ArrayList<>();
+		List<Type> arg_types = new ArrayList<>();
 		for (int i = 0; i < nArgs; i++) {
-			DataType t = popt();
+			Type t = popt();
 			arg_types.add(t);
 		}
 		Collections.reverse(arg_types); // reverse stack-order
@@ -386,9 +384,9 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 			throw new BPLCErrFuncUndeclared(ctx.id, arg_types);
 
 		// Check possible params
-		List<List<DataType>> possible = funcTbl.getPossibleParams(id);
+		List<List<Type>> possible = funcTbl.getPossibleParams(id);
 		boolean isSubset = false;
-		for (List<DataType> poss : possible) {
+		for (List<Type> poss : possible) {
 			boolean isSS = true;
 			int len = arg_types.size() > poss.size() ? poss.size() : arg_types.size();
 			for (int i = 0; i < len; i++) {
@@ -433,7 +431,7 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 	public String visitParam(ParamContext ctx) {
 		String id = ttos(ctx.id);
 		String type_str = ttos(ctx.typ);
-		DataType type = DataType.parse(type_str);
+		Type type = Types.lookup(type_str);
 		return type.c_type + " " + id;
 	}
 
@@ -456,11 +454,11 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 		String lhs = visit(ctx.lhs);
 		String rhs = visit(ctx.rhs);
 		String op_str = ttos(ctx.op);
-		DataType rhs_t = popt();
-		DataType lhs_t = popt();
+		Type rhs_t = popt();
+		Type lhs_t = popt();
 		if (rhs_t != lhs_t)
-			throw new BPLCErrTypeMismatch(TokenAdapter.from(ctx), Arrays.asList(rhs_t, lhs_t), Arrays.asList(INT, INT));
-		pusht(INT);
+			throw new BPLCErrTypeMismatch(TokenAdapter.from(ctx), Arrays.asList(rhs_t, lhs_t), Arrays.asList(Types.lookup("int"), Types.lookup("int")));
+		pusht(Types.lookup("int"));
 		return lhs + op_str + rhs;
 	}
 
@@ -469,11 +467,11 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 		String lhs = visit(ctx.lhs);
 		String rhs = visit(ctx.rhs);
 		String op_str = ttos(ctx.op);
-		DataType rhs_t = popt();
-		DataType lhs_t = popt();
+		Type rhs_t = popt();
+		Type lhs_t = popt();
 		if (rhs_t != lhs_t)
-			throw new BPLCErrTypeMismatch(TokenAdapter.from(ctx), Arrays.asList(rhs_t, lhs_t), Arrays.asList(INT, INT));
-		pusht(INT);
+			throw new BPLCErrTypeMismatch(TokenAdapter.from(ctx), Arrays.asList(rhs_t, lhs_t), Arrays.asList(Types.lookup("int"), Types.lookup("int")));
+		pusht(Types.lookup("int"));
 		return "(" + lhs + op_str + rhs + ")";
 	}
 
@@ -490,7 +488,7 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 	@Override
 	public String visitStrExpr(StrExprContext ctx) {
 		String val = ttos(ctx.val);
-		pusht(STRING);
+		pusht(Types.lookup("string"));
 		return val;
 	}
 
@@ -499,7 +497,7 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 		BigInteger i = new BigInteger(ttos(ctx.val));
 		String val = i.toString();
 
-		pusht(INT);
+		pusht(Types.lookup("int"));
 		return val + "LL";
 	}
 
@@ -552,17 +550,17 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 			return f.id;
 
 		StringBuilder buf = new StringBuilder();
-		for (DataType t : f.symTbl.getParamTypes())
+		for (Type t : f.symTbl.getParamTypes())
 			buf.append("_").append(t);
 
 		return "__$bplc_" + f.id + buf.toString() + "_" + f.type;
 	}
 
-	private void pusht(DataType t) {
+	private void pusht(Type t) {
 		tStack.push(t);
 	}
 
-	private DataType popt() {
+	private Type popt() {
 		StackTraceElement ste = Thread.currentThread().getStackTrace()[2];
 		if (tStack.isEmpty()) {
 			throw new IllegalStateException(String.format(

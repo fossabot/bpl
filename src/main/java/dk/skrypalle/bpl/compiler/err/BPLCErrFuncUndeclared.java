@@ -35,14 +35,14 @@ public class BPLCErrFuncUndeclared extends BPLCErr {
 
 	private static final long serialVersionUID = -5734024502365850613L;
 
-	private final List<DataType> params;
+	private final List<Type> params;
 
-	public BPLCErrFuncUndeclared(TokenAdapter t, List<DataType> params) {
+	public BPLCErrFuncUndeclared(TokenAdapter t, List<Type> params) {
 		super(t);
 		this.params = params;
 	}
 
-	public BPLCErrFuncUndeclared(Token t, List<DataType> params) {
+	public BPLCErrFuncUndeclared(Token t, List<Type> params) {
 		super(t);
 		this.params = params;
 	}

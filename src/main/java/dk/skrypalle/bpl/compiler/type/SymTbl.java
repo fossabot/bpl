@@ -52,7 +52,7 @@ public class SymTbl {
 		stack.pop();
 	}
 
-	public void declParam(String id, DataType t) {
+	public void declParam(String id, Type t) {
 		if (params.containsKey(id))
 			throw new IllegalArgumentException("param sym " + id + "[" + t + "]" + " already declared in this scope");
 
@@ -66,7 +66,7 @@ public class SymTbl {
 		paramStack.push(sym);
 	}
 
-	public Symbol declLocal(String id, DataType t) {
+	public Symbol declLocal(String id, Type t) {
 		if (cur().containsKey(id))
 			throw new IllegalArgumentException("local sym " + id + "[" + t + "]" + " already declared in this scope");
 
@@ -87,8 +87,8 @@ public class SymTbl {
 		return localIdx;
 	}
 
-	public List<DataType> getParamTypes() {
-		List<DataType> res = new ArrayList<>();
+	public List<Type> getParamTypes() {
+		List<Type> res = new ArrayList<>();
 		for (Symbol sym : paramStack)
 			res.add(sym.type);
 		Collections.reverse(res);

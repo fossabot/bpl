@@ -27,11 +27,11 @@ package dk.skrypalle.bpl.compiler.type;
 
 public class Symbol {
 
-	public final String   id;
-	public final DataType type;
-	public       int      off;
+	public final String id;
+	public final Type   type;
+	public       int    off;
 
-	public Symbol(String id, DataType type, int off) {
+	public Symbol(String id, Type type, int off) {
 		this.id = id;
 		this.type = type;
 		this.off = off;

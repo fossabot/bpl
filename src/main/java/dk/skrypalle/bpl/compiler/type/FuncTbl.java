@@ -29,7 +29,7 @@ import java.util.*;
 
 public class FuncTbl {
 
-	private final Map<String, Map<List<DataType>, Func>> map;
+	private final Map<String, Map<List<Type>, Func>> map;
 
 	public FuncTbl(FuncTbl other) {
 		map = new HashMap<>(other.map);
@@ -40,7 +40,7 @@ public class FuncTbl {
 	}
 
 	public void decl(Func f) {
-		Map<List<DataType>, Func> overloads = map.get(f.id);
+		Map<List<Type>, Func> overloads = map.get(f.id);
 		if (overloads == null) {
 			overloads = new HashMap<>();
 			overloads.put(f.symTbl.getParamTypes(), f);
@@ -54,12 +54,12 @@ public class FuncTbl {
 		return map.get(id) != null;
 	}
 
-	public boolean isDecl(String id, List<DataType> params) {
+	public boolean isDecl(String id, List<Type> params) {
 		return get(id, params) != null;
 	}
 
 	public Func getFirst(String id) {
-		Map<List<DataType>, Func> overloads = map.get(id);
+		Map<List<Type>, Func> overloads = map.get(id);
 		if (overloads == null)
 			return null;
 
@@ -68,30 +68,30 @@ public class FuncTbl {
 		return null;
 	}
 
-	public Func get(String id, List<DataType> params) {
-		Map<List<DataType>, Func> overloads = map.get(id);
+	public Func get(String id, List<Type> params) {
+		Map<List<Type>, Func> overloads = map.get(id);
 		if (overloads == null)
 			return null;
 		return overloads.get(params);
 	}
 
 	public int[] getOverloadedParams(String id) {
-		Map<List<DataType>, Func> overloads = map.get(id);
+		Map<List<Type>, Func> overloads = map.get(id);
 		if (overloads == null)
 			return null;
 
 		int[] res = new int[overloads.keySet().size()];
 		int i = 0;
-		for (List<DataType> params : overloads.keySet()) {
+		for (List<Type> params : overloads.keySet()) {
 			res[i++] = params.size();
 		}
 		Arrays.sort(res);
 		return res;
 	}
 
-	public List<List<DataType>> getPossibleParams(String id) {
-		Map<List<DataType>, Func> overloads = map.get(id);
-		List<List<DataType>> res = new ArrayList<>();
+	public List<List<Type>> getPossibleParams(String id) {
+		Map<List<Type>, Func> overloads = map.get(id);
+		List<List<Type>> res = new ArrayList<>();
 		res.addAll(overloads.keySet());
 
 		res.sort((l, r) -> {
@@ -112,13 +112,13 @@ public class FuncTbl {
 
 	public List<Func> flatten() {
 		List<Func> res = new ArrayList<>();
-		for (Map<List<DataType>, Func> overloads : map.values())
+		for (Map<List<Type>, Func> overloads : map.values())
 			res.addAll(overloads.values());
 		return res;
 	}
 
 	public boolean hasOverloads(String id) {
-		Map<List<DataType>, Func> overloads = map.get(id);
+		Map<List<Type>, Func> overloads = map.get(id);
 		return overloads != null && !overloads.isEmpty();
 	}
 

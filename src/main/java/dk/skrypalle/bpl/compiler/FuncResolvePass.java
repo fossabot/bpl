@@ -61,7 +61,7 @@ public class FuncResolvePass extends BPLBaseVisitor<FuncTbl> {
 	public FuncTbl visitFuncDecl(FuncDeclContext ctx) {
 		String id = ttos(ctx.id);
 		String type_str = ttos(ctx.typ);
-		DataType type = DataType.parse(type_str);
+		Type type = Types.lookup(type_str);
 
 		curF = new Func();
 		curF.id = id;
@@ -84,7 +84,7 @@ public class FuncResolvePass extends BPLBaseVisitor<FuncTbl> {
 		if (curF.symTbl.isDecl(id))
 			throw new BPLCErrSymRedeclared(ctx.id);
 
-		curF.symTbl.declParam(id, DataType.parse(type_str));
+		curF.symTbl.declParam(id, Types.lookup(type_str));
 		return funcTbl;
 	}
 
