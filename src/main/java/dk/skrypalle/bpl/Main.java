@@ -39,13 +39,13 @@ public final class Main {
 
 	public static void main(String[] args) throws IOException, InterruptedException {
 		Exec.trace = true;
-		int runWhich = 0x03;
+		int runWhich = 0x01;
 
 		String bpl;
 		if (args.length > 0) {
 			bpl = IO.readAll(Paths.get(args[0]));
 		} else {
-			bpl = loadTestFile("branch/if_0_one_armed");
+			bpl = loadTestFile("defer/recursion");
 		}
 
 		if ((runWhich & 0x01) != 0) {

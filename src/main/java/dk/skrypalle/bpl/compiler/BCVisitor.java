@@ -173,13 +173,15 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 	public byte[] visitPrint(PrintContext ctx) {
 		byte[] cld = isDeferred ? new byte[]{} : visitChildren(ctx);
 
-		Deque<DataType> types = new ArrayDeque<>();
+		int n = 0;
 		if (ctx.args != null) {
-			for (int i = 0; i < ctx.args.arg().size(); i++)
-				types.add(popt());
+			for (int i = 0; i < ctx.args.arg().size(); i++) {
+				popt();
+				n++;
+			}
 		}
 
-		return concat(cld, PRINT, Marshal.bytesS32BE(types.size()));
+		return concat(cld, PRINT, Marshal.bytesS32BE(n));
 	}
 
 	@Override

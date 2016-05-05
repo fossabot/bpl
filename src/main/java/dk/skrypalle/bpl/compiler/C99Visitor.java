@@ -147,7 +147,7 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 				String rhs = visit(actx);
 				isDeferred = true;
 				DataType rhs_t = popt();
-				types.push(rhs_t);
+				types.add(rhs_t);
 
 				String lhs_id = "__$deferred_param_" + deferCnt;
 				decl_buf.append(rhs_t.c_type).append(" ").append(lhs_id).append("=").append(rhs).append(";");
@@ -193,7 +193,7 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 		Deque<DataType> types = new ArrayDeque<>();
 		if (ctx.args != null) {
 			for (int i = 0; i < ctx.args.arg().size(); i++)
-				types.add(popt());
+				types.push(popt());
 		}
 
 		StringBuilder fmt_buf = new StringBuilder();
