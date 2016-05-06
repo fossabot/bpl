@@ -26,41 +26,25 @@
 package dk.skrypalle.bpl.compiler.err;
 
 import org.antlr.v4.runtime.*;
+import org.antlr.v4.runtime.atn.*;
+import org.antlr.v4.runtime.dfa.*;
 
-public interface TokenAdapter {
+import java.util.*;
 
-	int row();
-	int col();
-	String text();
+public class ANTLRErrListener implements ANTLRErrorListener {
 
-	static TokenAdapter from(Token t) {
-		//fmt:off
-		return new TokenAdapter() {
-			@Override public int row() { return t.getLine(); }
-			@Override public int col() { return t.getCharPositionInLine() + 1; }
-			@Override public String text() { return t.getText(); }
-		};
-		//fmt:on
+	@Override
+	public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line, int charPositionInLine, String msg, RecognitionException e) {
+		throw new BPLCErrSyntax(TokenAdapter.from(line, charPositionInLine + 1, msg));
 	}
 
-	static TokenAdapter from(ParserRuleContext ctx) {
-		//fmt:off
-		return new TokenAdapter() {
-			@Override public int row() { return ctx.start.getLine(); }
-			@Override public int col() { return ctx.start.getCharPositionInLine() + 1; }
-			@Override public String text() { return ctx.getText(); }
-		};
-		//fmt:on
-	}
+	@Override
+	public void reportAmbiguity(Parser recognizer, DFA dfa, int startIndex, int stopIndex, boolean exact, BitSet ambigAlts, ATNConfigSet configs) { }
 
-	static TokenAdapter from(int row, int col, String msg) {
-		//fmt:off
-		return new TokenAdapter() {
-			@Override public int row() { return row; }
-			@Override public int col() { return col; }
-			@Override public String text() { return msg; }
-		};
-		//fmt:on
-	}
+	@Override
+	public void reportAttemptingFullContext(Parser recognizer, DFA dfa, int startIndex, int stopIndex, BitSet conflictingAlts, ATNConfigSet configs) { }
+
+	@Override
+	public void reportContextSensitivity(Parser recognizer, DFA dfa, int startIndex, int stopIndex, int prediction, ATNConfigSet configs) { }
 
 }

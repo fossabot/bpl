@@ -26,6 +26,7 @@
 package dk.skrypalle.bpl;
 
 import dk.skrypalle.bpl.compiler.*;
+import dk.skrypalle.bpl.compiler.err.*;
 import dk.skrypalle.bpl.compiler.type.*;
 import dk.skrypalle.bpl.util.*;
 import dk.skrypalle.bpl.vm.*;
@@ -47,17 +48,9 @@ public final class Main {
 		} else {
 			bpl = loadTestFile("var/strings");
 			bpl = String.join("\n",
-//				"func x(a int, b int) int {",
-//				"   return 0;",
-//				"}",
-//				"func x(a string, b int) int {",
-//				"   return 0;",
-//				"}",
-				"func x(a int) int { return a; }",
 				"func main() int {",
-				"   return x(\"1\");",
-				"}",
-				""
+				"   retur 0;",
+				"}"
 			);
 		}
 
@@ -139,6 +132,10 @@ public final class Main {
 		ANTLRInputStream ais = new ANTLRInputStream(bpl);
 		BPLLexer lex = new BPLLexer(ais);
 		BPLParser prs = new BPLParser(new CommonTokenStream(lex));
+		lex.removeErrorListeners();
+		prs.removeErrorListeners();
+		lex.addErrorListener(new ANTLRErrListener());
+		prs.addErrorListener(new ANTLRErrListener());
 		return prs.compilationUnit();
 	}
 

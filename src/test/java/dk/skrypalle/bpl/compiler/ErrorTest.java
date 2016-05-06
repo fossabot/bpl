@@ -57,6 +57,24 @@ public class ErrorTest extends CompilerTestBase {
 
 	//endregion
 
+	//region syntax
+
+	@Test(dataProvider = "provideCompileSwitch",
+		expectedExceptions = BPLCErrSyntax.class,
+		expectedExceptionsMessageRegExp = "1:25: error: no viable alternative at input 'retur0'")
+	public void testErrNoViableAlt(Target t) throws Throwable {
+		execWithTmpDir(tmpDir -> t.compile(this, "func main() int { retur 0; }", tmpDir));
+	} // test eval via thrown exception
+
+	@Test(dataProvider = "provideCompileSwitch",
+		expectedExceptions = BPLCErrSyntax.class,
+		expectedExceptionsMessageRegExp = "1:5: error: token recognition error at: '~'")
+	public void testErrTokenRecognition(Target t) throws Throwable {
+		execWithTmpDir(tmpDir -> t.compile(this, "func~ main() int { return 0; }", tmpDir));
+	} // test eval via thrown exception
+
+	//endregion
+
 	//region func
 
 	@Test(dataProvider = "provideCompileSwitch",

@@ -27,40 +27,17 @@ package dk.skrypalle.bpl.compiler.err;
 
 import org.antlr.v4.runtime.*;
 
-public interface TokenAdapter {
+public class BPLCErrSyntax extends BPLCErr {
 
-	int row();
-	int col();
-	String text();
+	private static final long serialVersionUID = 923028093292039261L;
 
-	static TokenAdapter from(Token t) {
-		//fmt:off
-		return new TokenAdapter() {
-			@Override public int row() { return t.getLine(); }
-			@Override public int col() { return t.getCharPositionInLine() + 1; }
-			@Override public String text() { return t.getText(); }
-		};
-		//fmt:on
-	}
+	public BPLCErrSyntax(TokenAdapter t) { super(t); }
 
-	static TokenAdapter from(ParserRuleContext ctx) {
-		//fmt:off
-		return new TokenAdapter() {
-			@Override public int row() { return ctx.start.getLine(); }
-			@Override public int col() { return ctx.start.getCharPositionInLine() + 1; }
-			@Override public String text() { return ctx.getText(); }
-		};
-		//fmt:on
-	}
+	public BPLCErrSyntax(Token t) { super(t); }
 
-	static TokenAdapter from(int row, int col, String msg) {
-		//fmt:off
-		return new TokenAdapter() {
-			@Override public int row() { return row; }
-			@Override public int col() { return col; }
-			@Override public String text() { return msg; }
-		};
-		//fmt:on
+	@Override
+	String msg() {
+		return "%s"; // TODO [prototype] use own message format instead of ANTLR's
 	}
 
 }
