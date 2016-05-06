@@ -53,6 +53,7 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 	private int                           fOff;
 	private boolean                       isDeferred;
 	private Type                          curT;
+	private boolean                       load;
 
 	public BCVisitor(FuncTbl funcTbl) {
 		this.funcTbl = funcTbl;
@@ -62,6 +63,7 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 		this.staticLen = 0;
 		this.fOff = PREABLE_LEN;
 		this.isDeferred = false;
+		this.load = true;
 	}
 
 	@Override
@@ -112,7 +114,7 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 	}
 
 	@Override
-	public byte[] visitDeferableStmt(DeferableStmtContext ctx) {
+	public byte[] visitDeferrableStmt(DeferrableStmtContext ctx) {
 		if (curF.returns)
 			throw new BPLCErrStatementUnreachable(ctx.start);
 		return visitChildren(ctx);
@@ -263,7 +265,6 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 
 	@Override
 	public byte[] visitVarAssign(VarAssignContext ctx) {
-//		System.out.println("[ASSIGN] :: " + ctx.getText());
 		if (!(ctx.lhs instanceof IdExprContext) && !(ctx.lhs instanceof DerefExprContext))
 			throw new BPLCErrUnassignable(TokenAdapter.from(ctx.lhs));
 
@@ -278,60 +279,7 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 		if (lhs_t != rhs_t)
 			throw new BPLCErrTypeMismatch(TokenAdapter.from(ctx.getParent()), rhs_t, lhs_t);
 
-//		System.out.println("[STORE]");
-//		System.out.println("in here   : " + Hex.dump(lhs));
-//		System.out.println("store this: " + Hex.dump(rhs));
-//		System.out.println("this is a " + lhs_t);
-//		System.out.println("=============");
 		return concat(lhs, rhs, ISTORE);
-
-//		if (!(ctx.lhs instanceof IdExprContext))
-//			throw new IllegalStateException();
-//
-//		String id = ttos(((IdExprContext) ctx.lhs).val);
-////		if (!curF.symTbl.isDecl(id))
-////			throw new BPLCErrSymUndeclared(ctx.id);
-//
-//		Symbol sym = curF.symTbl.get(id);
-//		byte[] rhs = visit(ctx.rhs);
-//		Type have = popt();
-//		Type want = sym.type;
-//		if (have != want)
-//			throw new BPLCErrTypeMismatch(TokenAdapter.from(ctx.getParent()), have, want);
-//
-//		return concat(rhs, ISTORE, Marshal.bytesS32BE(sym.off));
-
-//		return EMPTY;
-
-//		if (!(ctx.lhs instanceof IdExprContext) && !(ctx.lhs instanceof DerefExprContext))
-//			throw new IllegalStateException("cannot assign to lhs=" + ctx.lhs.getText());
-//
-//		byte[] lhs = visit(ctx.lhs);
-//		Type lhs_t = popt();
-//		byte[] rhs = visit(ctx.rhs);
-//		Type rhs_t = popt();
-//		if (lhs_t != rhs_t)
-//			throw new BPLCErrTypeMismatch(TokenAdapter.from(ctx.getParent()), rhs_t, lhs_t);
-//
-//		return concat(rhs, ISTORE, Marshal.bytesS32BE(sym.off));
-//		if (ctx.id != null) {
-//			String id = ttos(ctx.id);
-//			if (!curF.symTbl.isDecl(id))
-//				throw new BPLCErrSymUndeclared(ctx.id);
-//
-//			Symbol sym = curF.symTbl.get(id);
-//			byte[] rhs = visit(ctx.rhs);
-//			Type have = popt();
-//			Type want = sym.type;
-//			if (have != want)
-//				throw new BPLCErrTypeMismatch(TokenAdapter.from(ctx.getParent()), have, want);
-//
-//			return concat(rhs, ISTORE, Marshal.bytesS32BE(sym.off));
-//		}
-//		if (ctx.call != null) {
-//
-//		}
-//		throw new IllegalStateException("unreachable");
 	}
 
 	@Override
@@ -473,7 +421,7 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 		Func f = funcTbl.get(id, arg_types);
 
 		// Don't push the return type if the call was a stand-alone statement
-		if (!(ctx.getParent() instanceof StmtContext) && !(ctx.getParent() instanceof DeferableStmtContext))
+		if (!(ctx.getParent() instanceof StmtContext) && !(ctx.getParent() instanceof DeferrableStmtContext))
 			pusht(f.type);
 
 		return concat(args, CALL, Marshal.bytesS32BE(f.entry), Marshal.bytesS32BE(nArgs));
@@ -502,6 +450,39 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 	//endregion
 
 	//region expr
+
+	@Override
+	public byte[] visitRefExpr(RefExprContext ctx) {
+		if (!(ctx.rhs instanceof IdExprContext))
+			throw new BPLCErrUnaddressable(TokenAdapter.from(ctx.rhs));
+
+		load = false;
+		byte[] cld = visitChildren(ctx);
+		load = true;
+		Type type = popt();
+		type = Types.ref(type);
+		pusht(type);
+		return concat(cld, ADDR_OF);
+	}
+
+	@Override
+	public byte[] visitDerefExpr(DerefExprContext ctx) {
+		byte[] cld = visit(ctx.rhs);
+		Type type = popt();
+		if (!(ctx.rhs instanceof IdExprContext)
+			&& !(ctx.rhs instanceof FuncCallExprContext)
+			&& !(ctx.rhs instanceof DerefExprContext)
+			&& !(ctx.rhs instanceof RefExprContext))
+			throw new BPLCErrInvalidDereference(TokenAdapter.from(ctx.rhs), type);
+
+		if (!(type instanceof PtrType))
+			throw new BPLCErrInvalidDereference(TokenAdapter.from(ctx.rhs), type);
+		type = Types.deref((PtrType) type);
+		pusht(type);
+		if (!load)
+			return concat(cld, ILOAD, RESOLVE);
+		return concat(cld, VAL_OF);
+	}
 
 	@Override
 	public byte[] visitBinOpExpr(BinOpExprContext ctx) {
@@ -610,20 +591,13 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 		return concat(IPUSH, res);
 	}
 
-	private boolean load = true;
-
 	@Override
 	public byte[] visitIdExpr(IdExprContext ctx) {
-//		if (load)
-//			System.out.println("idExpr[LOAD] :: " + ctx.getText());
-//		else
-//			System.out.println("idExpr[STORE] :: " + ctx.getText());
 		String id = ttos(ctx.val);
 		if (!curF.symTbl.isDecl(id))
 			throw new BPLCErrSymUndeclared(ctx.val);
 		Symbol sym = curF.symTbl.get(id);
 		pusht(sym.type);
-//		System.out.println("id expr:: " +ctx.getText()+" :: "+ sym);
 		byte[] res = concat(IPUSH, Marshal.bytesS64BE(sym.off));
 		if (!load)
 			return res;
@@ -632,45 +606,10 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 		switch (sym.type.name) { // TODO
 		case "string": res = concat(res, SLOAD); break;
 		default      : res = concat(res, ILOAD); break;
-//		default      : throw new IllegalStateException("unreachable");
 		}
 		//fmt:on
 
 		return res;
-	}
-
-	@Override
-	public byte[] visitRefExpr(RefExprContext ctx) {
-		if (!(ctx.rhs instanceof IdExprContext))
-			throw new BPLCErrUnaddressable(TokenAdapter.from(ctx.rhs));
-
-		load = false;
-		byte[] cld = visitChildren(ctx);
-		load = true;
-		Type type = popt();
-		type = Types.ref(type);
-		pusht(type);
-//		System.out.println("ADDR_OF " + Hex.dump(cld));
-		return concat(cld, ADDR_OF);
-	}
-
-	@Override
-	public byte[] visitDerefExpr(DerefExprContext ctx) {
-		byte[] cld = visit(ctx.rhs);
-		Type type = popt();
-		if (!(ctx.rhs instanceof IdExprContext)
-			&& !(ctx.rhs instanceof FuncCallExprContext)
-			&& !(ctx.rhs instanceof DerefExprContext)
-			&& !(ctx.rhs instanceof RefExprContext))
-			throw new BPLCErrInvalidDereference(TokenAdapter.from(ctx.rhs), type);
-
-		if (!(type instanceof PtrType))
-			throw new BPLCErrInvalidDereference(TokenAdapter.from(ctx.rhs), type);
-		type = Types.deref((PtrType) type);
-		pusht(type);
-		if (!load)
-			return concat(cld, ILOAD, BLA_OF);
-		return concat(cld, VAL_OF);
 	}
 
 	//endregion
@@ -679,7 +618,6 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 
 	@Override
 	public byte[] visitIdType(IdTypeContext ctx) {
-//		System.out.println("ID TYPE:: " + ctx.getText());
 		String type_str = ttos(ctx.id);
 		curT = Types.lookup(type_str);
 		if (curT == null)
@@ -689,7 +627,6 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 
 	@Override
 	public byte[] visitPtrType(PtrTypeContext ctx) {
-		System.out.println("PTR TYPE:: " + ctx.getText());
 		visitChildren(ctx);
 		curT = Types.ref(curT);
 		return EMPTY;
@@ -714,13 +651,6 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 	@Override
 	public byte[] visit(ParseTree t) {
 		return t == null ? defaultResult() : t.accept(this);
-	}
-
-	private byte[] visit(List<? extends ParseTree> l) {
-		byte[] res = {};
-		for (ParseTree t : l)
-			res = aggregateResult(res, visit(t));
-		return res;
 	}
 
 	//endregion

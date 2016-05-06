@@ -52,8 +52,6 @@ public final class Main {
 				"   i:=1;",
 				"   j:=&i;",
 				"   x:=**&j;",
-//				"   y:=&1;",
-				"   1=1;",
 				"   print(i, *j, x);",
 				"   return 0;",
 				"}"

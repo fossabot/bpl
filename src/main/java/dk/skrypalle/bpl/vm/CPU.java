@@ -158,71 +158,43 @@ class CPU {
 			res = lhs.val != rhs.val ? 1 : 0;
 			push(res, Types.lookup("int"));
 			break;
-		case ISTORE: // can be generic STORE?
-//			off = fetchS32();
+		case ISTORE:
 			rhs = pop();
 			lhs = pop();
-//			System.out.println("ISTORE:: STORING " + rhs);
-//			System.out.println("ISTORE:: IN      " + lhs);
-//			if(rhs.type!=lhs.type)
-//				throw new IllegalStateException("rhs="+rhs+", lhs="+lhs);
-
 			addr = fp + (int) lhs.val + 1;
 			sput(addr, rhs.val, rhs.type);
 			break;
-		case ILOAD: // can be generic LOAD?
-//			off = fetchS32();
+		case ILOAD:
 			lhs = pop();
 			addr = fp + (int) lhs.val + 1;
 			rhs = sget(addr);
-//			System.out.println("ILOAD:: LOADED " + rhs);
-//			System.out.println("ILOAD:: FROM   " + lhs);
 			push(rhs.val, rhs.type);
 			break;
 		case ADDR_OF:
 			lhs = pop();
 			addr = fp + (int) lhs.val + 1;
-//			addr = (int) lhs.val;
-//			System.out.println("ADDR_OF");
 			push(addr, Types.ref(lhs.type));
 			break;
 		case VAL_OF:
 			lhs = pop();
 			addr = (int) lhs.val;
-//			addr = fp + (int) lhs.val + 1;
-//			System.out.println("VAL_OF:: DEREF " + lhs.val);
-//			System.out.println("VAL_OF:: DEREF @" + addr);
 			rhs = sget(addr);
 			push(rhs.val, rhs.type);
 			break;
-		case BLA_OF:
+		case RESOLVE:
 			lhs = pop();
-//			System.out.println("BLA_OF:: need to figure out rel addr towards @" + lhs.val);
-//			System.out.println("BLA_OF:: fp=" + fp + ", sp=" + sp + ", lhs=" + lhs.val);
-//			System.out.println("BLA_OF:: x=addr-fp-1=" + lhs.val + "-" + fp + "-1=" + ((int) lhs.val - fp - 1));
 			push(lhs.val - fp - 1, Types.lookup("int"));
 			break;
 		case SPUSH:
 			int t = fetchS32();
 			addr = fetchS32();
-//			off = fetchS32();
-//			System.out.printf("SPUSH:: [%s] @ %d + %d -> %d\n", Type.parse(t), addr, off, addr + off);
-//			System.out.println(Hex.dump(code, addr, off));
-//			System.out.printf("PUSH encoded=%016x\n", Marshal.s64BE(addr, off));
 			push(addr, Types.lookup(t));
-//			addr = fetchS32();
-//			vm_type = fetchS32();
-//			Type type = Type.parse(vm_type);
-//			HeapEntry data = heap.get(addr);
-//			System.out.printf("SPUSH: addr=%08x, type=%s(%d), data(type=%s):\n%s", addr, type, vm_type, data.type, Hex.dump(data.val));
 			break;
 		case SLOAD:
-//			t = fetchS32(); // not needed
-			lhs = pop();//off = fetchS32();
+			lhs = pop();
 			addr = fp + (int) lhs.val + 1;
 			rhs = sget(addr);
 			push(rhs.val, rhs.type);
-//			System.out.printf("SLOAD:: [%s] @ (%d)%d :: %s\n", Type.parse(t), off, addr, rhs);
 			break;
 		case CALL:
 			addr = fetchS32();
@@ -298,16 +270,9 @@ class CPU {
 					break;
 				case "string":
 					addr = (int) arg.val;
-//				    System.out.printf("POP ARG: %s\n", arg);
-//				    addr = Marshal.msiBE(arg.val);
-//				    off = Marshal.lsiBE(arg.val); // not needed
-//				    System.out.printf("addr=%08x, off=%08x\n", addr,off);
-//				    System.out.println(Hex.dump(code,addr,off));
 					int len = Marshal.s32BE(code, addr);
 					addr += 4;
 					String s = new String(code, addr, len, IO.UTF8);
-//				    System.out.printf("The string: @%d len=%d\n===\n%s\n", addr, len,s);
-//				    System.out.println(Hex.dump(code,addr,len)+"\n===");
 					vm.out(s);
 					break;
 				default:
@@ -358,7 +323,6 @@ class CPU {
 
 	private void push(long val, Type type) {
 		sp++;
-//		System.out.println("PUSH TO " + sp);
 		if (sp == stack.length)
 			growStack();
 		stack[sp].val = val;
@@ -416,9 +380,9 @@ class CPU {
 		}
 		argBuf.append(']');
 
-		String trace = String.format("%08x  (0x%02x) %-6s %s", ip - 1, op, inst.name, argBuf.toString());
+		String trace = String.format("%08x  (0x%02x) %-8s %s", ip - 1, op, inst.name, argBuf.toString());
 
-		vm.trace(String.format("%-100s", trace));
+		vm.trace(String.format("%-80s", trace));
 	}
 
 	private void traceStack() {

@@ -37,7 +37,7 @@ stmt
 	;
 
 singularStmt
-	: deferableStmt
+	: deferrableStmt
 	| varAssign ';'
 	| ret       ';'
 	| branch
@@ -45,12 +45,12 @@ singularStmt
 	| block
 	;
 
-deferableStmt
+deferrableStmt
 	: funcCall  ';'
 	| print     ';'
 	;
 
-defer           : 'defer' rhs=deferableStmt                                                 ;
+defer           : 'defer' rhs=deferrableStmt                                                 ;
 loop            : 'while' '(' cond=expr ')' body=singularStmt                               ;
 branch          : 'if' '(' cond=expr ')' onTrue=singularStmt ('else' onFalse=singularStmt)? ;
 block           : '{' (stmt|defer)* '}'                                                     ;

@@ -50,7 +50,6 @@ public final class Types {
 	public static Type ref(Type to) {
 		Type t = lookup("^" + to.name);
 		if (t == null) {
-//			System.out.println("&" + to + " not yet defined.");
 			t = new PtrType(fwd.size(), to);
 			fwd.put(t.name, t);
 			rev.put(t.vm_type, t);

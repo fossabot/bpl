@@ -52,20 +52,6 @@ public final class Array {
 		return res;
 	}
 
-	public static byte[] prepend(byte b, byte[] a) {
-		byte[] res = new byte[a.length + 1];
-		res[0] = b;
-		System.arraycopy(a, 0, res, 1, a.length);
-		return res;
-	}
-
-	public static int[] toIntArray(Integer[] l) {
-		int[] res = new int[l.length];
-		for (int i = 0; i < l.length; i++)
-			res[i] = l[i];
-		return res;
-	}
-
 	private Array() { /**/ }
 
 }

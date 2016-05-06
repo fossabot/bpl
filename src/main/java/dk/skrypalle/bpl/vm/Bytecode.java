@@ -59,7 +59,7 @@ public final class Bytecode {
 	public static final byte LOCALS  = (byte) 0x36;
 	public static final byte ADDR_OF = (byte) 0x37;
 	public static final byte VAL_OF  = (byte) 0x38;
-	public static final byte BLA_OF  = (byte) 0x39;
+	public static final byte RESOLVE = (byte) 0x39;
 
 	public static final byte JMP  = (byte) 0x40;
 	public static final byte BREQ = (byte) 0x41;
@@ -83,37 +83,37 @@ public final class Bytecode {
 	static {
 		//fmt:off
 		opCodes = new HashMap<>();
-		opCodes.put(NOP,    new Op("nop",    0));
-		opCodes.put(POP,    new Op("pop",    0));
-		opCodes.put(IPUSH,  new Op("ipush",  8));
-		opCodes.put(IADD,   new Op("iadd",   0));
-		opCodes.put(ISUB,   new Op("isub",   0));
-		opCodes.put(IMUL,   new Op("imul",   0));
-		opCodes.put(IDIV,   new Op("idiv",   0));
-		opCodes.put(ILT,    new Op("igt",    0));
-		opCodes.put(IGT,    new Op("ilt",    0));
-		opCodes.put(ILTE,   new Op("igte",   0));
-		opCodes.put(IGTE,   new Op("ilte",   0));
-		opCodes.put(IEQ,    new Op("ieq",    0));
-		opCodes.put(INEQ,   new Op("ineq",   0));
+		opCodes.put(NOP,     new Op("nop",     0));
+		opCodes.put(POP,     new Op("pop",     0));
+		opCodes.put(IPUSH,   new Op("ipush",   8));
+		opCodes.put(IADD,    new Op("iadd",    0));
+		opCodes.put(ISUB,    new Op("isub",    0));
+		opCodes.put(IMUL,    new Op("imul",    0));
+		opCodes.put(IDIV,    new Op("idiv",    0));
+		opCodes.put(ILT,     new Op("igt",     0));
+		opCodes.put(IGT,     new Op("ilt",     0));
+		opCodes.put(ILTE,    new Op("igte",    0));
+		opCodes.put(IGTE,    new Op("ilte",    0));
+		opCodes.put(IEQ,     new Op("ieq",     0));
+		opCodes.put(INEQ,    new Op("ineq",    0));
 
-		opCodes.put(ILOAD,  new Op("iload",  0));
-		opCodes.put(ISTORE, new Op("istore", 0));
-		opCodes.put(SPUSH,  new Op("spush",  8));
-		opCodes.put(SLOAD,  new Op("sload",  0));
-		opCodes.put(CALL,   new Op("call",   8));
-		opCodes.put(RET,    new Op("ret",    0));
-		opCodes.put(LOCALS, new Op("locals", 4));
+		opCodes.put(ILOAD,   new Op("iload",   0));
+		opCodes.put(ISTORE,  new Op("istore",  0));
+		opCodes.put(SPUSH,   new Op("spush",   8));
+		opCodes.put(SLOAD,   new Op("sload",   0));
+		opCodes.put(CALL,    new Op("call",    8));
+		opCodes.put(RET,     new Op("ret",     0));
+		opCodes.put(LOCALS,  new Op("locals",  4));
 		opCodes.put(ADDR_OF, new Op("addr_of", 0));
-		opCodes.put(VAL_OF, new Op("val_of", 0));
-		opCodes.put(BLA_OF, new Op("bla_of", 0));
+		opCodes.put(VAL_OF,  new Op("val_of",  0));
+		opCodes.put(RESOLVE, new Op("resolve", 0));
 
-		opCodes.put(JMP,    new Op("jmp",    4));
-		opCodes.put(BREQ,   new Op("breq",   4));
-		opCodes.put(BRNE,   new Op("brne",   4));
+		opCodes.put(JMP,     new Op("jmp",     4));
+		opCodes.put(BREQ,    new Op("breq",    4));
+		opCodes.put(BRNE,    new Op("brne",    4));
 
-		opCodes.put(PRINT,  new Op("print",  4));
-		opCodes.put(HALT,   new Op("halt",   0));
+		opCodes.put(PRINT,   new Op("print",   4));
+		opCodes.put(HALT,    new Op("halt",    0));
 		//fmt:on
 	}
 

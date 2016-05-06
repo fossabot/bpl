@@ -47,6 +47,7 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 	private int     deferCnt;
 
 	private Func curF;
+	private Type curT;
 
 	public C99Visitor(FuncTbl funcTbl) {
 		this.funcTbl = funcTbl;
@@ -102,7 +103,7 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 	}
 
 	@Override
-	public String visitDeferableStmt(DeferableStmtContext ctx) {
+	public String visitDeferrableStmt(DeferrableStmtContext ctx) {
 		if (curF.returns)
 			throw new BPLCErrStatementUnreachable(ctx.start);
 
@@ -271,8 +272,6 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 
 	//region var
 
-	private Type curT;
-
 	@Override
 	public String visitVarDecl(VarDeclContext ctx) {
 		String id = ttos(ctx.id);
@@ -297,25 +296,6 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 			throw new BPLCErrTypeMismatch(TokenAdapter.from(ctx.getParent()), rhs_t, lhs_t);
 
 		return lhs + "=" + rhs;
-
-//		if (ctx.id != null) {
-//			String id = ttos(ctx.id);
-//			if (!curF.symTbl.isDecl(id))
-//				throw new BPLCErrSymUndeclared(ctx.id);
-//
-//			Symbol sym = curF.symTbl.get(id);
-//			String rhs = visit(ctx.rhs);
-//			Type have = popt();
-//			Type want = sym.type;
-//			if (have != want)
-//				throw new BPLCErrTypeMismatch(TokenAdapter.from(ctx.getParent()), have, want);
-//
-//			return id + "=" + rhs;
-//		}
-//		if (ctx.funcCall() != null) {
-//
-//		}
-//		throw new IllegalStateException("unreachable");
 	}
 
 	@Override
@@ -458,7 +438,7 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 		Func f = funcTbl.get(id, arg_types);
 
 		// Don't push the return type if the call was a stand-alone statement
-		if (!(ctx.getParent() instanceof StmtContext) && !(ctx.getParent() instanceof DeferableStmtContext))
+		if (!(ctx.getParent() instanceof StmtContext) && !(ctx.getParent() instanceof DeferrableStmtContext))
 			pusht(f.type);
 
 		return mangle(f) + "(" + args_str + ")";
@@ -543,11 +523,6 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 		pusht(Types.lookup("int"));
 		return "(" + lhs + op_str + rhs + ")";
 	}
-
-//	@Override
-//	public String visitAssignExpr(AssignExprContext ctx) {
-//		return visit(ctx.varAssign());
-//	}
 
 	@Override
 	public String visitFuncCallExpr(FuncCallExprContext ctx) {
