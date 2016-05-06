@@ -1,0 +1,17 @@
+func swap(a ^int, b ^int) int {
+	tmp:=*b;
+	*b=*a;
+	*a=tmp;
+	return 0;
+}
+
+func main() int {
+	i:=22;
+	j:=32;
+	swap(&i, &j);
+	print(i, j);
+	return 0;
+}
+
+::exp
+2016

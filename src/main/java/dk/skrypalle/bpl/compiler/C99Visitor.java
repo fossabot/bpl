@@ -196,13 +196,18 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 
 		StringBuilder fmt_buf = new StringBuilder();
 		while (!types.isEmpty()) {
-			//fmt:off
-			switch (types.pop().name) { // TODO
-			case "int"   : fmt_buf.append("%llx"); break;
-			case "string": fmt_buf.append("%s");   break;
-			default      : throw new IllegalStateException("unreachable");
+			Type t = types.pop();
+			if (t instanceof PtrType) {
+				fmt_buf.append("%p");
+			} else {
+				//fmt:off
+				switch (t.name) { // TODO
+				case "int"   : fmt_buf.append("%llx"); break;
+				case "string": fmt_buf.append("%s");   break;
+				default      : throw new IllegalStateException("unreachable");
+				}
+				//fmt:on
 			}
-			//fmt:on
 		}
 		return "printf(\"" + fmt_buf + "\", " + args_str + ")";
 	}
@@ -281,18 +286,36 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 
 	@Override
 	public String visitVarAssign(VarAssignContext ctx) {
-		String id = ttos(ctx.lhs);
-		if (!curF.symTbl.isDecl(id))
-			throw new BPLCErrSymUndeclared(ctx.lhs);
+		if (!(ctx.lhs instanceof IdExprContext) && !(ctx.lhs instanceof DerefExprContext))
+			throw new BPLCErrUnassignable(TokenAdapter.from(ctx.lhs));
 
-		Symbol sym = curF.symTbl.get(id);
+		String lhs = visit(ctx.lhs);
+		Type lhs_t = popt();
 		String rhs = visit(ctx.rhs);
-		Type have = popt();
-		Type want = sym.type;
-		if (have != want)
-			throw new BPLCErrTypeMismatch(TokenAdapter.from(ctx.getParent()), have, want);
+		Type rhs_t = popt();
+		if (lhs_t != rhs_t)
+			throw new BPLCErrTypeMismatch(TokenAdapter.from(ctx.getParent()), rhs_t, lhs_t);
 
-		return id + "=" + rhs;
+		return lhs + "=" + rhs;
+
+//		if (ctx.id != null) {
+//			String id = ttos(ctx.id);
+//			if (!curF.symTbl.isDecl(id))
+//				throw new BPLCErrSymUndeclared(ctx.id);
+//
+//			Symbol sym = curF.symTbl.get(id);
+//			String rhs = visit(ctx.rhs);
+//			Type have = popt();
+//			Type want = sym.type;
+//			if (have != want)
+//				throw new BPLCErrTypeMismatch(TokenAdapter.from(ctx.getParent()), have, want);
+//
+//			return id + "=" + rhs;
+//		}
+//		if (ctx.funcCall() != null) {
+//
+//		}
+//		throw new IllegalStateException("unreachable");
 	}
 
 	@Override
@@ -468,6 +491,34 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 	//region expr
 
 	@Override
+	public String visitRefExpr(RefExprContext ctx) {
+		if (!(ctx.rhs instanceof IdExprContext))
+			throw new BPLCErrUnaddressable(TokenAdapter.from(ctx.rhs));
+		String cld = visit(ctx.rhs);
+		Type type = popt();
+		type = Types.ref(type);
+		pusht(type);
+		return "(&" + cld + ")";
+	}
+
+	@Override
+	public String visitDerefExpr(DerefExprContext ctx) {
+		String cld = visit(ctx.rhs);
+		Type type = popt();
+		if (!(ctx.rhs instanceof IdExprContext)
+			&& !(ctx.rhs instanceof FuncCallExprContext)
+			&& !(ctx.rhs instanceof DerefExprContext)
+			&& !(ctx.rhs instanceof RefExprContext))
+			throw new BPLCErrInvalidDereference(TokenAdapter.from(ctx.rhs), type);
+
+		if (!(type instanceof PtrType))
+			throw new BPLCErrInvalidDereference(TokenAdapter.from(ctx.rhs), type);
+		type = Types.deref((PtrType) type);
+		pusht(type);
+		return "(*" + cld + ")";
+	}
+
+	@Override
 	public String visitBinOpExpr(BinOpExprContext ctx) {
 		String lhs = visit(ctx.lhs);
 		String rhs = visit(ctx.rhs);
@@ -493,10 +544,10 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 		return "(" + lhs + op_str + rhs + ")";
 	}
 
-	@Override
-	public String visitAssignExpr(AssignExprContext ctx) {
-		return visit(ctx.varAssign());
-	}
+//	@Override
+//	public String visitAssignExpr(AssignExprContext ctx) {
+//		return visit(ctx.varAssign());
+//	}
 
 	@Override
 	public String visitFuncCallExpr(FuncCallExprContext ctx) {
@@ -539,7 +590,13 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 		curT = Types.lookup(type_str);
 		if (curT == null)
 			throw new BPLCErrTypeUndeclared(ctx.id);
+		return "";
+	}
 
+	@Override
+	public String visitPtrType(PtrTypeContext ctx) {
+		visitChildren(ctx);
+		curT = Types.ref(curT);
 		return "";
 	}
 
@@ -583,9 +640,9 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 
 		StringBuilder buf = new StringBuilder();
 		for (Type t : f.symTbl.getParamTypes())
-			buf.append("_").append(t);
+			buf.append("_").append(t.mangleString());
 
-		return "__$bplc_" + f.id + buf.toString() + "_" + f.type;
+		return "__$bplc_" + f.id + buf.toString() + "_" + f.type.mangleString();
 	}
 
 	private void pusht(Type t) {

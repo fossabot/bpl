@@ -23,57 +23,23 @@
  *
  */
 
-package dk.skrypalle.bpl.compiler.type;
+package dk.skrypalle.bpl.compiler.err;
 
-import java.util.*;
+import org.antlr.v4.runtime.*;
 
-public final class Types {
+public class BPLCErrUnassignable extends BPLCErr {
 
-	private static final Map<String, Type>  fwd;
-	private static final Map<Integer, Type> rev;
+	private static final long serialVersionUID = 1142180426430914416L;
 
-	static {
-		fwd = new HashMap<>();
-		rev = new HashMap<>();
-		newPrimitive("int", "int64_t");
-		newPrimitive("string", "char*");
+	public BPLCErrUnassignable(TokenAdapter t) {
+		super(t);
 	}
 
-	public static Type lookup(String name) {
-		return fwd.get(name);
+	public BPLCErrUnassignable(Token t) {
+		super(t);
 	}
 
-	public static Type lookup(int vm_type) {
-		return rev.get(vm_type);
-	}
-
-	public static Type ref(Type to) {
-		Type t = lookup("^" + to.name);
-		if (t == null) {
-//			System.out.println("&" + to + " not yet defined.");
-			t = new PtrType(fwd.size(), to);
-			fwd.put(t.name, t);
-			rev.put(t.vm_type, t);
-		}
-
-		return t;
-	}
-
-	public static Type deref(PtrType from) {
-		Type t = lookup(from.name.substring(1));
-		if (t == null) {
-			throw new IllegalStateException("after deref: base-type not found");
-		}
-		return t;
-	}
-
-	private static Type newPrimitive(String name, String c_name) {
-		Type t = new Type(name, fwd.size(), c_name);
-		fwd.put(name, t);
-		rev.put(t.vm_type, t);
-		return t;
-	}
-
-	private Types() { /**/ }
+	@Override
+	String msg() { return "cannot assign to '%s'"; }
 
 }

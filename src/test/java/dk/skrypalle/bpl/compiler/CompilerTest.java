@@ -128,6 +128,9 @@ public class CompilerTest extends CompilerTestBase {
 
 			loadTestFile("defer/simple"),
 			loadTestFile("defer/recursion"),
+
+			loadTestFile("ptr/simple"),
+			loadTestFile("ptr/swap"),
 		};
 	}
 

@@ -97,6 +97,13 @@ public class FuncResolvePass extends BPLBaseVisitor<FuncTbl> {
 		return funcTbl;
 	}
 
+	@Override
+	public FuncTbl visitPtrType(PtrTypeContext ctx) {
+		visitChildren(ctx);
+		curT = Types.ref(curT);
+		return funcTbl;
+	}
+
 	//region aggregate, default, visit
 
 	@Override

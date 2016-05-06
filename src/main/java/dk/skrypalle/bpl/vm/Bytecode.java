@@ -50,13 +50,16 @@ public final class Bytecode {
 	public static final byte IEQ   = (byte) 0x11;
 	public static final byte INEQ  = (byte) 0x12;
 
-	public static final byte ILOAD  = (byte) 0x30;
-	public static final byte ISTORE = (byte) 0x31;
-	public static final byte SPUSH  = (byte) 0x32;
-	public static final byte SLOAD  = (byte) 0x33;
-	public static final byte CALL   = (byte) 0x34;
-	public static final byte RET    = (byte) 0x35;
-	public static final byte LOCALS = (byte) 0x36;
+	public static final byte ILOAD   = (byte) 0x30;
+	public static final byte ISTORE  = (byte) 0x31;
+	public static final byte SPUSH   = (byte) 0x32;
+	public static final byte SLOAD   = (byte) 0x33;
+	public static final byte CALL    = (byte) 0x34;
+	public static final byte RET     = (byte) 0x35;
+	public static final byte LOCALS  = (byte) 0x36;
+	public static final byte ADDR_OF = (byte) 0x37;
+	public static final byte VAL_OF  = (byte) 0x38;
+	public static final byte BLA_OF  = (byte) 0x39;
 
 	public static final byte JMP  = (byte) 0x40;
 	public static final byte BREQ = (byte) 0x41;
@@ -94,13 +97,16 @@ public final class Bytecode {
 		opCodes.put(IEQ,    new Op("ieq",    0));
 		opCodes.put(INEQ,   new Op("ineq",   0));
 
-		opCodes.put(ILOAD,  new Op("iload",  4));
-		opCodes.put(ISTORE, new Op("istore", 4));
+		opCodes.put(ILOAD,  new Op("iload",  0));
+		opCodes.put(ISTORE, new Op("istore", 0));
 		opCodes.put(SPUSH,  new Op("spush",  8));
-		opCodes.put(SLOAD,  new Op("sload",  4));
+		opCodes.put(SLOAD,  new Op("sload",  0));
 		opCodes.put(CALL,   new Op("call",   8));
 		opCodes.put(RET,    new Op("ret",    0));
 		opCodes.put(LOCALS, new Op("locals", 4));
+		opCodes.put(ADDR_OF, new Op("addr_of", 0));
+		opCodes.put(VAL_OF, new Op("val_of", 0));
+		opCodes.put(BLA_OF, new Op("bla_of", 0));
 
 		opCodes.put(JMP,    new Op("jmp",    4));
 		opCodes.put(BREQ,   new Op("breq",   4));

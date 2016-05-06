@@ -172,6 +172,48 @@ public class ErrorTest extends CompilerTestBase {
 		execWithTmpDir(tmpDir -> t.compile(this, wrapMain("x : int; x : int;"), tmpDir));
 	} // test eval via thrown exception
 
+	@Test(dataProvider = "provideCompileSwitch",
+		expectedExceptions = BPLCErrInvalidDereference.class,
+		expectedExceptionsMessageRegExp = "2:11: error: invalid dereference of 'x' - type int")
+	public void testErrInvalidDereferenceOfSymbol(Target t) throws Throwable {
+		execWithTmpDir(tmpDir -> t.compile(this, wrapMain("x:=1; y:=*x;"), tmpDir));
+	} // test eval via thrown exception
+
+	@Test(dataProvider = "provideCompileSwitch",
+		expectedExceptions = BPLCErrInvalidDereference.class,
+		expectedExceptionsMessageRegExp = "2:5: error: invalid dereference of '1' - type int")
+	public void testErrInvalidDereferenceOfLiteral(Target t) throws Throwable {
+		execWithTmpDir(tmpDir -> t.compile(this, wrapMain("x:=*1;"), tmpDir));
+	} // test eval via thrown exception
+
+	@Test(dataProvider = "provideCompileSwitch",
+		expectedExceptions = BPLCErrUnaddressable.class,
+		expectedExceptionsMessageRegExp = "1:55: error: cannot take the address of 'a\\(1\\)'")
+	public void testErrUnaddressableSymbol(Target t) throws Throwable {
+		execWithTmpDir(tmpDir -> t.compile(this, "func a(i int) int { return i; } func main() int { i:=&a(1); return 0; }", tmpDir));
+	} // test eval via thrown exception
+
+	@Test(dataProvider = "provideCompileSwitch",
+		expectedExceptions = BPLCErrUnaddressable.class,
+		expectedExceptionsMessageRegExp = "2:5: error: cannot take the address of '1'")
+	public void testErrUnaddressableLiteral(Target t) throws Throwable {
+		execWithTmpDir(tmpDir -> t.compile(this, wrapMain("x:=&1;"), tmpDir));
+	} // test eval via thrown exception
+
+	@Test(dataProvider = "provideCompileSwitch",
+		expectedExceptions = BPLCErrUnassignable.class,
+		expectedExceptionsMessageRegExp = "2:1: error: cannot assign to '1'")
+	public void testErrUnassignableLiteral(Target t) throws Throwable {
+		execWithTmpDir(tmpDir -> t.compile(this, wrapMain("1=1;"), tmpDir));
+	} // test eval via thrown exception
+
+	@Test(dataProvider = "provideCompileSwitch",
+		expectedExceptions = BPLCErrUnassignable.class,
+		expectedExceptionsMessageRegExp = "1:51: error: cannot assign to 'a\\(1\\)'")
+	public void testErrUnassignableSymbol(Target t) throws Throwable {
+		execWithTmpDir(tmpDir -> t.compile(this, "func a(i int) int { return i; } func main() int { a(1)=2; return 0; }", tmpDir));
+	} // test eval via thrown exception
+
 	//endregion
 
 	//region types

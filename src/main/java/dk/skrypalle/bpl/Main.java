@@ -40,7 +40,7 @@ public final class Main {
 
 	public static void main(String[] args) throws IOException, InterruptedException {
 		Exec.trace = true;
-		int runWhich = 0x02;
+		int runWhich = 0x03;
 
 		String bpl;
 		if (args.length > 0) {
@@ -49,7 +49,13 @@ public final class Main {
 			bpl = loadTestFile("var/strings");
 			bpl = String.join("\n",
 				"func main() int {",
-				"   retur 0;",
+				"   i:=1;",
+				"   j:=&i;",
+				"   x:=**&j;",
+//				"   y:=&1;",
+				"   1=1;",
+				"   print(i, *j, x);",
+				"   return 0;",
 				"}"
 			);
 		}
@@ -69,7 +75,7 @@ public final class Main {
 				System.err.printf("Target BPLBC failed: %s: %s\n", t.getClass().getSimpleName(), t.getMessage());
 				if (bplbc != null)
 					System.err.printf("Code memory:\n%s\n", Hex.dump(bplbc));
-				if (args.length == 0)
+				if (args.length == 0 && Exec.trace)
 					t.printStackTrace();
 			}
 		}
@@ -80,7 +86,6 @@ public final class Main {
 			try {
 				tmpDir = IO.makeTmpDir("_bplc_");
 				c99 = compileC99(bpl);
-				System.out.println(c99);
 				Path c99out = tmpDir.resolve("out.c");
 				IO.writeAll(c99out, c99);
 				ExecRes gcc = Exec.gcc(c99out);
@@ -101,7 +106,7 @@ public final class Main {
 				System.err.printf("Target C99 failed: %s: %s\n", t.getClass().getSimpleName(), t.getMessage());
 				if (c99 != null)
 					System.err.printf("Code memory:\n%s\n", c99);
-				if (args.length == 0)
+				if (args.length == 0 && Exec.trace)
 					t.printStackTrace();
 
 				if (tmpDir != null)

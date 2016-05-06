@@ -25,55 +25,13 @@
 
 package dk.skrypalle.bpl.compiler.type;
 
-import java.util.*;
+public class PtrType extends Type {
 
-public final class Types {
+	public final Type to;
 
-	private static final Map<String, Type>  fwd;
-	private static final Map<Integer, Type> rev;
-
-	static {
-		fwd = new HashMap<>();
-		rev = new HashMap<>();
-		newPrimitive("int", "int64_t");
-		newPrimitive("string", "char*");
+	PtrType(int vm_type, Type to) {
+		super("^" + to.name, vm_type, to.c_type + "*");
+		this.to = to;
 	}
-
-	public static Type lookup(String name) {
-		return fwd.get(name);
-	}
-
-	public static Type lookup(int vm_type) {
-		return rev.get(vm_type);
-	}
-
-	public static Type ref(Type to) {
-		Type t = lookup("^" + to.name);
-		if (t == null) {
-//			System.out.println("&" + to + " not yet defined.");
-			t = new PtrType(fwd.size(), to);
-			fwd.put(t.name, t);
-			rev.put(t.vm_type, t);
-		}
-
-		return t;
-	}
-
-	public static Type deref(PtrType from) {
-		Type t = lookup(from.name.substring(1));
-		if (t == null) {
-			throw new IllegalStateException("after deref: base-type not found");
-		}
-		return t;
-	}
-
-	private static Type newPrimitive(String name, String c_name) {
-		Type t = new Type(name, fwd.size(), c_name);
-		fwd.put(name, t);
-		rev.put(t.vm_type, t);
-		return t;
-	}
-
-	private Types() { /**/ }
 
 }

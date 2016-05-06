@@ -57,7 +57,7 @@ block           : '{' (stmt|defer)* '}'                                         
 funcDecl        : 'func' id=ID '(' params=paramList? ')' typ=type body=block                ;
 funcCall        : id=ID '(' args=argList? ')'                                               ;
 varDecl         : id=ID ':' typ=type                                                        ;
-varAssign       : lhs=ID '=' rhs=expr                                                       ;
+varAssign       : lhs=expr '=' rhs=expr                                                ;
 varDeclAssign   : lhs=ID ':' typ=type '=' rhs=expr                                          ;
 varDeclAssignTI : lhs=ID ':=' rhs=expr                                                      ;
 print           : 'print' '(' args=argList? ')'                                             ;
@@ -68,12 +68,13 @@ arg             : expr                                                          
 argList         : arg (',' arg)*                                                            ;
 
 expr
-	: lhs=expr op=('/'|'*')                     rhs=expr #BinOpExpr
+	:          op= '&'                          rhs=expr #RefExpr
+	|          op= '*'                          rhs=expr #DerefExpr
+	| lhs=expr op=('/'|'*')                     rhs=expr #BinOpExpr
 	| lhs=expr op=('+'|'-')                     rhs=expr #BinOpExpr
 	| lhs=expr op=('<'|'>'|'<='|'>='|'=='|'!=') rhs=expr #BinOpExpr
 	| lhs=expr op= '&&'                         rhs=expr #BoolOpExpr
 	| lhs=expr op= '||'                         rhs=expr #BoolOpExpr
-	| varAssign                                          #AssignExpr
 	| funcCall                                           #FuncCallExpr
 	| val=STR                                            #StrExpr
 	| val=INT                                            #IntExpr
@@ -82,6 +83,7 @@ expr
 
 type
 	: id=ID    #IdType
+	| '^' type #PtrType
 	;
 
 INT : [0-9]+            ;

@@ -42,6 +42,10 @@ public class Type implements Comparable<Type> {
 		return name;
 	}
 
+	public String mangleString() {
+		return name.replaceAll("\\^", "\\$");
+	}
+
 	@Override
 	public int compareTo(Type other) {
 		return this.name.compareTo(other.name);

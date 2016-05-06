@@ -159,16 +159,48 @@ class CPU {
 			push(res, Types.lookup("int"));
 			break;
 		case ISTORE: // can be generic STORE?
-			off = fetchS32();
+//			off = fetchS32();
 			rhs = pop();
-			addr = fp + off + 1;
+			lhs = pop();
+//			System.out.println("ISTORE:: STORING " + rhs);
+//			System.out.println("ISTORE:: IN      " + lhs);
+//			if(rhs.type!=lhs.type)
+//				throw new IllegalStateException("rhs="+rhs+", lhs="+lhs);
+
+			addr = fp + (int) lhs.val + 1;
 			sput(addr, rhs.val, rhs.type);
 			break;
 		case ILOAD: // can be generic LOAD?
-			off = fetchS32();
-			addr = fp + off + 1;
+//			off = fetchS32();
+			lhs = pop();
+			addr = fp + (int) lhs.val + 1;
+			rhs = sget(addr);
+//			System.out.println("ILOAD:: LOADED " + rhs);
+//			System.out.println("ILOAD:: FROM   " + lhs);
+			push(rhs.val, rhs.type);
+			break;
+		case ADDR_OF:
+			lhs = pop();
+			addr = fp + (int) lhs.val + 1;
+//			addr = (int) lhs.val;
+//			System.out.println("ADDR_OF");
+			push(addr, Types.ref(lhs.type));
+			break;
+		case VAL_OF:
+			lhs = pop();
+			addr = (int) lhs.val;
+//			addr = fp + (int) lhs.val + 1;
+//			System.out.println("VAL_OF:: DEREF " + lhs.val);
+//			System.out.println("VAL_OF:: DEREF @" + addr);
 			rhs = sget(addr);
 			push(rhs.val, rhs.type);
+			break;
+		case BLA_OF:
+			lhs = pop();
+//			System.out.println("BLA_OF:: need to figure out rel addr towards @" + lhs.val);
+//			System.out.println("BLA_OF:: fp=" + fp + ", sp=" + sp + ", lhs=" + lhs.val);
+//			System.out.println("BLA_OF:: x=addr-fp-1=" + lhs.val + "-" + fp + "-1=" + ((int) lhs.val - fp - 1));
+			push(lhs.val - fp - 1, Types.lookup("int"));
 			break;
 		case SPUSH:
 			int t = fetchS32();
@@ -186,8 +218,8 @@ class CPU {
 			break;
 		case SLOAD:
 //			t = fetchS32(); // not needed
-			off = fetchS32();
-			addr = fp + off + 1;
+			lhs = pop();//off = fetchS32();
+			addr = fp + (int) lhs.val + 1;
 			rhs = sget(addr);
 			push(rhs.val, rhs.type);
 //			System.out.printf("SLOAD:: [%s] @ (%d)%d :: %s\n", Type.parse(t), off, addr, rhs);
@@ -393,7 +425,7 @@ class CPU {
 		StringBuilder stackBuf = new StringBuilder();
 		stackBuf.append('[');
 		for (int i = 0; i < sp + 1; i++) {
-			stackBuf.append(String.format("0x%x", stack[i].val));
+			stackBuf.append(String.format("0x%x(%s)", stack[i].val, stack[i].type));
 			if (i < sp)
 				stackBuf.append(", ");
 		}
