@@ -266,16 +266,17 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 
 	//region var
 
+	private Type curT;
+
 	@Override
 	public String visitVarDecl(VarDeclContext ctx) {
 		String id = ttos(ctx.id);
-		String type_str = ttos(ctx.typ);
-		Type type = Types.lookup(type_str);
+		visit(ctx.typ);
 		if (curF.symTbl.isDecl(id))
 			throw new BPLCErrSymRedeclared(ctx.id);
 
-		curF.symTbl.declLocal(id, type);
-		return type.c_type + " " + id;
+		curF.symTbl.declLocal(id, curT);
+		return curT.c_type + " " + id;
 	}
 
 	@Override
@@ -297,19 +298,18 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 	@Override
 	public String visitVarDeclAssign(VarDeclAssignContext ctx) {
 		String id = ttos(ctx.lhs);
-		String type_str = ttos(ctx.typ);
-		Type type = Types.lookup(type_str);
+		visit(ctx.typ);
 		if (curF.symTbl.isDecl(id))
 			throw new BPLCErrSymRedeclared(ctx.lhs);
 
-		Symbol sym = curF.symTbl.declLocal(id, type);
+		Symbol sym = curF.symTbl.declLocal(id, curT);
 		String rhs = visit(ctx.rhs);
 		Type have = popt();
 		Type want = sym.type;
 		if (have != want)
 			throw new BPLCErrTypeMismatch(TokenAdapter.from(ctx.getParent()), have, want);
 
-		return type.c_type + " " + id + " = " + rhs;
+		return curT.c_type + " " + id + " = " + rhs;
 	}
 
 	@Override
@@ -338,11 +338,15 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 		String id = ttos(ctx.id);
 		List<Type> params = new ArrayList<>();
 		if (ctx.params != null) {
-			for (ParamContext pctx : ctx.params.param())
-				params.add(Types.lookup(ttos(pctx.typ)));
+			for (ParamContext pctx : ctx.params.param()) {
+				visit(pctx.typ);
+				params.add(curT);
+			}
 		}
 
 		curF = funcTbl.get(id, params);
+		if (curF == null)
+			throw new NullPointerException(id + " :: " + params);
 		curF.entry = -1; // unused by C99 target
 		curF.returns = false;
 
@@ -401,16 +405,31 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 				break;
 			}
 		}
+		possible.sort((l, r) -> {
+			if (l.size() < r.size()) // sort [int] before [int, int]
+				return -1;
+			if (l.size() > r.size()) // sort [int, int] after [int]
+				return 1;
 
-		if (isSubset) {
-			int actArgs = ctx.args == null ? 0 : ctx.args.arg().size();
-			int[] expArgs = funcTbl.getOverloadedParams(id);
-			if (Arrays.binarySearch(expArgs, actArgs) < 0) {
-				// # of provided args not found in overloads
-				throw new BPLCErrWrongNumArgs(ctx.id, arg_types, possible);
+			int len = l.size();
+			for (int i = 0; i < len; i++) {
+				int cmp = l.get(i).compareTo(r.get(i));
+				if (cmp != 0)
+					return cmp; // sort [int, string] before [string, int]
 			}
+			return 0; // means that we have 2 overloads with the same signature, may not happen
+		});
+
+		int actArgs = ctx.args == null ? 0 : ctx.args.arg().size();
+		int[] expArgs = funcTbl.getOverloadedParams(id);
+		boolean numArgsOK = Arrays.binarySearch(expArgs, actArgs) >= 0;
+		if (isSubset) {
+			if (!numArgsOK)
+				throw new BPLCErrWrongNumArgs(ctx.id, arg_types, possible);
 		} else {
-			throw new BPLCErrFuncUndeclared(ctx.id, arg_types);
+			if (!numArgsOK)
+				throw new BPLCErrFuncUndeclared(ctx.id, arg_types);
+			throw new BPLCErrWrongArgTypes(ctx.id, arg_types, possible);
 		}
 
 		Func f = funcTbl.get(id, arg_types);
@@ -430,9 +449,8 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 	@Override
 	public String visitParam(ParamContext ctx) {
 		String id = ttos(ctx.id);
-		String type_str = ttos(ctx.typ);
-		Type type = Types.lookup(type_str);
-		return type.c_type + " " + id;
+		visit(ctx.typ);
+		return curT.c_type + " " + id;
 	}
 
 	@Override
@@ -509,6 +527,20 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 		Symbol sym = curF.symTbl.get(id);
 		pusht(sym.type);
 		return id;
+	}
+
+	//endregion
+
+	//region type
+
+	@Override
+	public String visitIdType(IdTypeContext ctx) {
+		String type_str = ttos(ctx.id);
+		curT = Types.lookup(type_str);
+		if (curT == null)
+			throw new BPLCErrTypeUndeclared(ctx.id);
+
+		return "";
 	}
 
 	//endregion

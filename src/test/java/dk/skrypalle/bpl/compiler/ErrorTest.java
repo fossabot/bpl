@@ -207,6 +207,31 @@ public class ErrorTest extends CompilerTestBase {
 		execWithTmpDir(tmpDir -> t.compile(this, "func main() int { s : string; i : int; s = \"1\"; i = 1; i=s&&i; return 0; }", tmpDir));
 	} // test eval via thrown exception
 
+	@Test(dataProvider = "provideCompileSwitch",
+		expectedExceptions = BPLCErrTypeUndeclared.class,
+		expectedExceptionsMessageRegExp = "1:13: error: type 'undef' undeclared")
+	public void testErrTypeUndeclared(Target t) throws Throwable {
+		execWithTmpDir(tmpDir -> t.compile(this, "func main() undef { return 0; }", tmpDir));
+	} // test eval via thrown exception
+
+	@Test(dataProvider = "provideCompileSwitch",
+		expectedExceptions = BPLCErrWrongArgTypes.class,
+		expectedExceptionsMessageRegExp = "1:58: error: wrong types of arguments to function 'x' - have \\[string\\] want \\[\\[int\\]\\]")
+	public void testErrWrongTypesOfArgumentsOnCall(Target t) throws Throwable {
+		execWithTmpDir(tmpDir -> t.compile(this, "func x(a int) int { return 0; } func main() int { return x(\"1\"); }", tmpDir));
+	} // test eval via thrown exception
+
+	@Test(dataProvider = "provideCompileSwitch",
+		expectedExceptions = BPLCErrWrongArgTypes.class,
+		expectedExceptionsMessageRegExp = "3:26: error: wrong types of arguments to function 'x' - have \\[string, int\\] want \\[\\[int, int\\], \\[int, string\\]\\]")
+	public void testErrWrongTypesOfArgumentsOnOverloadedCall(Target t) throws Throwable {
+		execWithTmpDir(tmpDir -> t.compile(this, String.join("\n",
+			"func x(a int, b int) int    { return 0; }",
+			"func x(a int, b string) int { return 0; }",
+			"func main() int { return x(\"1\", 2); }"
+		), tmpDir));
+	} // test eval via thrown exception
+
 	// endregion
 
 }

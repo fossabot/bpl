@@ -23,28 +23,23 @@
  *
  */
 
-package dk.skrypalle.bpl.compiler.type;
+package dk.skrypalle.bpl.compiler.err;
 
-public class Type implements Comparable<Type> {
+import org.antlr.v4.runtime.*;
 
-	public final String name;
-	public final int    vm_type;
-	public final String c_type;
+public class BPLCErrTypeUndeclared extends BPLCErr {
 
-	Type(String name, int vm_type, String c_type) {
-		this.name = name;
-		this.vm_type = vm_type;
-		this.c_type = c_type;
+	private static final long serialVersionUID = -4048684259492578710L;
+
+	public BPLCErrTypeUndeclared(TokenAdapter t) {
+		super(t);
+	}
+
+	public BPLCErrTypeUndeclared(Token t) {
+		super(t);
 	}
 
 	@Override
-	public String toString() {
-		return name;
-	}
-
-	@Override
-	public int compareTo(Type other) {
-		return this.name.compareTo(other.name);
-	}
+	String msg() { return "type '%s' undeclared"; }
 
 }

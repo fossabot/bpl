@@ -39,13 +39,26 @@ public final class Main {
 
 	public static void main(String[] args) throws IOException, InterruptedException {
 		Exec.trace = true;
-		int runWhich = 0x03;
+		int runWhich = 0x02;
 
 		String bpl;
 		if (args.length > 0) {
 			bpl = IO.readAll(Paths.get(args[0]));
 		} else {
 			bpl = loadTestFile("var/strings");
+			bpl = String.join("\n",
+//				"func x(a int, b int) int {",
+//				"   return 0;",
+//				"}",
+//				"func x(a string, b int) int {",
+//				"   return 0;",
+//				"}",
+				"func x(a int) int { return a; }",
+				"func main() int {",
+				"   return x(\"1\");",
+				"}",
+				""
+			);
 		}
 
 		if ((runWhich & 0x01) != 0) {

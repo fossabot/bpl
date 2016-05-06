@@ -81,8 +81,7 @@ expr
 	;
 
 type
-	: 'int'
-	| 'string'
+	: id=ID    #IdType
 	;
 
 INT : [0-9]+            ;

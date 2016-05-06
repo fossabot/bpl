@@ -40,6 +40,7 @@ public class FuncResolvePass extends BPLBaseVisitor<FuncTbl> {
 	private final FuncTbl funcTbl;
 
 	private Func curF;
+	private Type curT;
 
 	public FuncResolvePass() {
 		funcTbl = new FuncTbl();
@@ -60,13 +61,11 @@ public class FuncResolvePass extends BPLBaseVisitor<FuncTbl> {
 	@Override
 	public FuncTbl visitFuncDecl(FuncDeclContext ctx) {
 		String id = ttos(ctx.id);
-		String type_str = ttos(ctx.typ);
-		Type type = Types.lookup(type_str);
 
 		curF = new Func();
 		curF.id = id;
-		curF.type = type;
-
+		visit(ctx.typ);
+		curF.type = curT;
 		visit(ctx.params);
 
 		if (funcTbl.isDecl(id, curF.symTbl.getParamTypes()))
@@ -80,11 +79,21 @@ public class FuncResolvePass extends BPLBaseVisitor<FuncTbl> {
 	@Override
 	public FuncTbl visitParam(ParamContext ctx) {
 		String id = ttos(ctx.id);
-		String type_str = ttos(ctx.typ);
+		visit(ctx.typ);
 		if (curF.symTbl.isDecl(id))
 			throw new BPLCErrSymRedeclared(ctx.id);
 
-		curF.symTbl.declParam(id, Types.lookup(type_str));
+		curF.symTbl.declParam(id, curT);
+		return funcTbl;
+	}
+
+	@Override
+	public FuncTbl visitIdType(IdTypeContext ctx) {
+		String type_str = ttos(ctx.id);
+		curT = Types.lookup(type_str);
+		if (curT == null)
+			throw new BPLCErrTypeUndeclared(ctx.id);
+
 		return funcTbl;
 	}
 

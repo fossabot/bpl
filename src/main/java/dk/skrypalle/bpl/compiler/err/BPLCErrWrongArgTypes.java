@@ -23,28 +23,33 @@
  *
  */
 
-package dk.skrypalle.bpl.compiler.type;
+package dk.skrypalle.bpl.compiler.err;
 
-public class Type implements Comparable<Type> {
+import dk.skrypalle.bpl.compiler.type.*;
+import org.antlr.v4.runtime.*;
 
-	public final String name;
-	public final int    vm_type;
-	public final String c_type;
+import java.util.*;
 
-	Type(String name, int vm_type, String c_type) {
-		this.name = name;
-		this.vm_type = vm_type;
-		this.c_type = c_type;
+public class BPLCErrWrongArgTypes extends BPLCErr {
+
+	private static final long serialVersionUID = -4583352306226907870L;
+
+	private final List<Type>       act;
+	private final List<List<Type>> exp;
+
+	public BPLCErrWrongArgTypes(TokenAdapter t, List<Type> act, List<List<Type>> exp) {
+		super(t);
+		this.act = act;
+		this.exp = exp;
+	}
+
+	public BPLCErrWrongArgTypes(Token t, List<Type> act, List<List<Type>> exp) {
+		this(TokenAdapter.from(t), act, exp);
 	}
 
 	@Override
-	public String toString() {
-		return name;
-	}
-
-	@Override
-	public int compareTo(Type other) {
-		return this.name.compareTo(other.name);
+	String msg() {
+		return "wrong types of arguments to function '%s' - have " + act + " want " + exp;
 	}
 
 }
