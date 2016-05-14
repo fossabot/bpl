@@ -119,7 +119,7 @@ public class FuncTbl {
 
 	public boolean hasOverloads(String id) {
 		Map<List<Type>, Func> overloads = map.get(id);
-		return overloads != null && !overloads.isEmpty();
+		return overloads != null && overloads.size() > 1;
 	}
 
 	public void merge(FuncTbl other) {

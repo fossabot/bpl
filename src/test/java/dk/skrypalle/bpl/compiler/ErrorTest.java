@@ -294,4 +294,43 @@ public class ErrorTest extends CompilerTestBase {
 
 	// endregion
 
+	//region void
+
+	@Test(dataProvider = "provideCompileSwitch",
+		expectedExceptions = BPLCErrVoidAsValue.class,
+		expectedExceptionsMessageRegExp = "1:37: error: 'a\\(\\)' has no type but is used as value")
+	public void testErrVoidAsValueInVarDeclAssign(Target t) throws Throwable {
+		execWithTmpDir(tmpDir -> t.compile(this, "func a() {} func main() int { x:int=a(); }", tmpDir));
+	} // test eval via thrown exception
+
+	@Test(dataProvider = "provideCompileSwitch",
+		expectedExceptions = BPLCErrVoidAsValue.class,
+		expectedExceptionsMessageRegExp = "1:40: error: 'a\\(\\)' has no type but is used as value")
+	public void testErrVoidAsValueInVarAssign(Target t) throws Throwable {
+		execWithTmpDir(tmpDir -> t.compile(this, "func a() {} func main() int { x:int; x=a(); }", tmpDir));
+	} // test eval via thrown exception
+
+	@Test(dataProvider = "provideCompileSwitch",
+		expectedExceptions = BPLCErrVoidAsValue.class,
+		expectedExceptionsMessageRegExp = "1:34: error: 'a\\(\\)' has no type but is used as value")
+	public void testErrVoidAsValueInVarDeclAssignTI(Target t) throws Throwable {
+		execWithTmpDir(tmpDir -> t.compile(this, "func a() {} func main() int { x:=a(); }", tmpDir));
+	} // test eval via thrown exception
+
+	@Test(dataProvider = "provideCompileSwitch",
+		expectedExceptions = BPLCErrVoidAsValue.class,
+		expectedExceptionsMessageRegExp = "1:50: error: 'a\\(\\)' has no type but is used as value")
+	public void testErrVoidAsValueInFuncParam(Target t) throws Throwable {
+		execWithTmpDir(tmpDir -> t.compile(this, "func a() {} func b(a int) {} func main() int { b(a()); }", tmpDir));
+	} // test eval via thrown exception
+
+	@Test(dataProvider = "provideCompileSwitch",
+		expectedExceptions = BPLCErrVoidAsValue.class,
+		expectedExceptionsMessageRegExp = "1:35: error: 'a\\(\\)' has no type but is used as value")
+	public void testErrVoidAsValueInReturn(Target t) throws Throwable {
+		execWithTmpDir(tmpDir -> t.compile(this, "func a() {} func b() int { return a(); } func main() int { b(); }", tmpDir));
+	} // test eval via thrown exception
+
+	//endregion
+
 }

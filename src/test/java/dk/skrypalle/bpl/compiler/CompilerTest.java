@@ -131,6 +131,8 @@ public class CompilerTest extends CompilerTestBase {
 
 			loadTestFile("ptr/simple"),
 			loadTestFile("ptr/swap"),
+
+			loadTestFile("types/void"),
 		};
 	}
 

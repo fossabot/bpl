@@ -50,18 +50,18 @@ deferrableStmt
 	| print     ';'
 	;
 
-defer           : 'defer' rhs=deferrableStmt                                                 ;
+defer           : 'defer' rhs=deferrableStmt                                                ;
 loop            : 'while' '(' cond=expr ')' body=singularStmt                               ;
 branch          : 'if' '(' cond=expr ')' onTrue=singularStmt ('else' onFalse=singularStmt)? ;
 block           : '{' (stmt|defer)* '}'                                                     ;
-funcDecl        : 'func' id=ID '(' params=paramList? ')' typ=type body=block                ;
+funcDecl        : 'func' id=ID '(' params=paramList? ')' typ=type? body=block               ;
 funcCall        : id=ID '(' args=argList? ')'                                               ;
 varDecl         : id=ID ':' typ=type                                                        ;
-varAssign       : lhs=expr '=' rhs=expr                                                ;
+varAssign       : lhs=expr '=' rhs=expr                                                     ;
 varDeclAssign   : lhs=ID ':' typ=type '=' rhs=expr                                          ;
 varDeclAssignTI : lhs=ID ':=' rhs=expr                                                      ;
 print           : 'print' '(' args=argList? ')'                                             ;
-ret             : 'return' expr                                                             ;
+ret             : 'return' expr?                                                            ;
 param           : id=ID typ=type                                                            ;
 paramList       : param (',' param)*                                                        ;
 arg             : expr                                                                      ;

@@ -171,10 +171,16 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 	public String visitRet(RetContext ctx) {
 		curF.returns = true;
 		String val = visitChildren(ctx);
-		Type have = popt();
+		Type have;
 		Type want = curF.type;
-		if (have != want)
-			throw new BPLCErrTypeMismatch(TokenAdapter.from(ctx.getParent()), have, want);
+
+		if (want != Types.VOID) {
+			have = popt();
+			if (have == Types.VOID)
+				throw new BPLCErrVoidAsValue(TokenAdapter.from(ctx.expr()));
+			if (have != want)
+				throw new BPLCErrTypeMismatch(TokenAdapter.from(ctx.getParent()), have, want);
+		}
 
 		StringBuilder buf = new StringBuilder();
 		for (Deque<String> scope : defers) {
@@ -220,6 +226,8 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 
 		String cond_str = visit(ctx.cond);
 		Type cond_t = popt();
+		if (cond_t == Types.VOID)
+			throw new BPLCErrVoidAsValue(TokenAdapter.from(ctx.cond));
 		if (cond_t != Types.lookup("int"))
 			throw new BPLCErrTypeMismatch(TokenAdapter.from(ctx.cond), cond_t, Types.lookup("int"));
 
@@ -243,6 +251,8 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 	public String visitLoop(LoopContext ctx) {
 		String cond_str = visit(ctx.cond);
 		Type cond_t = popt();
+		if (cond_t == Types.VOID)
+			throw new BPLCErrVoidAsValue(TokenAdapter.from(ctx.cond));
 		if (cond_t != Types.lookup("int"))
 			throw new BPLCErrTypeMismatch(TokenAdapter.from(ctx.cond), cond_t, Types.lookup("int"));
 
@@ -292,6 +302,10 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 		Type lhs_t = popt();
 		String rhs = visit(ctx.rhs);
 		Type rhs_t = popt();
+		if (lhs_t == Types.VOID)
+			throw new BPLCErrVoidAsValue(TokenAdapter.from(ctx.lhs));
+		if (rhs_t == Types.VOID)
+			throw new BPLCErrVoidAsValue(TokenAdapter.from(ctx.rhs));
 		if (lhs_t != rhs_t)
 			throw new BPLCErrTypeMismatch(TokenAdapter.from(ctx.getParent()), rhs_t, lhs_t);
 
@@ -309,6 +323,8 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 		String rhs = visit(ctx.rhs);
 		Type have = popt();
 		Type want = sym.type;
+		if (have == Types.VOID)
+			throw new BPLCErrVoidAsValue(TokenAdapter.from(ctx.rhs));
 		if (have != want)
 			throw new BPLCErrTypeMismatch(TokenAdapter.from(ctx.getParent()), have, want);
 
@@ -323,6 +339,9 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 
 		String rhs = visit(ctx.rhs);
 		Type type = popt();
+		if (type == Types.VOID)
+			throw new BPLCErrVoidAsValue(TokenAdapter.from(ctx.rhs));
+
 		curF.symTbl.declLocal(id, type);
 
 		return type.c_type + " " + id + " = " + rhs;
@@ -356,7 +375,7 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 		String params_s = visit(ctx.params);
 		String body_s = visit(ctx.body);
 
-		if (!curF.returns)
+		if (!curF.returns && curF.type != Types.VOID)
 			throw new BPLCErrReturnMissing(ctx.stop);
 
 		String ret_t = curF.type.c_type; // FIXME temporary to please GCC
@@ -438,7 +457,7 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 		Func f = funcTbl.get(id, arg_types);
 
 		// Don't push the return type if the call was a stand-alone statement
-		if (!(ctx.getParent() instanceof StmtContext) && !(ctx.getParent() instanceof DeferrableStmtContext))
+		if (!(ctx.getParent() instanceof DeferrableStmtContext))
 			pusht(f.type);
 
 		return mangle(f) + "(" + args_str + ")";
@@ -463,7 +482,12 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 
 	@Override
 	public String visitArg(ArgContext ctx) {
-		return visit(ctx.expr());
+		String arg = visit(ctx.expr());
+		Type type = popt();
+		if (type == Types.VOID)
+			throw new BPLCErrVoidAsValue(TokenAdapter.from(ctx.expr()));
+		pusht(type);
+		return arg;
 	}
 
 	//endregion
@@ -505,6 +529,10 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 		String op_str = ttos(ctx.op);
 		Type rhs_t = popt();
 		Type lhs_t = popt();
+		if (lhs_t == Types.VOID)
+			throw new BPLCErrVoidAsValue(TokenAdapter.from(ctx.lhs));
+		if (rhs_t == Types.VOID)
+			throw new BPLCErrVoidAsValue(TokenAdapter.from(ctx.rhs));
 		if (rhs_t != lhs_t)
 			throw new BPLCErrTypeMismatch(TokenAdapter.from(ctx), Arrays.asList(rhs_t, lhs_t), Arrays.asList(Types.lookup("int"), Types.lookup("int")));
 		pusht(Types.lookup("int"));
@@ -518,6 +546,10 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 		String op_str = ttos(ctx.op);
 		Type rhs_t = popt();
 		Type lhs_t = popt();
+		if (lhs_t == Types.VOID)
+			throw new BPLCErrVoidAsValue(TokenAdapter.from(ctx.lhs));
+		if (rhs_t == Types.VOID)
+			throw new BPLCErrVoidAsValue(TokenAdapter.from(ctx.rhs));
 		if (rhs_t != lhs_t)
 			throw new BPLCErrTypeMismatch(TokenAdapter.from(ctx), Arrays.asList(rhs_t, lhs_t), Arrays.asList(Types.lookup("int"), Types.lookup("int")));
 		pusht(Types.lookup("int"));

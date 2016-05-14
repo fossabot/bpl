@@ -156,10 +156,16 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 	public byte[] visitRet(RetContext ctx) {
 		curF.returns = true;
 		byte[] cld = visitChildren(ctx);
-		Type have = popt();
+		Type have;
 		Type want = curF.type;
-		if (have != want)
-			throw new BPLCErrTypeMismatch(TokenAdapter.from(ctx.getParent()), have, want);
+
+		if (want != Types.VOID) {
+			have = popt();
+			if (have == Types.VOID)
+				throw new BPLCErrVoidAsValue(TokenAdapter.from(ctx.expr()));
+			if (have != want)
+				throw new BPLCErrTypeMismatch(TokenAdapter.from(ctx.getParent()), have, want);
+		}
 
 		byte[] ll = {};
 		for (Deque<byte[]> scope : defers) {
@@ -192,6 +198,8 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 
 		byte[] cond = visit(ctx.cond);
 		Type cond_t = popt();
+		if (cond_t == Types.VOID)
+			throw new BPLCErrVoidAsValue(TokenAdapter.from(ctx.cond));
 		if (cond_t != Types.lookup("int"))
 			throw new BPLCErrTypeMismatch(TokenAdapter.from(ctx.cond), cond_t, Types.lookup("int"));
 
@@ -218,6 +226,8 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 	public byte[] visitLoop(LoopContext ctx) {
 		byte[] cond = visit(ctx.cond);
 		Type cond_t = popt();
+		if (cond_t == Types.VOID)
+			throw new BPLCErrVoidAsValue(TokenAdapter.from(ctx.cond));
 		if (cond_t != Types.lookup("int"))
 			throw new BPLCErrTypeMismatch(TokenAdapter.from(ctx.cond), cond_t, Types.lookup("int"));
 
@@ -276,6 +286,10 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 		byte[] lhs = visit(ctx.lhs);
 		load = true;
 		Type lhs_t = popt();
+		if (lhs_t == Types.VOID)
+			throw new BPLCErrVoidAsValue(TokenAdapter.from(ctx.lhs));
+		if (rhs_t == Types.VOID)
+			throw new BPLCErrVoidAsValue(TokenAdapter.from(ctx.rhs));
 		if (lhs_t != rhs_t)
 			throw new BPLCErrTypeMismatch(TokenAdapter.from(ctx.getParent()), rhs_t, lhs_t);
 
@@ -293,6 +307,8 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 		byte[] rhs = visit(ctx.rhs);
 		Type have = popt();
 		Type want = sym.type;
+		if (have == Types.VOID)
+			throw new BPLCErrVoidAsValue(TokenAdapter.from(ctx.rhs));
 		if (have != want)
 			throw new BPLCErrTypeMismatch(TokenAdapter.from(ctx.getParent()), have, want);
 
@@ -307,6 +323,9 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 
 		byte[] rhs = visit(ctx.rhs);
 		Type type = popt();
+		if (type == Types.VOID)
+			throw new BPLCErrVoidAsValue(TokenAdapter.from(ctx.rhs));
+
 		Symbol sym = curF.symTbl.declLocal(id, type);
 
 		return concat(IPUSH, Marshal.bytesS64BE(sym.off), rhs, ISTORE);
@@ -335,8 +354,20 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 		byte[] params_b = visit(ctx.params);
 		byte[] body_b = visit(ctx.body);
 
-		if (!curF.returns)
-			throw new BPLCErrReturnMissing(ctx.stop);
+		if (!curF.returns) {
+			if (curF.type != Types.VOID)
+				throw new BPLCErrReturnMissing(ctx.stop);
+
+			byte[] ll = {};
+			for (Deque<byte[]> scope : defers) {
+				for (byte[] defer : scope)
+					ll = concat(ll, defer);
+			}
+
+			// Pushing -1 as return value for VOID, which is non-assignable (void not defined as type)
+			// and thus it will get popped off after the call for now
+			body_b = concat(body_b, ll, IPUSH, Marshal.bytesS64BE(-1), RET); //FIXME: temp hack
+		}
 
 		byte[] res = concat(params_b, body_b);
 
@@ -421,9 +452,10 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 		Func f = funcTbl.get(id, arg_types);
 
 		// Don't push the return type if the call was a stand-alone statement
-		if (!(ctx.getParent() instanceof StmtContext) && !(ctx.getParent() instanceof DeferrableStmtContext))
-			pusht(f.type);
+		if (ctx.getParent() instanceof DeferrableStmtContext)
+			return concat(args, CALL, Marshal.bytesS32BE(f.entry), Marshal.bytesS32BE(nArgs), POP);
 
+		pusht(f.type);
 		return concat(args, CALL, Marshal.bytesS32BE(f.entry), Marshal.bytesS32BE(nArgs));
 	}
 
@@ -444,7 +476,12 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 
 	@Override
 	public byte[] visitArg(ArgContext ctx) {
-		return visit(ctx.expr());
+		byte[] arg = visit(ctx.expr());
+		Type type = popt();
+		if (type == Types.VOID)
+			throw new BPLCErrVoidAsValue(TokenAdapter.from(ctx.expr()));
+		pusht(type);
+		return arg;
 	}
 
 	//endregion
@@ -491,6 +528,10 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 		String op_str = ttos(ctx.op);
 		Type rhs_t = popt();
 		Type lhs_t = popt();
+		if (lhs_t == Types.VOID)
+			throw new BPLCErrVoidAsValue(TokenAdapter.from(ctx.lhs));
+		if (rhs_t == Types.VOID)
+			throw new BPLCErrVoidAsValue(TokenAdapter.from(ctx.rhs));
 		if (rhs_t != lhs_t)
 			throw new BPLCErrTypeMismatch(TokenAdapter.from(ctx), Arrays.asList(rhs_t, lhs_t), Arrays.asList(Types.lookup("int"), Types.lookup("int")));
 		pusht(Types.lookup("int"));
@@ -520,6 +561,10 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 		String op_str = ttos(ctx.op);
 		Type rhs_t = popt();
 		Type lhs_t = popt();
+		if (lhs_t == Types.VOID)
+			throw new BPLCErrVoidAsValue(TokenAdapter.from(ctx.lhs));
+		if (rhs_t == Types.VOID)
+			throw new BPLCErrVoidAsValue(TokenAdapter.from(ctx.rhs));
 		if (rhs_t != lhs_t)
 			throw new BPLCErrTypeMismatch(TokenAdapter.from(ctx), Arrays.asList(rhs_t, lhs_t), Arrays.asList(Types.lookup("int"), Types.lookup("int")));
 		Type type = Types.lookup("int");

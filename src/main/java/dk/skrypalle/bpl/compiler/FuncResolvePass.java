@@ -52,8 +52,10 @@ public class FuncResolvePass extends BPLBaseVisitor<FuncTbl> {
 
 		if (!funcTbl.isDecl("main"))
 			throw new IllegalStateException("no main function found"); // TODO
-		if (!funcTbl.hasOverloads("main"))
+		if (funcTbl.hasOverloads("main"))
 			throw new IllegalStateException("main function cannot be overloaded"); // TODO
+		if (funcTbl.getFirst("main").type != Types.lookup("int"))
+			throw new IllegalStateException("main function must return " + Types.lookup("int")); // TODO
 
 		return funcTbl;
 	}
@@ -62,9 +64,12 @@ public class FuncResolvePass extends BPLBaseVisitor<FuncTbl> {
 	public FuncTbl visitFuncDecl(FuncDeclContext ctx) {
 		String id = ttos(ctx.id);
 
+		curT = null;
 		curF = new Func();
 		curF.id = id;
 		visit(ctx.typ);
+		if (curT == null)
+			curT = Types.VOID;
 		curF.type = curT;
 		visit(ctx.params);
 

@@ -46,16 +46,18 @@ public final class Main {
 		if (args.length > 0) {
 			bpl = IO.readAll(Paths.get(args[0]));
 		} else {
-			bpl = loadTestFile("var/strings");
 			bpl = String.join("\n",
+				"func b() {}",
+				"func a() int {",
+				"   return b();",
+				"}",
 				"func main() int {",
-				"   i:=1;",
-				"   j:=&i;",
-				"   x:=**&j;",
-				"   print(i, *j, x);",
+//				"   x := a();",
+				"   print(a());",
 				"   return 0;",
 				"}"
 			);
+//			bpl = loadTestFile("func/call_simple");
 		}
 
 		if ((runWhich & 0x01) != 0) {
