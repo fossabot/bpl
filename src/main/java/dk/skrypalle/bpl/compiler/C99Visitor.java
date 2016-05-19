@@ -540,6 +540,23 @@ public class C99Visitor extends BPLBaseVisitor<String> {
 	}
 
 	@Override
+	public String visitCmpOpExpr(CmpOpExprContext ctx) {
+		String lhs = visit(ctx.lhs);
+		String rhs = visit(ctx.rhs);
+		String op_str = ttos(ctx.op);
+		Type rhs_t = popt();
+		Type lhs_t = popt();
+		if (lhs_t == Types.VOID)
+			throw new BPLCErrVoidAsValue(TokenAdapter.from(ctx.lhs));
+		if (rhs_t == Types.VOID)
+			throw new BPLCErrVoidAsValue(TokenAdapter.from(ctx.rhs));
+		if (rhs_t != lhs_t)
+			throw new BPLCErrTypeMismatch(TokenAdapter.from(ctx), Arrays.asList(rhs_t, lhs_t), Arrays.asList(Types.lookup("int"), Types.lookup("int")));
+		pusht(Types.lookup("int"));
+		return lhs + op_str + rhs;
+	}
+
+	@Override
 	public String visitBoolOpExpr(BoolOpExprContext ctx) {
 		String lhs = visit(ctx.lhs);
 		String rhs = visit(ctx.rhs);

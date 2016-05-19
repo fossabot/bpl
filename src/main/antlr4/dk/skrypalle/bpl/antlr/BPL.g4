@@ -72,7 +72,7 @@ expr
 	|          op= '*'                          rhs=expr #DerefExpr
 	| lhs=expr op=('/'|'*')                     rhs=expr #BinOpExpr
 	| lhs=expr op=('+'|'-')                     rhs=expr #BinOpExpr
-	| lhs=expr op=('<'|'>'|'<='|'>='|'=='|'!=') rhs=expr #BinOpExpr
+	| lhs=expr op=('<'|'>'|'<='|'>='|'=='|'!=') rhs=expr #CmpOpExpr
 	| lhs=expr op= '&&'                         rhs=expr #BoolOpExpr
 	| lhs=expr op= '||'                         rhs=expr #BoolOpExpr
 	| funcCall                                           #FuncCallExpr

@@ -542,6 +542,29 @@ public class BCVisitor extends BPLBaseVisitor<byte[]> {
 		case "-" : op = ISUB; break;
 		case "*" : op = IMUL; break;
 		case "/" : op = IDIV; break;
+		default  : throw new IllegalStateException("unreachable");
+		}
+		//fmt:on
+		return concat(lhs, rhs, op);
+	}
+
+	@Override
+	public byte[] visitCmpOpExpr(CmpOpExprContext ctx) {
+		byte[] lhs = visit(ctx.lhs);
+		byte[] rhs = visit(ctx.rhs);
+		String op_str = ttos(ctx.op);
+		Type rhs_t = popt();
+		Type lhs_t = popt();
+		if (lhs_t == Types.VOID)
+			throw new BPLCErrVoidAsValue(TokenAdapter.from(ctx.lhs));
+		if (rhs_t == Types.VOID)
+			throw new BPLCErrVoidAsValue(TokenAdapter.from(ctx.rhs));
+		if (rhs_t != lhs_t)
+			throw new BPLCErrTypeMismatch(TokenAdapter.from(ctx), Arrays.asList(rhs_t, lhs_t), Arrays.asList(Types.lookup("int"), Types.lookup("int")));
+		pusht(Types.lookup("int"));
+		byte op;
+		//fmt:off
+		switch (op_str) {
 		case "<" : op = ILT;  break;
 		case ">" : op = IGT;  break;
 		case "<=": op = ILTE; break;
