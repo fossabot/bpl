@@ -25,6 +25,9 @@ target/
 *.s
 *.c~
 
+# GO
+*.go
+
 # BPL
 *.bplbc
 
