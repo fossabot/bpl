@@ -1,6 +1,7 @@
 #BPL Programming Language
 
 [![Build Status](https://travis-ci.org/baeda/bpl.svg?branch=master)](https://travis-ci.org/baeda/bpl)
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fbaeda%2Fbpl.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fbaeda%2Fbpl?ref=badge_shield)
 
 A hackish attempt to bring forth a simple, yet non-restrictive programming
 language.
@@ -33,3 +34,7 @@ available.
 
 The project uses [ANTLR v4](http://www.antlr.org/) for lexing and parsing and
 is written in vanilla Java 8 for bootstrapping.
+
+
+## License
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fbaeda%2Fbpl.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Fbaeda%2Fbpl?ref=badge_large)
